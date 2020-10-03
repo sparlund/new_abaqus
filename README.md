@@ -8,10 +8,8 @@ The name is a joke from the character YinYang in Silicon Valley, who has the ide
 
    
 ### TODO
-- ~~ Implement logic and structure for reading abaqus input files ~~
-
-
-- ~~ Set up classes and functions for nodes, elements, properties and materials ~~
+- ~~Implement logic and structure for reading abaqus input files~~
+- ~~Set up classes and functions for nodes, elements, properties and materials~~
 - Implement logic for 3D shell element
 - Assemble stiffness matrix for 3D shell elements
 - Boundary condition keywords
