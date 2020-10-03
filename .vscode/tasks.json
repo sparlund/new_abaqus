@@ -1,0 +1,35 @@
+{
+    "version": "0.1.0",
+    "command": "g++",
+    "isShellCommand": true,
+    "showOutput": "always",
+    "linux": {
+        "tasks": [
+            {
+                "taskName": "Build",
+                "suppressTaskName": true,
+                "isBuildCommand": true,
+                "args": [
+                    "-g",
+                    "-Wreturn-type",
+                    "-Wall",
+                    "-std=c++11",
+                    "-I /usr/local/include/Eigen/",
+                    "main.cpp",
+                    "src/mesh.cpp",
+                    "src/mid.cpp",
+                    "src/misc_string_functions.cpp",
+                    "src/new_abaqus.cpp",
+                    "src/node.cpp",
+                    "src/pid.cpp",
+                    "src/elements/S3.cpp",
+                    "src/elements/S2.cpp",
+                    "src/dof.cpp",
+                    "-o",
+                    "new_abaqus",
+                    "-Wno-format-security"
+                ]
+            }
+        ]
+    },
+}
