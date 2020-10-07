@@ -1,13 +1,16 @@
 #pragma once
 #include <array>
+#include <vector>
+#include "dof.h"
+
 class Node
 {
 private:
 public:
     // Node has id and positional data
-    float x, y, z;
     unsigned int id;
-    std::array<float,6> dofs;  
+    float x, y, z;
+    std::vector<Dof> dofs;  
     Node(unsigned int local_id, float x, float y, float z);
     ~Node();
 };

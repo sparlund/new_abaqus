@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <Eigen/Sparse>
 #include "mid.h"
 #include "pid.h"
 #include "node.h"
@@ -52,6 +53,16 @@ public:
     // Node* get_node(unsigned long id){return this->nodes.at(id);}
     // Pid* get_pid(unsigned int pid_id) {return this->pids.at(pid_id);}
     // Mid* get_mid(unsigned int mid_id) {return this->mids.at(mid_id);}
+
+    // ndofs is counter for total number of degrees of freedom for the mesh
+    unsigned int ndofs = 0;
+    // Eigen::SparseMatrix<float> K;
+    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> K;
+    Eigen::Matrix<float,Eigen::Dynamic,1> f;
+    Eigen::Matrix<float,Eigen::Dynamic,1> u;
+    void assemble();
+    void solve();
+
 
     Mesh();
     void read_file(std::string filename);

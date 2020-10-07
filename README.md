@@ -14,5 +14,7 @@ The name is a joke from the character YinYang in Silicon Valley, who has the ide
 - Assemble stiffness matrix for 3D shell elements
 - Boundary condition keywords
 - Solve eigen value problem
+- Compare solution against CALFEM and abaqus
+
 
 

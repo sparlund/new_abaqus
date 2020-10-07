@@ -16,7 +16,8 @@ int main(int argc, char const *argv[])
             na.mesh.read_file(std::string(argv[1]));
         }
     }
-    na.mesh.about();
+    na.mesh.assemble();
+    // na.mesh.about();
 
 
     return 0;

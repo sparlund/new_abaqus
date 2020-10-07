@@ -10,9 +10,37 @@
 #include "mid.h"
 #include "pid.h"
 #include "node.h"
+#include "dof.h"
 #include "element.h"
 #include "elements/S3.h"
+#include "elements/S2.h"
 #include "misc_string_functions.h"
+
+// unsigned int Mesh::ndofs = 0;
+
+void Mesh::assemble(){
+    // By the time of assemble we know the number of dofs --> pre-allocate K, f & solution u
+    // std::cout << ndofs << "\n";
+    K.resize(ndofs,ndofs);
+    K.Zero(ndofs,ndofs);    
+    f.resize(ndofs,1);
+    f.Zero(ndofs,1);
+    u.resize(ndofs,1);
+    u.Zero(ndofs,1);
+    // Loop over all elements!
+    std::shared_ptr<Element> current_element;
+    std::cout << ":)\n"; 
+    for (unsigned int i = 0; i < elements.size(); i++)
+    { 
+        current_element = elements.at(i);
+        std::vector<std::shared_ptr<Node>> current_element_nodes =  current_element->get_connectivity();        
+        std::cout << current_element->get_Ke() << "\n";
+        // K = K + current_element->get_Ke();
+        // f = f + current_element->fe();
+    }
+    
+
+}
 
 
 
@@ -135,7 +163,26 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     if (type.compare("S3"))
     {
         element = std::shared_ptr<Element>(new S3(element_id,element_connectivity,pid));
+
     }
+    else if (type.compare("S2"))
+    {
+        element = std::shared_ptr<Element>(new S2(element_id,element_connectivity,pid));
+    }
+    // Need to add correct amount of dof's to each node, now that we know what
+    // type of element have. Before this we don't know how many dofs each node need
+    for (unsigned char i = 0; i < element->get_element_nnodes() ; i++)
+    {
+        for (unsigned char j = 0; j < element->get_element_ndofs(); j++)
+        {
+            Dof dof;
+            // for each node in current element
+            // add correct number of dofs to current node
+            element_connectivity.at(i)->dofs.push_back(dof);
+            ndofs++;
+        }
+    }
+    
     elements.push_back(element);
     // else{
     //     std::cout << "Element of type " << type << " not supported.\n";
@@ -166,17 +213,17 @@ void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string
 };
 
 void Mesh::about(){  
-    std::cout << "--\n"; 
+    std::cout << "- PID -\n"; 
     for (unsigned int i = 0; i < pids.size(); i++)
     {
         std::cout << pids.at(i)->name << "\n";
     }
-    std::cout << "--\n";   
+    std::cout << "- NODES -\n";   
     for (unsigned int i = 0; i < nodes.size(); i++)
     {
         std::cout << nodes.at(i)->x << ", " << nodes.at(i)->y << ", " << nodes.at(i)->z << "\n";
     }
-    std::cout << "--\n"; 
+    std::cout << "- ELEMENTS -\n"; 
     for (unsigned int i = 0; i < elements.size(); i++)
     {
         std::cout << elements.at(i)->id << "\n";

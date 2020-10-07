@@ -27,6 +27,7 @@ public:
     std::vector<std::shared_ptr<Node>> get_connectivity(){return this->connectivity;};
     unsigned char get_element_ndofs(){return dofs;}
     unsigned char get_element_nnodes(){return nnodes;}
+    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Ke(){return Ke;}
     S3(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
     ~S3();
 };
