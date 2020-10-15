@@ -8,16 +8,16 @@ The name is a joke from the character YinYang in Silicon Valley, who has the ide
 
    
 ### TODO
-- ~~Implement logic and structure for reading abaqus input files~~
-- ~~Set up classes and functions for nodes, elements, properties and materials~~
-- ~~Implement stiffness matrix contirbution for 2D tria element~~
-- Implement logic for 3D shell element
-- ~~Assemble stiffness matrix for generic elements~~
-- ~~Boundary condition keywords~~
-- ~~Point load keyword and assemble global load vector~~
-- Solve for displacement
-- Solve eigen value problem
-- Compare solution against CALFEM and abaqus
+- [x] Implement logic and structure for reading abaqus input files~~
+- [x] Set up classes and functions for nodes, elements, properties and materials~~
+- [x] Implement stiffness matrix contirbution for 2D tria element~~
+- [ ] Implement logic for 3D shell element
+- [x] Assemble stiffness matrix for generic elements~~
+- [x] Boundary condition keywords~~
+- [x] Point load keyword and assemble global load vector~~
+- [ ] Solve for displacement
+- [ ] Solve eigen value problem
+- [ ] Compare solution against CALFEM and abaqus
 
 
 
