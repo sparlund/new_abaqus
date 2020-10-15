@@ -17,7 +17,9 @@ The name is a joke from the character YinYang in Silicon Valley, who has the ide
 - [x] Point load keyword and assemble global load vector~~
 - [ ] Solve for displacement
 - [ ] Solve eigen value problem
-- [ ] Compare solution against CALFEM and abaqus
+- [ ] Make file
+- [ ] Automate test cases for comparison solution against CALFEM and or abaqus
+
 
 
 
