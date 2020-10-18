@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <memory>
 #include <Eigen/Sparse>
+#include <Eigen/Dense>
+#include <utility>
 #include "mid.h"
 #include "pid.h"
 #include "node.h"
@@ -23,6 +25,7 @@ private:
 
     // arrays of pointers to nodes and elements
     std::vector<std::shared_ptr<Node>> nodes;
+    std::unordered_map<unsigned int,unsigned int> global_2_local_node_id;
     std::unordered_map<unsigned int,std::shared_ptr<Node>> node_id_2_node_pointer;
     std::vector<std::shared_ptr<Element>> elements;
     // array of PID's belonging to the Mesh
@@ -35,11 +38,12 @@ private:
     std::vector<std::string> pid_2_create; 
     // array of MID's belonging to the Mesh
     std::vector<std::unique_ptr<Mid>> mids;
-    // map from global id to local id
     // array of elements and their connectivity
     // Method to add Node
     void add_node(std::string line,std::unordered_map<std::string, std::string> options);
     void add_element(std::string line,std::unordered_map<std::string, std::string> options);
+    void add_load(std::string line);
+    void add_boundary(std::string line,std::unordered_map<std::string, std::string> options);
     void add_pid(std::unordered_map<std::string, std::string> options);
     void add_mid(std::unordered_map<std::string, std::string> options);
 
@@ -56,10 +60,11 @@ public:
 
     // ndofs is counter for total number of degrees of freedom for the mesh
     unsigned int ndofs = 0;
-    // Eigen::SparseMatrix<float> K;
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> K;
-    Eigen::Matrix<float,Eigen::Dynamic,1> f;
+    Eigen::SparseMatrix<float> K;
+    Eigen::SparseVector<float> f;
     Eigen::Matrix<float,Eigen::Dynamic,1> u;
+    std::vector<std::pair<unsigned int,float>> f_to_be_added;
+    std::vector<std::pair<unsigned int,float>> bc;
     void assemble();
     void solve();
 

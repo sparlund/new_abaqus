@@ -6,6 +6,8 @@
 #include <iostream>
 #include <memory>
 #include <Eigen/Dense>
+#include <Eigen/SparseCholesky>
+#include <utility>
 #include "mesh.h"
 #include "mid.h"
 #include "pid.h"
@@ -18,28 +20,62 @@
 
 // unsigned int Mesh::ndofs = 0;
 
+
+void Mesh::solve(){
+    // Ku=f
+    u.resize(ndofs,1);
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver;
+    solver.compute(K);
+    u = solver.solve(f);
+    unsigned int node_id = global_2_local_node_id[348];
+    std::shared_ptr<Node> node = nodes.at(node_id);
+    float x_disp = u(node->dofs.at(0).id);
+    std::cout << x_disp << "\n";
+}
+
 void Mesh::assemble(){
     // By the time of assemble we know the number of dofs --> pre-allocate K, f & solution u
-    // std::cout << ndofs << "\n";
+    ndofs = nodes.at(0)->dofs.at(0).global_dof_id_counter; 
     K.resize(ndofs,ndofs);
-    K.Zero(ndofs,ndofs);    
     f.resize(ndofs,1);
-    f.Zero(ndofs,1);
-    u.resize(ndofs,1);
-    u.Zero(ndofs,1);
-    // Loop over all elements!
+    std::cout << "ndofs=" << ndofs << "\n";
+    // assemble load vector
+    for (unsigned int i = 0; i < f_to_be_added.size(); i++)
+    {
+        f.coeffRef(f_to_be_added.at(i).first) += f_to_be_added.at(i).second;
+    }
+    // assemble stiffness matrix
     std::shared_ptr<Element> current_element;
-    std::cout << ":)\n"; 
+    std::cout << "----\n";
     for (unsigned int i = 0; i < elements.size(); i++)
     { 
         current_element = elements.at(i);
-        std::vector<std::shared_ptr<Node>> current_element_nodes =  current_element->get_connectivity();        
-        std::cout << current_element->get_Ke() << "\n";
-        // K = K + current_element->get_Ke();
-        // f = f + current_element->fe();
+        std::vector<unsigned int> dofs = current_element->get_element_dof_ids();
+        for(unsigned int j=0;j < dofs.size();j++){
+            unsigned int dof_row = dofs.at(j);
+            for(unsigned int k=0;k < dofs.size();k++){
+                unsigned int dof_column = dofs.at(k);
+                Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Ke = current_element->get_Ke();
+                K.coeffRef(dof_row,dof_column) += Ke(j,k);
+            }
+        }
     }
-    
-
+    // boundary conditions:
+    for (unsigned int i = 0; i < bc.size(); i++)
+    {
+        // if current bc==0, make all values in the corresponding row and column in K to zero
+        if (bc.at(i).second == 0.0f)
+        {
+            K.row(bc.at(i).first) *= 0;
+            K.col(bc.at(i).first) *= 0;
+        }
+    }
+    std::cout << "K:\n";
+    std::cout << K;
+    std::cout << "\n";
+    std::cout << "f:\n";
+    std::cout << f;
+    std::cout << "---\n";
 }
 
 
@@ -56,8 +92,43 @@ void Mesh::add_mid(std::unordered_map<std::string, std::string> options){
 
 Mesh::Mesh(){
     // init object to hold the mesh data.
-};
+}
 
+void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::string> options){
+    std::string type = options["TYPE"];
+    std::vector<std::string> data = misc::split_on(line,',');
+    if (type=="DISPLACEMENT")
+    {
+        // node,dof_from,dof_to,magnitude
+        unsigned int global_node_id = std::stoi(data.at(0));
+        unsigned int dof_from       = std::stoi(data.at(1));
+        unsigned int dof_to         = std::stoi(data.at(2));
+        float        magnitude      = std::stof(data.at(3));        
+        // dof is given above in the local coord system
+        std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[global_node_id]);
+        for (unsigned int i = dof_from; i <= dof_to; i++)
+        {
+            // abaqus starts counting dof's at 1, but vectors start at 0
+            bc.push_back(std::make_pair(node->dofs.at(i-1).id,magnitude));
+        }
+        
+    }
+    
+}
+
+void Mesh::add_load(std::string line){
+    // for *cload line is: node, dof, magnitude
+    std::vector<std::string> data   = misc::split_on(line,',');   
+    unsigned int global_node_id     = std::stoi(data.at(0));
+    unsigned int local_dof          = std::stoi(data.at(1));
+    float magnitude                 = std::stof(data.at(2));
+    std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[global_node_id]);
+    unsigned int global_dof = node->dofs.at(local_dof-1).id;
+    // we don't know complete number of dofs yet,
+    // so we can't add directly to global load vector, but have
+    // to store it here meanwhile
+    f_to_be_added.push_back(std::make_pair(global_dof,magnitude));    
+}
 
 void Mesh::read_file(std::string filename){
     misc::append_newline_to_textfile(filename);
@@ -89,7 +160,47 @@ void Mesh::read_file(std::string filename){
                 // }
                 
             }
-                   
+            else if (keyword=="*BOUNDARY"){
+                getline(input_file, line);
+                row_counter++;
+                bool inner_loop_keyword = true;
+                while (inner_loop_keyword == true){
+                // Ignore if it's a comment! Still on same keyword.
+                    if (misc::is_comment(line) == false){
+                        add_boundary(line,options);
+                    }
+                    // Want to peek next line, if it's a keyword or empty line we break
+                    // the while loop and start over!
+                    unsigned int previous_pos = input_file.tellg();
+                    getline(input_file, line);
+                    if (misc::is_keyword(line) == true or line.empty() == true)
+                    {
+                        input_file.seekg(previous_pos);
+                        inner_loop_keyword = false;
+                    }
+                }
+            }
+            else if (keyword == "*CLOAD")
+            {
+                getline(input_file, line);
+                row_counter++;
+                bool inner_loop_keyword = true;
+                while (inner_loop_keyword == true){
+                // Ignore if it's a comment! Still on same keyword.
+                    if (misc::is_comment(line) == false){
+                        add_load(line);
+                    }
+                    // Want to peek next line, if it's a keyword or empty line we break
+                    // the while loop and start over!
+                    unsigned int previous_pos = input_file.tellg();
+                    getline(input_file, line);
+                    if (misc::is_keyword(line) == true or line.empty() == true)
+                    {
+                        input_file.seekg(previous_pos);
+                        inner_loop_keyword = false;
+                    }
+                }
+            }
             else if (keyword == "*NODE" or keyword == "*ELEMENT")
             {
                 getline(input_file, line);
@@ -160,29 +271,15 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
         element_connectivity.push_back(node_id_2_node_pointer[node_id]);
     }
     std::shared_ptr<Element> element;
-    if (type.compare("S3"))
+    if (type == "S3")
     {
         element = std::shared_ptr<Element>(new S3(element_id,element_connectivity,pid));
 
     }
-    else if (type.compare("S2"))
+    else if (type == "S2")
     {
         element = std::shared_ptr<Element>(new S2(element_id,element_connectivity,pid));
     }
-    // Need to add correct amount of dof's to each node, now that we know what
-    // type of element have. Before this we don't know how many dofs each node need
-    for (unsigned char i = 0; i < element->get_element_nnodes() ; i++)
-    {
-        for (unsigned char j = 0; j < element->get_element_ndofs(); j++)
-        {
-            Dof dof;
-            // for each node in current element
-            // add correct number of dofs to current node
-            element_connectivity.at(i)->dofs.push_back(dof);
-            ndofs++;
-        }
-    }
-    
     elements.push_back(element);
     // else{
     //     std::cout << "Element of type " << type << " not supported.\n";
@@ -210,6 +307,7 @@ void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string
     std::shared_ptr<Node> node  = std::shared_ptr<Node>(new Node(id,x,y,z));
     nodes.push_back(node);
     node_id_2_node_pointer[id] = node;
+    global_2_local_node_id[id] = nodes.size()-1;  
 };
 
 void Mesh::about(){  
@@ -221,12 +319,19 @@ void Mesh::about(){
     std::cout << "- NODES -\n";   
     for (unsigned int i = 0; i < nodes.size(); i++)
     {
-        std::cout << nodes.at(i)->x << ", " << nodes.at(i)->y << ", " << nodes.at(i)->z << "\n";
+        std::cout << nodes.at(i)->id << ": "<< nodes.at(i)->x << ", " << nodes.at(i)->y << ", " << nodes.at(i)->z << "\n";
     }
     std::cout << "- ELEMENTS -\n"; 
     for (unsigned int i = 0; i < elements.size(); i++)
     {
-        std::cout << elements.at(i)->id << "\n";
+        std::cout << elements.at(i)->get_id() << "   nodes (";
+        std::vector<std::shared_ptr<Node>> connectivity = elements.at(i)->get_connectivity();
+        for (unsigned int k = 0; k < connectivity.size()  ; k++)
+        {
+            std::cout << connectivity.at(k)->id << ", ";
+        }
+        std::cout << ")\n";
+        
     }
     
 };
