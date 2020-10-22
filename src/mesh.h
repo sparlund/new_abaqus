@@ -64,6 +64,7 @@ public:
     Eigen::SparseVector<float> f;
     Eigen::Matrix<float,Eigen::Dynamic,1> u;
     std::vector<std::pair<unsigned int,float>> f_to_be_added;
+    // bc: global dof, value
     std::vector<std::pair<unsigned int,float>> bc;
     void assemble();
     void solve();

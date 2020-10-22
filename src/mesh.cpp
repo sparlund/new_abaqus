@@ -6,8 +6,9 @@
 #include <iostream>
 #include <memory>
 #include <Eigen/Dense>
-#include <Eigen/SparseCholesky>
+#include <Eigen/SparseLU>
 #include <utility>
+#include <cmath>
 #include "mesh.h"
 #include "mid.h"
 #include "pid.h"
@@ -24,14 +25,25 @@
 void Mesh::solve(){
     // Ku=f
     u.resize(ndofs,1);
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver;
+    Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
     solver.compute(K);
     u = solver.solve(f);
+    for (unsigned int i = 0; i < ndofs; i++)
+    {
+        std::cout << u.coeffRef(i) << "\n";
+    }
+    
     unsigned int node_id = global_2_local_node_id[348];
     std::shared_ptr<Node> node = nodes.at(node_id);
     float x_disp = u(node->dofs.at(0).id);
+    float y_disp = u(node->dofs.at(1).id);
+    float magn = std::sqrt(std::abs(x_disp) + std::abs(y_disp));
     std::cout << x_disp << "\n";
+    std::cout << y_disp << "\n";
+    std::cout << magn << "\n";
+
 }
+
 
 void Mesh::assemble(){
     // By the time of assemble we know the number of dofs --> pre-allocate K, f & solution u
@@ -64,11 +76,10 @@ void Mesh::assemble(){
     for (unsigned int i = 0; i < bc.size(); i++)
     {
         // if current bc==0, make all values in the corresponding row and column in K to zero
-        if (bc.at(i).second == 0.0f)
-        {
-            K.row(bc.at(i).first) *= 0;
-            K.col(bc.at(i).first) *= 0;
-        }
+        unsigned int current_global_dof = bc.at(i).first;
+        K.row(current_global_dof) *= 0;
+        K.coeffRef(current_global_dof,current_global_dof) = 1;
+        f.coeffRef(current_global_dof) = bc.at(i).second;
     }
     std::cout << "K:\n";
     std::cout << K;
