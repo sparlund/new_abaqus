@@ -3,7 +3,8 @@ new_abaqus is a hobby project for creating an FE-solver reading an FE-mesh follo
 
 The name is a joke from the character YinYang in Silicon Valley, who has the idea for "new netflix".
 
-### TODO & Features implemented
+
+### To-do & Features implemented
 - [x] Implement logic and structure for reading abaqus input files
 - [x] Set up classes and functions for nodes, elements, properties and materials
 - [ ] Implement logic for different elements
@@ -19,7 +20,7 @@ The name is a joke from the character YinYang in Silicon Valley, who has the ide
   - [ ] *STEP
   - [ ] *OUTPUT
 - [x] Point load keyword and assemble global load vector
-- [x] Solve Ka=f system
+- [x] Solve Ka=f
   - [x] Modify stiffness matrix and load vector to account for boundary conditions
 - [ ] Calculate scalar values on elements
   - [ ] von Mises stress
