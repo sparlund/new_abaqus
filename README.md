@@ -23,6 +23,7 @@ The name is a joke from the character YinYang in Silicon Valley, who has the ide
   - [ ] Partition stiffness matrix
 - [ ] Solve eigen value problem
   - [ ] Calculate mass matrix in element construction
+- [ ] Figure out smart way to store results  
 - [ ] makefile
 - [ ] Automate test cases for comparison solution against CALFEM and or abaqus
 
