@@ -11,7 +11,6 @@ The name is a joke from the character YinYang in Silicon Valley, who has the ide
   - [x] 2D tria (S2)
   - [ ] 3D tria (S3)
   - [ ] 3D brick (C3D8)
-
 - [x] Assemble stiffness matrix
 - [x] Add support for more keywords
   - [x] *BOUNDARY
