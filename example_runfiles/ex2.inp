@@ -1,4 +1,4 @@
-*SHELL SECTION, ELSET=pid, MATERIAL=steel
+** *SHELL SECTION, ELSET=pid, MATERIAL=steel
                       1.,
 **
 ** MATERIALS
@@ -6,16 +6,15 @@
 **
 **steel
 **
-*MATERIAL, NAME=steel
-*DENSITY
-                 7.85E-9,
-*ELASTIC, TYPE=ISOTROPIC
-                 210000.,                     0.33
+** *MATERIAL, NAME=steel
+** *DENSITY
+**                  7.85E-9,
+** *ELASTIC, TYPE=ISOTROPIC
+**                  210000.,                     0.33
 **
 ** 
 **
 **
-** BOUNDARY
 **
 **
 *NODE
@@ -361,7 +360,7 @@
 ** STEP 1
 **
 ** *STEP, NAME=Anonymous STEP 1
-*STATIC
+** *STATIC
 **
 ** CLOAD
 **
@@ -380,4 +379,3 @@
 **
 **
 ** 
-**
