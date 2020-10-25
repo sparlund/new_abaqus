@@ -9,6 +9,7 @@
 #include <Eigen/SparseLU>
 #include <utility>
 #include <cmath>
+#include <fstream>
 #include "mesh.h"
 #include "mid.h"
 #include "pid.h"
@@ -21,6 +22,73 @@
 
 // unsigned int Mesh::ndofs = 0;
 
+void Mesh::export_2_vtk(){
+    // output results to vtk format for the ParaView post processor
+    // https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
+    // http://profs.sci.univr.it/~caliari/aa1314/advanced_numerical_analysis/Pellegrini.pdf
+    std::vector<std::string> split1 = misc::split_on(filename,'/');
+    std::vector<std::string> split2 = misc::split_on(split1.at(1),'.');
+    std::string output_filename = split2.at(0) + ".vtk";
+    std::ofstream output(output_filename);
+    output << "# vtk DataFile Version 3.0" << std::endl;
+    output << "vtk output" << std::endl;
+    // ascii or binary format:
+    output << "ASCII" << std::endl;
+    output << "DATASET UNSTRUCTURED_GRID" << std::endl;
+    // no need to use double precision on printing results
+    output << "POINTS " << nodes.size() << " float" << std::endl;
+    // print nodes to result file
+    for (unsigned int i = 0; i < nodes.size() ; i++)
+    {
+        output << nodes.at(i)->x << " " << nodes.at(i)->y << " " << nodes.at(i)->z << std::endl;
+    }
+    // need to calculate number of elements + sum(nodes per element)
+    output << "CELLS " << elements.size() << " " << elements.size() + elements.size()*3  << std::endl;
+    for (unsigned int i = 0; i < elements.size(); i++)
+    {
+        output << 3 << " ";
+        std::vector<std::shared_ptr<Node>> connectivity =  elements.at(i)->get_connectivity();
+        for (unsigned int  j = 0; j < connectivity.size(); j++)
+        {
+            output << global_2_local_node_id[connectivity.at(j)->id] << " ";
+        }
+        output << std::endl;
+    }
+    
+    output << "CELL_TYPES " << elements.size() << std::endl;
+    for (unsigned int i = 0; i < elements.size(); i++)
+    {
+        // TODO: change to specific type for each element, need lookup table
+        output << 5 << std::endl;
+    }
+    // point_data, i.e displacement on nodes
+    output << "POINT_DATA " << nodes.size() << std::endl;
+    output << "FIELD displacement 1" << std::endl;
+    output << "displacement 3 " << nodes.size() << " float" << std::endl;
+    std::shared_ptr<Node> current_node;
+    for (unsigned int i = 0; i < nodes.size(); i++)
+    {
+        current_node = nodes.at(i);
+        output << u(current_node->dofs.at(0).id) << " " << u(current_node->dofs.at(1).id) << " " << 0 << std::endl;
+    }
+    
+
+    // output << "FIELD disp" << elements.size() << std::endl;
+    // output << "nodaldisp 1 3 float" << std::endl;
+    // for (unsigned int i = 0; i < nodes.size(); i++)
+    // {
+    //     std::cout << i;
+    //     for (unsigned int j = 0; i < count; i++)
+    //     {
+    //         /* code */
+    //     }
+        
+    //     " " << u(i) << " " << u(i + 1) << " " << u(i +2) << std::endl;
+    // }
+    // close file
+    output.close();
+    
+}
 
 void Mesh::solve(){
     // Ku=f
@@ -28,29 +96,31 @@ void Mesh::solve(){
     Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
     solver.compute(K);
     u = solver.solve(f);
-    for (unsigned int i = 0; i < ndofs; i++)
-    {
-        std::cout << u.coeffRef(i) << "\n";
-    }
-    
-    unsigned int node_id = global_2_local_node_id[348];
-    std::shared_ptr<Node> node = nodes.at(node_id);
-    float x_disp = u(node->dofs.at(0).id);
-    float y_disp = u(node->dofs.at(1).id);
-    float magn = std::sqrt(std::abs(x_disp) + std::abs(y_disp));
-    std::cout << x_disp << "\n";
-    std::cout << y_disp << "\n";
-    std::cout << magn << "\n";
+
+    // for (unsigned int i = 0; i < ndofs; i++)
+    // {
+    //     std::cout << u.coeffRef(i) << "\n";
+    // }
+    // unsigned int node_id = global_2_local_node_id[348];
+    // std::shared_ptr<Node> node = nodes.at(node_id);
+    // float x_disp = u(node->dofs.at(0).id);
+    // float y_disp = u(node->dofs.at(1).id);
+    // float magn = std::sqrt(std::abs(x_disp) + std::abs(y_disp));
+    // std::cout << x_disp << "\n";
+    // std::cout << y_disp << "\n";
+    // std::cout << magn << "\n";
 
 }
 
 
 void Mesh::assemble(){
     // By the time of assemble we know the number of dofs --> pre-allocate K, f & solution u
+    std::cout << "nnodes =" << nodes.size() << std::endl;
+    std::cout << "nel =" << elements.size() << std::endl;
     ndofs = nodes.at(0)->dofs.at(0).global_dof_id_counter; 
     K.resize(ndofs,ndofs);
     f.resize(ndofs,1);
-    std::cout << "ndofs=" << ndofs << "\n";
+    // std::cout << "ndofs=" << ndofs << "\n";
     // assemble load vector
     for (unsigned int i = 0; i < f_to_be_added.size(); i++)
     {
@@ -58,7 +128,7 @@ void Mesh::assemble(){
     }
     // assemble stiffness matrix
     std::shared_ptr<Element> current_element;
-    std::cout << "----\n";
+    // std::cout << "----\n";
     for (unsigned int i = 0; i < elements.size(); i++)
     { 
         current_element = elements.at(i);
@@ -81,12 +151,12 @@ void Mesh::assemble(){
         K.coeffRef(current_global_dof,current_global_dof) = 1;
         f.coeffRef(current_global_dof) = bc.at(i).second;
     }
-    std::cout << "K:\n";
-    std::cout << K;
-    std::cout << "\n";
-    std::cout << "f:\n";
-    std::cout << f;
-    std::cout << "---\n";
+    // std::cout << "K:\n";
+    // std::cout << K;
+    // std::cout << "\n";
+    // std::cout << "f:\n";
+    // std::cout << f;
+    // std::cout << "---\n";
 }
 
 
@@ -143,6 +213,7 @@ void Mesh::add_load(std::string line){
 
 void Mesh::read_file(std::string filename){
     misc::append_newline_to_textfile(filename);
+    this->filename = filename;
     // Create input stream object
     std::ifstream input_file(filename);
     std::vector<std::string> filename_split = misc::split_on(filename,'/');   
@@ -218,6 +289,7 @@ void Mesh::read_file(std::string filename){
                 row_counter++;
                 bool inner_loop_keyword = true;
                 while (inner_loop_keyword == true){
+                row_counter++;   
                 // Ignore if it's a comment! Still on same keyword.
                     if (misc::is_comment(line) == false){
                         if (keyword == "*NODE")
@@ -233,7 +305,7 @@ void Mesh::read_file(std::string filename){
                     // the while loop and start over!
                     unsigned int previous_pos = input_file.tellg();
                     getline(input_file, line);
-                    // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << "\n";
+                    std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
                     if (misc::is_keyword(line) == true or line.empty() == true)
                     {
                         input_file.seekg(previous_pos);

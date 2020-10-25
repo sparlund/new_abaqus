@@ -46,7 +46,7 @@ private:
     void add_boundary(std::string line,std::unordered_map<std::string, std::string> options);
     void add_pid(std::unordered_map<std::string, std::string> options);
     void add_mid(std::unordered_map<std::string, std::string> options);
-
+    std::string filename;
 public:    
     void about();
     unsigned int get_pid_counter(){return pid_counter;};
@@ -68,6 +68,7 @@ public:
     std::vector<std::pair<unsigned int,float>> bc;
     void assemble();
     void solve();
+    void export_2_vtk();
 
 
     Mesh();
