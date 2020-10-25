@@ -62,6 +62,7 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "*.ipp": "cpp",
-        "dense": "cpp"
+        "dense": "cpp",
+        "sparselu": "cpp"
     }
 }

@@ -12,6 +12,7 @@ class S2 : public Element
 {
 private:
     unsigned int id;
+    static const std::string element_type;
     static const unsigned char nnodes   = 3;
     static const unsigned char ndofs     = 6; // 3*2
     std::vector<unsigned int> dofs_id;
@@ -31,6 +32,7 @@ public:
     unsigned char get_element_ndofs(){return ndofs;}
     unsigned char get_element_nnodes(){return nnodes;}
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Ke(){return Ke;}
+    std::string get_element_type(){return element_type;}
     S2(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
     ~S2();
 };

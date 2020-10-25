@@ -18,6 +18,7 @@ int main(int argc, char const *argv[])
     }
     na.mesh.assemble();
     na.mesh.solve();
+    na.mesh.export_2_vtk();
     // na.mesh.about();
 
 

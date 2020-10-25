@@ -11,6 +11,7 @@ class S3 : public Element
 {
 private:
     unsigned int id;
+    static const std::string element_type;
     static const unsigned char nnodes   = 3;
     static const unsigned char ndofs     = 9; // 3*3
     std::vector<unsigned int> dofs_id;
@@ -31,6 +32,7 @@ public:
     std::vector<unsigned int> get_element_dof_ids(){return dofs_id;};
     unsigned char get_element_nnodes(){return nnodes;}
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Ke(){return Ke;}
+    std::string get_element_type(){return element_type;}
     S3(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
     ~S3();
 };

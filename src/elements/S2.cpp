@@ -2,7 +2,7 @@
 #include "../dof.h"
 #include <iostream>
 
-
+const std::string S2::element_type = "S2";
 
 S2::~S2(){}
 S2::S2(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid):
@@ -56,12 +56,12 @@ S2::S2(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::sha
                   v, 1,       0,
                   0, 0, (1-v)/2;
         Eigen::Matrix<float,3,3> D = (E/( 1-(v*v) )) * D_temp;
-        std::cout << "D\n";
-        std::cout << D << "\n"; 
-        // Finally compute elements contribution to stiffness matrix and load vector:
+        // std::cout << "D\n";
+        std::cout << "element  " << id << " created" << "\n"; 
+        // // Finally compute elements contribution to stiffness matrix and load vector:
         Ke = t*0.5*J.determinant()*B.transpose()*D*B;
-        std::cout << "Ke:\n";
-        std::cout << Ke << "\n";
+        // std::cout << "Ke:\n";
+        // std::cout << Ke << "\n";
     }
 // float detJ = J.determinant();
 // std::cout << "---\n";

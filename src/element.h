@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <string>
 #include <Eigen/Sparse>
 #include "node.h"
 #include "pid.h"
@@ -20,6 +21,7 @@ public:
     virtual std::shared_ptr<Pid> get_pid()=0;
     virtual unsigned int get_id()=0;
     virtual Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>get_Ke()=0; 
+    virtual std::string get_element_type()=0;
     virtual ~Element(){};
     Element(){};
 };
