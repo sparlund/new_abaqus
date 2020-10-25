@@ -1,8 +1,14 @@
-## new_abaqus
+### new_abaqus
 new_abaqus is a hobby project for creating an FE-solver reading an FE-mesh following the syntax of the commercial software abaqus. 
 
 The name is a joke from the character YinYang in Silicon Valley, who has the idea for "new netflix".
 
+### Example
+The program takes 1 argument, an input file containing the mesh and load case definition. On linux:
+```
+./new_abaqus example_runfiles/ex2.inp
+```
+This will save an output file of the results called `ex2.vtk` and a logfile called `ex2.log`. The results can be viewed in the open source post processor ParaView.
 
 ### To-do & Features implemented
 - [x] Implement logic and structure for reading abaqus input files
@@ -30,6 +36,7 @@ The name is a joke from the character YinYang in Silicon Valley, who has the ide
 - [ ] Export results to VTK format to view results in ParaView
   - [x] Nodal displacement
   - [ ] Stresses and strains  
+- [ ] Re-direct output to a log file for debugging  
 - [ ] makefile
 - [ ] Automate test cases for comparison solution against abaqus
 
