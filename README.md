@@ -38,7 +38,7 @@ This will save an output file of the results called `ex3.vtk` and a logfile call
 - [ ] Export results to VTK format to view results in ParaView
   - [x] Nodal displacement
   - [ ] Stresses and strains  
-- [ ] Re-direct output to a log file for debugging  
+- [*continous*] Re-direct output to a log file for debugging  
 - [ ] makefile
 - [ ] Automate test cases for comparison solution against abaqus
 
