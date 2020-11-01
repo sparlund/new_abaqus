@@ -6,9 +6,9 @@ The name is a joke from the character YinYang in Silicon Valley, who has the ide
 ### Example
 The program takes 1 argument, an input file containing the mesh and load case definition. On linux:
 ```
-./new_abaqus example_runfiles/ex2.inp
+./new_abaqus example_runfiles/ex3.inp
 ```
-This will save an output file of the results called `ex2.vtk` and a logfile called `ex2.log`. The results can be viewed in the open source post processor ParaView.
+This will save an output file of the results called `ex3.vtk` and a logfile called `ex3.log`. The results can be viewed in the open source post processor ParaView.
 
 ### To-do & Features implemented
 - [x] Implement logic and structure for reading abaqus input files
@@ -16,6 +16,8 @@ This will save an output file of the results called `ex2.vtk` and a logfile call
 - [x] Set up classes and functions for nodes, elements, properties and materials
 - [ ] Implement logic for different elements
   - [x] 2D tria (S2)
+  - [x] 2D quadrilateral (CPS4)
+  - [ ] 3D tetra (C3D10)
   - [ ] 3D tria (S3)
   - [ ] 3D brick (C3D8)
 - [x] Assemble stiffness matrix
