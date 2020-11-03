@@ -87,8 +87,6 @@ std::vector<std::string> misc::split_on(std::string in,char split_char)
     {
         std::string item;
         getline(ss, item, split_char);
-        // std::cout << item << "\n";
-        // make lower case!
         items.push_back(item);
     };
     return items;

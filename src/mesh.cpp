@@ -18,6 +18,7 @@
 #include "element.h"
 #include "elements/S3.h"
 #include "elements/S2.h"
+#include "elements/CPS4.h"
 #include "misc_string_functions.h"
 
 // unsigned int Mesh::ndofs = 0;
@@ -42,14 +43,21 @@ void Mesh::export_2_vtk(){
     {
         output << nodes.at(i)->x << " " << nodes.at(i)->y << " " << nodes.at(i)->z << std::endl;
     }
-    // need to calculate number of elements + sum(nodes per element)
-    output << "CELLS " << elements.size() << " " << elements.size() + elements.size()*3  << std::endl;
+    unsigned int total_amount_of_used_nodes=0;
     for (unsigned int i = 0; i < elements.size(); i++)
     {
-        output << 3 << " ";
+        std::cout << "total_amount_of_used_nodes:" << total_amount_of_used_nodes << std::endl;
+        total_amount_of_used_nodes += elements.at(i)->get_element_nnodes();
+    }    
+    output << "CELLS " << elements.size() << " " << elements.size() + total_amount_of_used_nodes  << std::endl;
+    for (unsigned int i = 0; i < elements.size(); i++)
+    {
+        output << elements.at(i)->get_element_nnodes() << " ";
         std::vector<std::shared_ptr<Node>> connectivity =  elements.at(i)->get_connectivity();
+        std::cout << "connectivity.size()=" << connectivity.size() << std::endl;
         for (unsigned int  j = 0; j < connectivity.size(); j++)
         {
+            std::cout << "global_2_local_node_id[connectivity.at(j)->id]: " << global_2_local_node_id[connectivity.at(j)->id] << std::endl;
             output << global_2_local_node_id[connectivity.at(j)->id] << " ";
         }
         output << std::endl;
@@ -58,8 +66,7 @@ void Mesh::export_2_vtk(){
     output << "CELL_TYPES " << elements.size() << std::endl;
     for (unsigned int i = 0; i < elements.size(); i++)
     {
-        // TODO: change to specific type for each element, need lookup table
-        output << 5 << std::endl;
+        output << elements.at(i)->get_vtk_identifier() << std::endl;
     }
     // point_data, i.e displacement on nodes
     output << "POINT_DATA " << nodes.size() << std::endl;
@@ -68,24 +75,9 @@ void Mesh::export_2_vtk(){
     std::shared_ptr<Node> current_node;
     for (unsigned int i = 0; i < nodes.size(); i++)
     {
-        current_node = nodes.at(i);
+        current_node = nodes.at(i);        
         output << u(current_node->dofs.at(0).id) << " " << u(current_node->dofs.at(1).id) << " " << 0 << std::endl;
     }
-    
-
-    // output << "FIELD disp" << elements.size() << std::endl;
-    // output << "nodaldisp 1 3 float" << std::endl;
-    // for (unsigned int i = 0; i < nodes.size(); i++)
-    // {
-    //     std::cout << i;
-    //     for (unsigned int j = 0; i < count; i++)
-    //     {
-    //         /* code */
-    //     }
-        
-    //     " " << u(i) << " " << u(i + 1) << " " << u(i +2) << std::endl;
-    // }
-    // close file
     output.close();
     
 }
@@ -96,20 +88,6 @@ void Mesh::solve(){
     Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
     solver.compute(K);
     u = solver.solve(f);
-
-    // for (unsigned int i = 0; i < ndofs; i++)
-    // {
-    //     std::cout << u.coeffRef(i) << "\n";
-    // }
-    // unsigned int node_id = global_2_local_node_id[348];
-    // std::shared_ptr<Node> node = nodes.at(node_id);
-    // float x_disp = u(node->dofs.at(0).id);
-    // float y_disp = u(node->dofs.at(1).id);
-    // float magn = std::sqrt(std::abs(x_disp) + std::abs(y_disp));
-    // std::cout << x_disp << "\n";
-    // std::cout << y_disp << "\n";
-    // std::cout << magn << "\n";
-
 }
 
 
@@ -363,10 +341,20 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     {
         element = std::shared_ptr<Element>(new S2(element_id,element_connectivity,pid));
     }
+    else if (type == "CPS4")
+    {   
+        element = std::shared_ptr<Element>(new CPS4(element_id,element_connectivity,pid));
+    }
+    else if (type == "C3D10")
+    {   
+        element = std::shared_ptr<Element>(new C3D10(element_id,element_connectivity,pid));
+    }
+    else
+    {
+        std::cout << "Element of type " << type << " not supported." << std::endl;
+        return;
+    }    
     elements.push_back(element);
-    // else{
-    //     std::cout << "Element of type " << type << " not supported.\n";
-    // }
     
     };
 void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string> options){

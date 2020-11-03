@@ -22,12 +22,14 @@
                     "src/new_abaqus.cpp",
                     "src/node.cpp",
                     "src/pid.cpp",
+                    "src/dof.cpp",
                     "src/elements/S3.cpp",
                     "src/elements/S2.cpp",
-                    "src/dof.cpp",
+                    "src/elements/CPS4.cpp",
                     "-o",
                     "new_abaqus",
-                    "-Wno-format-security"
+                    "-Wno-format-security",
+                    "-Wcomment"
                 ]
             }
         ]
