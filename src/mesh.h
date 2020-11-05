@@ -48,7 +48,6 @@ private:
     void add_mid(std::unordered_map<std::string, std::string> options);
     std::string filename;
 public:    
-    void about();
     unsigned int get_pid_counter(){return pid_counter;};
     // getters and setters
     unsigned long get_number_of_elements(){return this->elements.size();}

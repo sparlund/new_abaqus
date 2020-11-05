@@ -19,6 +19,7 @@
 #include "elements/S3.h"
 #include "elements/S2.h"
 #include "elements/CPS4.h"
+#include "elements/C3D10.h"
 #include "misc_string_functions.h"
 
 // unsigned int Mesh::ndofs = 0;
@@ -46,7 +47,6 @@ void Mesh::export_2_vtk(){
     unsigned int total_amount_of_used_nodes=0;
     for (unsigned int i = 0; i < elements.size(); i++)
     {
-        std::cout << "total_amount_of_used_nodes:" << total_amount_of_used_nodes << std::endl;
         total_amount_of_used_nodes += elements.at(i)->get_element_nnodes();
     }    
     output << "CELLS " << elements.size() << " " << elements.size() + total_amount_of_used_nodes  << std::endl;
@@ -54,10 +54,8 @@ void Mesh::export_2_vtk(){
     {
         output << elements.at(i)->get_element_nnodes() << " ";
         std::vector<std::shared_ptr<Node>> connectivity =  elements.at(i)->get_connectivity();
-        std::cout << "connectivity.size()=" << connectivity.size() << std::endl;
         for (unsigned int  j = 0; j < connectivity.size(); j++)
         {
-            std::cout << "global_2_local_node_id[connectivity.at(j)->id]: " << global_2_local_node_id[connectivity.at(j)->id] << std::endl;
             output << global_2_local_node_id[connectivity.at(j)->id] << " ";
         }
         output << std::endl;
@@ -83,22 +81,30 @@ void Mesh::export_2_vtk(){
 }
 
 void Mesh::solve(){
+    std::cout << "---    Starting to solve linear problem Ku=f    ---" << std::endl;
     // Ku=f
-    u.resize(ndofs,1);
     Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
     solver.compute(K);
     u = solver.solve(f);
+    std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[3852]); 
+    std::cout << "---    Solution to linear problem found    ---" << std::endl;
+
+
 }
 
 
 void Mesh::assemble(){
     // By the time of assemble we know the number of dofs --> pre-allocate K, f & solution u
-    std::cout << "nnodes =" << nodes.size() << std::endl;
-    std::cout << "nel =" << elements.size() << std::endl;
+    std::cout << "---    Starting stiffness matrix assembly    ---" << std::endl;
+    std::cout << "       Mesh size:" << std::endl;
+    std::cout << "               nodes = " << nodes.size() << std::endl;
+    std::cout << "            elements = " << elements.size() << std::endl;
+    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs 
     ndofs = nodes.at(0)->dofs.at(0).global_dof_id_counter; 
+    std::cout << "  degrees of freedom = " << ndofs << std::endl;
     K.resize(ndofs,ndofs);
     f.resize(ndofs,1);
-    // std::cout << "ndofs=" << ndofs << "\n";
+    u.resize(ndofs,1);
     // assemble load vector
     for (unsigned int i = 0; i < f_to_be_added.size(); i++)
     {
@@ -129,12 +135,6 @@ void Mesh::assemble(){
         K.coeffRef(current_global_dof,current_global_dof) = 1;
         f.coeffRef(current_global_dof) = bc.at(i).second;
     }
-    // std::cout << "K:\n";
-    // std::cout << K;
-    // std::cout << "\n";
-    // std::cout << "f:\n";
-    // std::cout << f;
-    // std::cout << "---\n";
 }
 
 
@@ -170,6 +170,7 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
             // abaqus starts counting dof's at 1, but vectors start at 0
             bc.push_back(std::make_pair(node->dofs.at(i-1).id,magnitude));
         }
+        std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs=" << dof_from << "-" << dof_to << ", magnitude=" << magnitude << std::endl;
         
     }
     
@@ -181,12 +182,22 @@ void Mesh::add_load(std::string line){
     unsigned int global_node_id     = std::stoi(data.at(0));
     unsigned int local_dof          = std::stoi(data.at(1));
     float magnitude                 = std::stof(data.at(2));
+    // std::cout << global_node_id << std::endl;    
+    // std::cout << local_dof  << std::endl;
+    // std::cout << magnitude << std::endl;
+    std::cout << "cload error" << std::endl;
+    std::cout << "global_node_id=" << global_node_id << std::endl;
+    std::cout << "global_2_local_node_id[global_node_id]=" << global_2_local_node_id[global_node_id] << std::endl;
     std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[global_node_id]);
+    std::cout << "node->id = " << node->id << std::endl;
+    std::cout << "node->dofs.size()=" << node->dofs.size() << std::endl;
     unsigned int global_dof = node->dofs.at(local_dof-1).id;
+    std::cout << "global_dof = " << global_dof << std::endl;
     // we don't know complete number of dofs yet,
     // so we can't add directly to global load vector, but have
     // to store it here meanwhile
-    f_to_be_added.push_back(std::make_pair(global_dof,magnitude));    
+    f_to_be_added.push_back(std::make_pair(global_dof,magnitude));   
+    std::cout << "*CLOAD: id=" << global_node_id << ", dof=" << local_dof << ", magnitude=" << magnitude << std::endl;
 }
 
 void Mesh::read_file(std::string filename){
@@ -283,7 +294,7 @@ void Mesh::read_file(std::string filename){
                     // the while loop and start over!
                     unsigned int previous_pos = input_file.tellg();
                     getline(input_file, line);
-                    std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
+                    // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
                     if (misc::is_keyword(line) == true or line.empty() == true)
                     {
                         input_file.seekg(previous_pos);
@@ -291,6 +302,11 @@ void Mesh::read_file(std::string filename){
                     }
                 }                
             }
+            else
+            {
+                std::cout << keyword << ": not supported";
+            }
+            
             if (input_file.eof() == true)
             {
                 break;
@@ -351,7 +367,7 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     }
     else
     {
-        std::cout << "Element of type " << type << " not supported." << std::endl;
+        std::cout << "*ELEMENT: type=" << type << " not supported" << std::endl;
         return;
     }    
     elements.push_back(element);
@@ -378,35 +394,19 @@ void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string
     std::shared_ptr<Node> node  = std::shared_ptr<Node>(new Node(id,x,y,z));
     nodes.push_back(node);
     node_id_2_node_pointer[id] = node;
-    global_2_local_node_id[id] = nodes.size()-1;  
-};
+    global_2_local_node_id[id] = nodes.size()-1;
+    if (id == 3852)
+    {
+        std::cout << "id=" << id << std::endl; 
+        std::cout << "x=" << x << std::endl; 
+        std::cout << "y=" << y << std::endl; 
+        std::cout << "z=" << z << std::endl; 
+        std::cout << "nodes.size()=" << nodes.size() << std::endl; 
+        std::cout << "global_2_local_node_id[id]=" << global_2_local_node_id[id] << std::endl; 
+    }
+      
 
-void Mesh::about(){  
-    std::cout << "- PID -\n"; 
-    for (unsigned int i = 0; i < pids.size(); i++)
-    {
-        std::cout << pids.at(i)->name << "\n";
-    }
-    std::cout << "- NODES -\n";   
-    for (unsigned int i = 0; i < nodes.size(); i++)
-    {
-        std::cout << nodes.at(i)->id << ": "<< nodes.at(i)->x << ", " << nodes.at(i)->y << ", " << nodes.at(i)->z << "\n";
-    }
-    std::cout << "- ELEMENTS -\n"; 
-    for (unsigned int i = 0; i < elements.size(); i++)
-    {
-        std::cout << elements.at(i)->get_id() << "   nodes (";
-        std::vector<std::shared_ptr<Node>> connectivity = elements.at(i)->get_connectivity();
-        for (unsigned int k = 0; k < connectivity.size()  ; k++)
-        {
-            std::cout << connectivity.at(k)->id << ", ";
-        }
-        std::cout << ")\n";
-        
-    }
-    
 };
-
 Mesh::~Mesh(){};
 
 

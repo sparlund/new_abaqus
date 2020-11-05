@@ -23,7 +23,6 @@ private:
     Eigen::Matrix<float,6,6> C;
     Eigen::Matrix<float,6,6> B;
     float A;
-
 public:
     static Eigen::Matrix<float,6,2> N; 
     std::shared_ptr<Pid> get_pid(){return this->pid;};
