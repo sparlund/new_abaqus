@@ -17,7 +17,7 @@
 #include "dof.h"
 #include "element.h"
 #include "elements/S3.h"
-#include "elements/S2.h"
+#include "elements/CPS3.h"
 #include "elements/CPS4.h"
 #include "elements/C3D10.h"
 #include "misc_string_functions.h"
@@ -304,7 +304,7 @@ void Mesh::read_file(std::string filename){
             }
             else
             {
-                std::cout << keyword << ": not supported";
+                std::cout << keyword << ": not supported" << std::endl;
             }
             
             if (input_file.eof() == true)
@@ -353,9 +353,9 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
         element = std::shared_ptr<Element>(new S3(element_id,element_connectivity,pid));
 
     }
-    else if (type == "S2")
+    else if (type == "CPS3")
     {
-        element = std::shared_ptr<Element>(new S2(element_id,element_connectivity,pid));
+        element = std::shared_ptr<Element>(new CPS3(element_id,element_connectivity,pid));
     }
     else if (type == "CPS4")
     {   

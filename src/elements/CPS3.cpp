@@ -1,10 +1,10 @@
-#include "S2.h"
+#include "CPS3.h"
 #include "../dof.h"
 #include <iostream>
 
-const std::string S2::element_type = "S2";
-S2::~S2(){}
-S2::S2(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid):
+const std::string CPS3::element_type = "CPS3";
+CPS3::~CPS3(){}
+CPS3::CPS3(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid):
     id(id),connectivity(connectivity),pid(pid){
         // add dofs to each node. can be done first now because now we know how many dofs each node should have
         for (unsigned int i = 0; i < connectivity.size(); i++)

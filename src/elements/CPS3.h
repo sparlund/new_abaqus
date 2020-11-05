@@ -7,8 +7,8 @@
 #include "../pid.h"
 #include "../node.h"
 
-// S2 is 3 node tria shell element
-class S2 : public Element
+// CPS3 is 3 node tria shell element
+class CPS3 : public Element
 {
 private:
     unsigned int id;
@@ -35,8 +35,8 @@ public:
     unsigned short get_vtk_identifier(){return vtk_identifier;}
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Ke(){return Ke;}
     std::string get_element_type(){return element_type;}
-    S2(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
-    ~S2();
+    CPS3(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
+    ~CPS3();
 };
 
 
