@@ -6,14 +6,8 @@
 #include "../pid.h"
 #include "../node.h"
 
-// CPS4 is 4 node quadrilateral element
-// *---------* 
-// |  x   x  |
-// |         |
-// |  x   x  |
-// *---------*
 
-class CPS4 : public Element
+class C3D10 : public Element
 {
 private:
     unsigned int id;
@@ -37,7 +31,7 @@ private:
     Eigen::Matrix<float,4,4> dNdXhi;
     Eigen::Matrix<float,4,4> dNdEta;
     Eigen::Matrix<float,3,10> dNdxdydz;
-    Eigen::Matrix<float,3,10> shape_functions(Eigen::Matrix<float,1,4> evaluation_points);
+    // Eigen::Matrix<float,3,10> shape_functions(Eigen::Matrix<float,1,4> evaluation_points);
     bool initialized; // init to be set after we've constructed shape functions for this element, dont need to run for every object instance
     const unsigned short ngp = 4; // 
     const unsigned short W = 0.25; 
@@ -56,6 +50,6 @@ public:
     unsigned short get_vtk_identifier(){return vtk_identifier;}
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Ke(){return Ke;}
     std::string get_element_type(){return element_type;}
-    CPS4(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
-    ~CPS4();
+    C3D10(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
+    ~C3D10();
 };
