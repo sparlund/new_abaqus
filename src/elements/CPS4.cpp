@@ -14,8 +14,6 @@ CPS4::CPS4(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std:
         if (connectivity.at(i)->dofs.size() != ndofs/nnodes)
         {
             // create 2 dofs
-            std::cout << "creating 2 dofs in CPS4 element with id=" << id << std::endl;
-            std::cout << connectivity.at(i)->dofs.size() << "\n";
             Dof x = Dof();
             Dof y = Dof();
             connectivity.at(i)->dofs.push_back(x);
@@ -80,6 +78,7 @@ CPS4::CPS4(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std:
                 dNdxdy(1,0), dNdxdy(0,0),dNdxdy(1,1), dNdxdy(0,1),dNdxdy(1,2), dNdxdy(0,2),dNdxdy(1,3), dNdxdy(0,3); 
         Ke += w*detJ.at(i)*t*B.transpose()*D*B;
     }
+    print_element_info_to_log();
 }
 
 

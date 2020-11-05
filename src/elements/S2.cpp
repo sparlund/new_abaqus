@@ -3,7 +3,6 @@
 #include <iostream>
 
 const std::string S2::element_type = "S2";
-
 S2::~S2(){}
 S2::S2(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid):
     id(id),connectivity(connectivity),pid(pid){
@@ -14,8 +13,6 @@ S2::S2(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::sha
             if (connectivity.at(i)->dofs.size() != ndofs/nnodes)
             {
                 // create 2 dofs
-                std::cout << "creating 2 dofs in S2 element..\n";
-                std::cout << connectivity.at(i)->dofs.size() << "\n";
                 Dof x = Dof();
                 Dof y = Dof();
                 connectivity.at(i)->dofs.push_back(x);
@@ -56,24 +53,7 @@ S2::S2(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::sha
                   v, 1,       0,
                   0, 0, (1-v)/2;
         Eigen::Matrix<float,3,3> D = (E/( 1-(v*v) )) * D_temp;
-        std::cout << "element  " << id << " created" << "\n"; 
         // // Finally compute elements contribution to stiffness matrix and load vector:
         Ke = t*0.5*J.determinant()*B.transpose()*D*B;
+        Element::print_element_info_to_log();
 }
-        // std::cout << "Ke:\n";
-        // std::cout << Ke << "\n";
-// float detJ = J.determinant();
-// std::cout << "---\n";
-// std::cout << "det(J):\n";
-// std::cout << detJ << "\n";
-// std::cout << "J:\n";
-// std::cout << J << "\n";
-// std::cout << "B:\n";
-// std::cout << B << "\n";
-
-// std::cout << "---\n";
-// plane strain:
-// D_temp << 1-v,   v,   v,          0,
-//             v, 1-v,   v,          0,
-//             v,   v, 1-v,          0,
-//             0,   0,   0,    (1-2*v)/2;
