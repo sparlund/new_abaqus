@@ -11,7 +11,9 @@ public:
     unsigned int id;
     std::string name;
     float density;
-    Mid(int id, std::string name);
-    std::unordered_map<std::string,std::string> options;
+    float E;
+    float v;
+    static std::vector<std::string> supported_material_keywords;
+    Mid(std::string name);
     ~Mid();
 };

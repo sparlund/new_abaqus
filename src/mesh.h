@@ -27,6 +27,7 @@ private:
     std::vector<std::shared_ptr<Node>> nodes;
     std::unordered_map<unsigned int,unsigned int> global_2_local_node_id;
     std::unordered_map<unsigned int,std::shared_ptr<Node>> node_id_2_node_pointer;
+    std::unordered_map<std::string, std::shared_ptr<Mid>> mid_name_2_mid_pointer;
     std::vector<std::shared_ptr<Element>> elements;
     // array of PID's belonging to the Mesh
     std::vector<std::shared_ptr<Pid>> pids;
@@ -37,7 +38,7 @@ private:
     // specified name
     std::vector<std::string> pid_2_create; 
     // array of MID's belonging to the Mesh
-    std::vector<std::unique_ptr<Mid>> mids;
+    std::vector<std::shared_ptr<Mid>> mids;
     // array of elements and their connectivity
     // Method to add Node
     void add_node(std::string line,std::unordered_map<std::string, std::string> options);

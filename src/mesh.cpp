@@ -88,8 +88,6 @@ void Mesh::solve(){
     u = solver.solve(f);
     std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[3852]); 
     std::cout << "---    Solution to linear problem found    ---" << std::endl;
-
-
 }
 
 
@@ -142,9 +140,11 @@ void Mesh::assemble(){
 void Mesh::add_mid(std::unordered_map<std::string, std::string> options){
     // Create new MID based on input on *MATERIAL data line.
     // Other functions add mtrl data such as density etc
-    // Mid temp_mid(mid_counter,options["NAME"]);
-    // mid_counter++;
-    
+    // MID has to have a name
+    std::string mid_name = options["NAME"];
+    std::shared_ptr<Mid> mid  = std::shared_ptr<Mid>(new Mid(mid_name));
+    mid_name_2_mid_pointer[mid_name] = mid;
+    mids.push_back(mid);  
 };
 
 
@@ -224,11 +224,67 @@ void Mesh::read_file(std::string filename){
             {
                 // a complete material is typically described over several
                 // lines so must make a complicated loop here..
+                // Create mid:
                 add_mid(options);
-                // while (/* condition */)
-                // {
-                //     /* code */
-                // }
+                // Add all following options to the last created material card.
+                bool material_keywords_loop = true;
+                while(material_keywords_loop == true)
+                {
+                    // Jump to next line 
+                    getline(input_file, line);
+                    row_counter++;
+                    // Check if new line is a keyword, otherwise it's a comment and we skip that line 
+                    if (misc::is_keyword(line) == true)
+                    {
+                        std::string keyword = misc::split_on(line, ',').at(0);
+                        if (keyword == "*DENSITY")
+                        {
+                            // Skip to next line and save the value
+                            getline(input_file, line);
+                            float density = std::stof(misc::split_on(line, ',').at(0));
+                            mids.back()->density = density;
+                            std::cout << keyword << " = " << density << std::endl;
+                        }
+                        else if (keyword == "*ELASTIC")
+                        {
+                            // elastic keyword has to specify an option, such as isotropic, anisotropic..
+                            std::unordered_map<std::string,std::string> options = misc::options_map(line);
+                            if (options["TYPE"] == "ISOTROPIC")
+                            {
+                                // Example:
+                                // *ELASTIC, TYPE=ISOTROPIC
+                                // E,v
+                                // Skip to next line and save the value
+                                getline(input_file, line);
+                                std::vector<std::string> values = misc::split_on(line, ',');
+                                mids.back()->E = std::stof(values.at(0));
+                                mids.back()->v = std::stof(values.at(1));
+                                std::cout << "E" << " = " << mids.back()->E << std::endl;
+                                std::cout << "v" << " = " << mids.back()->v << std::endl;
+                            }
+                            
+                        }
+                        else
+                        {
+                            std::cout << keyword << " unsupported material option" << std::endl;
+                        }
+                    }
+                    else
+                    {
+                        // peep next line, if it's not one of the 
+                        // supported material specific keywords we skip adding data to the material
+                        // Want to peek next line, if it's a keyword or empty line we break
+                        // the while loop and start over!
+                        unsigned int previous_pos = input_file.tellg();
+                        getline(input_file, line);
+                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        {
+                            input_file.seekg(previous_pos);
+                            material_keywords_loop = false;
+                        }
+
+                    }
+                }
                 
             }
             else if (keyword=="*BOUNDARY"){
@@ -316,10 +372,7 @@ void Mesh::read_file(std::string filename){
     }       
 };
 
-void Mesh::add_pid(std::unordered_map<std::string, std::string> options){
-    
-    // Create random color
-    // std::cout << colors.size() << "\n";
+void Mesh::add_pid(std::unordered_map<std::string, std::string> options){    
     std::string pid_name = options["ELSET"];
     // TODO: find MID pointer instead!!
     std::string mid_name = options["MATERIAL"];
