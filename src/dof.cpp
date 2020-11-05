@@ -5,7 +5,7 @@ Dof::Dof()
 {
     
     id = global_dof_id_counter;
-    std::cout << "dof created, id=" << id << "\n";
+    // std::cout << "dof created, id=" << id << "\n";
     global_dof_id_counter++;
 }
 
