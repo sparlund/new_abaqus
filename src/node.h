@@ -11,6 +11,7 @@ public:
     unsigned int id;
     float x, y, z;
     std::vector<Dof> dofs;  
+    static unsigned int node_counter;
     Node(unsigned int local_id, float x, float y, float z);
     ~Node();
 };
