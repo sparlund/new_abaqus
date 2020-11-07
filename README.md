@@ -19,11 +19,6 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
 | abaqus (c)      | 0.0348       |
 | new_abaqus   | 0.0346        |
 
-	
-	
-
-
-
 
 ### To-do & Features implemented
 - [x] Implement logic and structure for reading abaqus input files
@@ -33,14 +28,14 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
   - [x] 2D tria (S2)
   - [x] 2D quadrilateral (CPS4)
   - [ ] 3D tetra (C3D10)
-  - [ ] 3D tria (S3)
   - [ ] 3D brick (C3D8)
 - [x] Assemble stiffness matrix
   - [x] Modify stiffness matrix and load vector to account for boundary conditions
 - [x] Add support for more keywords
   - [x] *BOUNDARY
   - [x] *CLOAD
-  - [ ] *MATERIAL
+  - [X] *MATERIAL (=mid)
+  - [X] *SECTION (=pid)
   - [ ] *STEP
   - [ ] *OUTPUT
 - [x] Point load keyword and assemble global load vector
@@ -54,6 +49,7 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
   - [x] Nodal displacement
   - [ ] Stresses and strains  
 - [x] Re-direct output to a log file for debugging  
+  - [ ] Print timing for each step in logfile  
 - [ ] makefile
 - [ ] Automate test cases for comparison solution against abaqus
 
