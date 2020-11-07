@@ -43,10 +43,10 @@ CPS3::CPS3(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std:
              -J(1,0), J(1,1), J(0,0), -J(0,1), J(1,0)-J(0,0), -J(1,1)+J(0,1);
         B = 1/J.determinant()*B; 
         // TODO: plane strain
-        
+        std::shared_ptr<Mid> mid = pid->get_mid();
+        float v = mid->get_v();
+        float E = mid->get_E();        
         float t = 1.0;
-        float E = 210e3;
-        float v = 0.33;
         Eigen::Matrix<float,3,3> D_temp;
         // plane stress:
         D_temp << 1, v,       0,

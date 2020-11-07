@@ -2,6 +2,20 @@
 *HEADING
 
 **
+*MATERIAL, NAME=M1;mid
+*DENSITY
+                 7.85E-9,
+*ELASTIC, TYPE=ISOTROPIC
+                 210000.,                      0.3
+** 
+*SOLID SECTION, ELSET=P1;pid, MATERIAL=M1;mid
+                      1.,
+**
+** MATERIALS
+**
+**
+**M1;mid
+**
 **
 **
 *NODE
@@ -1683,19 +1697,6 @@
 **
 ** SECTION DATA
 **
-*SOLID SECTION, ELSET=P1;pid, MATERIAL=M1;mid
-                      1.,
-**
-** MATERIALS
-**
-**
-**M1;mid
-**
-*MATERIAL, NAME=M1;mid
-*DENSITY
-                 7.85E-9,
-*ELASTIC, TYPE=ISOTROPIC
-                 210000.,                      0.3
 **
 ** 
 **

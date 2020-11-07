@@ -3,8 +3,8 @@
 #include "mid.h"
 
 
-Pid::Pid(std::string name,std::string material_name):name(name),material_name(material_name){
-    // Look upp material_name and find the pointer to it 
+Pid::Pid(std::string name,std::shared_ptr<Mid> mid):name(name),mid(mid){
+    std::cout << "*SECTION: ELSET = " << this->name << ", MATERIAL = " << this->mid->get_name() << std::endl;
 }
 
 Pid::~Pid(){}

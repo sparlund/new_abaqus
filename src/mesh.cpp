@@ -10,6 +10,7 @@
 #include <utility>
 #include <cmath>
 #include <fstream>
+#include <ctime>
 #include "mesh.h"
 #include "mid.h"
 #include "pid.h"
@@ -28,6 +29,10 @@ void Mesh::export_2_vtk(){
     // output results to vtk format for the ParaView post processor
     // https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
     // http://profs.sci.univr.it/~caliari/aa1314/advanced_numerical_analysis/Pellegrini.pdf
+    std::clock_t clock_export;
+    float duration_clock_export;
+    clock_export = std::clock();
+    std::cout << "---    Starting to export VTK results file    ---" << std::endl;
     std::vector<std::string> split1 = misc::split_on(filename,'/');
     std::vector<std::string> split2 = misc::split_on(split1.at(1),'.');
     std::string output_filename = split2.at(0) + ".vtk";
@@ -77,29 +82,38 @@ void Mesh::export_2_vtk(){
         output << u(current_node->dofs.at(0).id) << " " << u(current_node->dofs.at(1).id) << " " << 0 << std::endl;
     }
     output.close();
-    
+    duration_clock_export = ( std::clock() - clock_export ) / (float) CLOCKS_PER_SEC;
+    std::cout << "---    Exported to VTK format in " << duration_clock_export << " seconds (wallclock time)   ---" << std::endl;
 }
 
 void Mesh::solve(){
     std::cout << "---    Starting to solve linear problem Ku=f    ---" << std::endl;
+    std::clock_t clock_solve;
+    float duration_clock_solve;
+    clock_solve = std::clock();  
+
     // Ku=f
     Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
     solver.compute(K);
     u = solver.solve(f);
     std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[3852]); 
-    std::cout << "---    Solution to linear problem found    ---" << std::endl;
+    duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
+    std::cout << "---    Solution to linear problem found in " << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
 }
 
 
 void Mesh::assemble(){
     // By the time of assemble we know the number of dofs --> pre-allocate K, f & solution u
     std::cout << "---    Starting stiffness matrix assembly    ---" << std::endl;
-    std::cout << "       Mesh size:" << std::endl;
+    std::cout << "          Mesh size:" << std::endl;
     std::cout << "               nodes = " << nodes.size() << std::endl;
     std::cout << "            elements = " << elements.size() << std::endl;
     // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs 
     ndofs = nodes.at(0)->dofs.at(0).global_dof_id_counter; 
     std::cout << "  degrees of freedom = " << ndofs << std::endl;
+    std::clock_t clock_assemble;
+    float duration_assemble;
+    clock_assemble = std::clock();
     K.resize(ndofs,ndofs);
     f.resize(ndofs,1);
     u.resize(ndofs,1);
@@ -133,8 +147,9 @@ void Mesh::assemble(){
         K.coeffRef(current_global_dof,current_global_dof) = 1;
         f.coeffRef(current_global_dof) = bc.at(i).second;
     }
+    duration_assemble = ( std::clock() - clock_assemble ) / (float) CLOCKS_PER_SEC;;
+    std::cout << "---    Assembly completed in "<< duration_assemble << "seconds (wallclock time)    ---" << std::endl;
 }
-
 
 
 void Mesh::add_mid(std::unordered_map<std::string, std::string> options){
@@ -146,7 +161,6 @@ void Mesh::add_mid(std::unordered_map<std::string, std::string> options){
     mid_name_2_mid_pointer[mid_name] = mid;
     mids.push_back(mid);  
 };
-
 
 
 Mesh::Mesh(){
@@ -185,14 +199,8 @@ void Mesh::add_load(std::string line){
     // std::cout << global_node_id << std::endl;    
     // std::cout << local_dof  << std::endl;
     // std::cout << magnitude << std::endl;
-    std::cout << "cload error" << std::endl;
-    std::cout << "global_node_id=" << global_node_id << std::endl;
-    std::cout << "global_2_local_node_id[global_node_id]=" << global_2_local_node_id[global_node_id] << std::endl;
     std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[global_node_id]);
-    std::cout << "node->id = " << node->id << std::endl;
-    std::cout << "node->dofs.size()=" << node->dofs.size() << std::endl;
     unsigned int global_dof = node->dofs.at(local_dof-1).id;
-    std::cout << "global_dof = " << global_dof << std::endl;
     // we don't know complete number of dofs yet,
     // so we can't add directly to global load vector, but have
     // to store it here meanwhile
@@ -201,11 +209,15 @@ void Mesh::add_load(std::string line){
 }
 
 void Mesh::read_file(std::string filename){
+    std::vector<std::string> filename_split = misc::split_on(filename,'/');   
+    std::cout << "---    Starting to read input file " << filename_split.back() << "    ---" << std::endl;
+    std::clock_t clock_read_file;
+    float duration_clock_read_file;
+    clock_read_file = std::clock();  
     misc::append_newline_to_textfile(filename);
     this->filename = filename;
     // Create input stream object
     std::ifstream input_file(filename);
-    std::vector<std::string> filename_split = misc::split_on(filename,'/');   
     std::string line;
     unsigned int row_counter = 0;
     while (getline(input_file, line))
@@ -242,7 +254,7 @@ void Mesh::read_file(std::string filename){
                             // Skip to next line and save the value
                             getline(input_file, line);
                             float density = std::stof(misc::split_on(line, ',').at(0));
-                            mids.back()->density = density;
+                            mids.back()->set_density(density);
                             std::cout << keyword << " = " << density << std::endl;
                         }
                         else if (keyword == "*ELASTIC")
@@ -257,10 +269,11 @@ void Mesh::read_file(std::string filename){
                                 // Skip to next line and save the value
                                 getline(input_file, line);
                                 std::vector<std::string> values = misc::split_on(line, ',');
-                                mids.back()->E = std::stof(values.at(0));
-                                mids.back()->v = std::stof(values.at(1));
-                                std::cout << "E" << " = " << mids.back()->E << std::endl;
-                                std::cout << "v" << " = " << mids.back()->v << std::endl;
+                                float E = std::stof(values.at(0));
+                                float v = std::stof(values.at(1));
+                                mids.back()->set_E(E);
+                                mids.back()->set_v(v);
+                                std::cout << keyword << ", " << options["TYPE"] << ", E" << " = " << E << ", v" << " = " << v << std::endl;
                             }
                             
                         }
@@ -273,16 +286,19 @@ void Mesh::read_file(std::string filename){
                     {
                         // peep next line, if it's not one of the 
                         // supported material specific keywords we skip adding data to the material
-                        // Want to peek next line, if it's a keyword or empty line we break
-                        // the while loop and start over!
                         unsigned int previous_pos = input_file.tellg();
                         getline(input_file, line);
-                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        if (misc::is_keyword(line) == true)
                         {
+                            std::string keyword = misc::split_on(line, ',').at(0);
+                            // if the new keyword is not a supported material keyword we break loop and keep reading file
+                            // otherwise keep on truckin'
+                            if (misc::is_string_in_string_vector(keyword,mids.back()->supported_material_keywords) == false)
+                            {
                             input_file.seekg(previous_pos);
                             material_keywords_loop = false;
+                            }                            
                         }
-
                     }
                 }
                 
@@ -370,15 +386,18 @@ void Mesh::read_file(std::string filename){
             row_counter++;   
         }
     }       
+    duration_clock_read_file = (std::clock() - clock_read_file ) / (float) CLOCKS_PER_SEC;
+    std::cout << "---    Input file read in " << duration_clock_read_file << " seconds (wallclock time)    ---" << std::endl;
 };
 
 void Mesh::add_pid(std::unordered_map<std::string, std::string> options){    
     std::string pid_name = options["ELSET"];
     // TODO: find MID pointer instead!!
     std::string mid_name = options["MATERIAL"];
-
+    // Find material
+    std::shared_ptr<Mid> mid = mid_name_2_mid_pointer[mid_name];
     // Create new pid
-    std::shared_ptr<Pid> pid  = std::shared_ptr<Pid>(new Pid(pid_name,mid_name));
+    std::shared_ptr<Pid> pid  = std::shared_ptr<Pid>(new Pid(pid_name,mid));
     pids.push_back(pid);
     pid_map[pid_name] = pid;
 
@@ -448,17 +467,6 @@ void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string
     nodes.push_back(node);
     node_id_2_node_pointer[id] = node;
     global_2_local_node_id[id] = nodes.size()-1;
-    if (id == 3852)
-    {
-        std::cout << "id=" << id << std::endl; 
-        std::cout << "x=" << x << std::endl; 
-        std::cout << "y=" << y << std::endl; 
-        std::cout << "z=" << z << std::endl; 
-        std::cout << "nodes.size()=" << nodes.size() << std::endl; 
-        std::cout << "global_2_local_node_id[id]=" << global_2_local_node_id[id] << std::endl; 
-    }
-      
-
 };
 Mesh::~Mesh(){};
 

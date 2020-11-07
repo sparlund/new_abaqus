@@ -7,6 +7,19 @@
 #include "misc_string_functions.h"
 #include <unordered_map>
 
+bool misc::is_string_in_string_vector(std::string input_string, std::vector<std::string> input_vector){
+    for (unsigned int i = 0; i < input_vector.size(); i++)
+    {
+        if (input_string == input_vector.at(i))
+        {
+            return true;
+        }
+        
+    }
+    return false;
+    
+}
+
 void misc::trim(std::string& string){
     const auto strBegin = string.find_first_not_of(" ");
     if (strBegin == std::string::npos){

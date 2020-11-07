@@ -29,8 +29,9 @@ CPS4::CPS4(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std:
         }
         
     }
-    float v = 0.33;
-    float E = 210e3;
+    std::shared_ptr<Mid> mid = pid->get_mid();
+    float v = mid->get_v();
+    float E = mid->get_E();
     float t = 1.0f;
     D << 1, v, 0,
          v, 1, 0,
