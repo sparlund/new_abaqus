@@ -14,7 +14,7 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
 
 <img src="example_runfiles/ex3.png" width="75%"/>
 
-| FE-solver      | Load node deflection |
+| FE-solver      | Load node deflection (red arrow in figure above!) |
 | ----------- | ----------- |
 | abaqus (c)      | 0.0348       |
 | new_abaqus   | 0.0346        |
@@ -27,8 +27,10 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
 - [ ] Implement logic for different elements
   - [x] 2D tria (S2)
   - [x] 2D quadrilateral (CPS4)
-  - [ ] 3D tetra (C3D10)
-  - [ ] 3D brick (C3D8)
+  - [ ] 3D second order tetra (C3D10)
+  - [X] 3D hexahedron (C3D8)
+  - [ ] 3D second order hexahedron (C3D20)
+- [x] Assemble mass matrix  
 - [x] Assemble stiffness matrix
   - [x] Modify stiffness matrix and load vector to account for boundary conditions
 - [x] Add support for more keywords
@@ -37,6 +39,8 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
   - [X] *MATERIAL (=mid)
   - [X] *SECTION (=pid)
   - [ ] *STEP
+  - [ ] *STATIC
+  - [ ] *EIGENFREQUENCY
   - [ ] *OUTPUT
 - [x] Point load keyword and assemble global load vector
 - [x] Solve Ka=f for linear problems
@@ -44,14 +48,15 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
   - [ ] Stresses and strains
   - [ ] von Mises stress
 - [ ] Solve eigen value problem
+  - [ ] Compute mass matrix for elements
   - [ ] Calculate mass matrix in element construction
 - [ ] Export results to VTK format to view results in ParaView
   - [x] Nodal displacement
   - [ ] Stresses and strains  
 - [x] Re-direct output to a log file for debugging  
-  - [ ] Print timing for each step in logfile  
+  - [x] Print timing for each step in logfile  
 - [ ] makefile
-- [ ] Automate test cases for comparison solution against abaqus
+- [ ] Automate test cases for comparison solution against abaqus or hand calculations
 
 
 
