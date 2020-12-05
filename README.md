@@ -22,7 +22,8 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
 
 ### Element types available
 CPS3, CPS4, C3D10, C3D8
-<img src="elements_available.png" width="75%"/>
+
+<img src="elements_available.png" width="75%" align=left/>
 
 
 ### To-do & Features implemented
