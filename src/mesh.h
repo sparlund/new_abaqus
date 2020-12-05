@@ -48,6 +48,8 @@ private:
     void add_pid(std::unordered_map<std::string, std::string> options);
     void add_mid(std::unordered_map<std::string, std::string> options);
     std::string filename;
+    bool static_analysis;
+    bool eigenvalue_analysis;
 public:    
     unsigned int get_pid_counter(){return pid_counter;};
     // getters and setters
@@ -60,8 +62,16 @@ public:
 
     // ndofs is counter for total number of degrees of freedom for the mesh
     unsigned int ndofs = 0;
+    // global stiffness matrix
     Eigen::SparseMatrix<float> K;
+    // global mass matrix
+    Eigen::SparseMatrix<float> M;
+    // global load vector
     Eigen::SparseVector<float> f;
+    Eigen::Matrix<float,Eigen::Dynamic,1> eigenvalues;
+    Eigen::Matrix<float,Eigen::Dynamic,3> eigenvectors;
+
+    // solution to Ku=f
     Eigen::Matrix<float,Eigen::Dynamic,1> u;
     std::vector<std::pair<unsigned int,float>> f_to_be_added;
     // bc: global dof, value

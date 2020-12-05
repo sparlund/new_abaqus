@@ -24,6 +24,7 @@ private:
     float A;
 public:
     Eigen::Matrix<float,6,6> Ke;
+    Eigen::Matrix<float,6,6> Me;
     Eigen::Matrix<float,6,1> fe;  
     static Eigen::Matrix<float,6,2> N; 
     std::shared_ptr<Pid> get_pid(){return this->pid;};
@@ -34,6 +35,7 @@ public:
     unsigned short get_element_nnodes(){return nnodes;}
     unsigned short get_vtk_identifier(){return vtk_identifier;}
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Ke(){return Ke;}
+    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Me(){return Me;}
     std::string get_element_type(){return element_type;}
     CPS3(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
     ~CPS3();
