@@ -19,27 +19,13 @@ private:
     std::vector<unsigned int> dofs_id;
     std::vector<std::shared_ptr<Node>> connectivity;
     std::shared_ptr<Pid> pid;
-    Eigen::Matrix<float,4,4> J;
-    std::vector<float> detJ;
-    Eigen::Matrix<float,6,10> B;
-    Eigen::Matrix<float,6,6> D;
-    float A;
-    Eigen::Matrix<float,10,2> coord;
-    // size(N) = ngp*nnodes
-    Eigen::Matrix<float,4,10> N;
-    // size(dNdXhi) = ngp*ngp, 4 vectors of (1x4)
-    Eigen::Matrix<float,4,4> dNdXhi;
-    Eigen::Matrix<float,4,4> dNdEta;
-    Eigen::Matrix<float,3,10> dNdxdydz;
-    // Eigen::Matrix<float,3,10> shape_functions(Eigen::Matrix<float,1,4> evaluation_points);
-    bool initialized; // init to be set after we've constructed shape functions for this element, dont need to run for every object instance
-    const unsigned short ngp = 4; // 
-    const unsigned short W = 0.25; 
-    Eigen::Matrix<float,4,1> xhi;
-    Eigen::Matrix<float,4,1> eta;
-
+    const unsigned short ngp = 4;   // The target rank of K e is 30 − 6 = 24. Since each Gauss point adds 6 to the rank up to a maximum
+                                    // of 24, the number of Gauss points should be 4 or higher. 
+    // dim(coord) = nnodes*ndim
+    Eigen::Matrix<float,10,3> coord;
 public:
     Eigen::Matrix<float,30,30> Ke;
+    Eigen::Matrix<float,30,30> Me;
     Eigen::Matrix<float,30,1> fe;  
     std::shared_ptr<Pid> get_pid(){return this->pid;};
     unsigned int get_id(){return id;};
@@ -49,6 +35,7 @@ public:
     unsigned short get_element_nnodes(){return nnodes;}
     unsigned short get_vtk_identifier(){return vtk_identifier;}
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Ke(){return Ke;}
+    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Me(){return Me;}
     std::string get_element_type(){return element_type;}
     C3D10(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
     ~C3D10();
