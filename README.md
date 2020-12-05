@@ -12,7 +12,9 @@ This will save an output file of the results called `ex3.vtk` and a logfile call
 
 This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of quad and trias.  Result comparison:
 
-<img src="example_runfiles/ex3.png" width="75%"/>
+<img src="src/images/ex3.png" width="75%"/>
+
+<img src="src/images/ex3_displacement.png" width="75%"/>
 
 | FE-solver      | Load node deflection (red arrow in figure above!) |
 | ----------- | ----------- |
@@ -23,7 +25,7 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
 ### Element types available
 CPS3, CPS4, C3D10, C3D8
 
-<img src="elements_available.png" width="75%" align=left/>
+<img src="src/images/elements_available.png" width="75%" align=left/>
 
 
 ### To-do & Features implemented
