@@ -19,6 +19,7 @@ private:
     std::vector<std::shared_ptr<Node>> connectivity;
     std::shared_ptr<Pid> pid;
     Eigen::Matrix<float,6,6> Ke;
+    Eigen::Matrix<float,6,6> Me;
     Eigen::Matrix<float,6,1> fe;
     Eigen::Matrix<float,6,6> C;
     Eigen::Matrix<float,6,6> B;
@@ -32,6 +33,7 @@ public:
     unsigned short get_element_nnodes(){return nnodes;}
     std::vector<unsigned int> get_element_dof_ids(){return dofs_id;};
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Ke(){return Ke;}
+    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Me(){return Me;}
     std::string get_element_type(){return element_type;}
     unsigned short get_vtk_identifier(){return vtk_identifier;}
     S3(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
