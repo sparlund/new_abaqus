@@ -1,6 +1,6 @@
 #include <iostream>
-#include <cmath>
 #include "C3D8.h"
+#include <stdlib.h>
 
 const std::string C3D8::element_type = "C3D8";
 
@@ -45,30 +45,18 @@ C3D8::C3D8(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std:
            0,     0,     0,           0,  (1-2*v)/2,          0,
            0,     0,     0,           0,          0,  (1-2*v)/2;
     D *= E/((1+v)*(1-2*v));
-    // shape functions:
-    // N1=1/8*(1−xhi)(1−eta)(1−my)
-    // N2=1/8*(1+xhi)(1−eta)(1−my)
-    // N3=1/8*(1+xhi)(1+eta)(1−my)
-    // N4=1/8*(1−xhi)(1+eta)(1−my)
-    // N5=1/8*(1−xhi)(1−eta)(1+my)
-    // N6=1/8*(1+xhi)(1−eta)(1+my)
-    // N7=1/8*(1+xhi)(1+eta)(1+my)
-    // N8=1/8*(1−xhi)(1+eta)(1+my)
+    // std::cout << D << std::endl;
     
-    // coord
+    // coord system is located in the middle of 
+    // the element, as weights are from -1 to 1
     for (unsigned short i = 0; i < nnodes; i++)
     {
         coord(i,0) = connectivity.at(i)->x;
         coord(i,1) = connectivity.at(i)->y;
         coord(i,2) = connectivity.at(i)->z;
     }
-    // gauss points same in all directions!
-    xhi << -std::sqrt(0.33), std::sqrt(0.33);
-    eta << -std::sqrt(0.33), std::sqrt(0.33);
-    my  << -std::sqrt(0.33), std::sqrt(0.33);
+    // std::cout << "coord=" << coord << std::endl;
 
-    // set Ke zero
-    Ke.setZero();
     // dim(J) = ndim x ndim
     Eigen::Matrix<float,3,3> J;
     Eigen::Matrix<float,6,24> B;
@@ -80,35 +68,83 @@ C3D8::C3D8(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std:
     Eigen::Matrix<float,1,8> q_z;
     Eigen::Matrix<float,1,8> zero;
     zero.setZero();
-    for (unsigned short i = 0; i < ngp_per_dim; i++)
+    Eigen::Matrix<float,1,8> N;
+    // size(global_N_matrix) = element ndof*element ndof
+    Eigen::Matrix<float,3,24> global_N_matrix;
+    Eigen::Matrix<float,1,8> dNdXhi;
+    Eigen::Matrix<float,1,8> dNdEta;
+    Eigen::Matrix<float,1,8> dNdMy;
+    // dim(dNdxdydz) = dim(dNdXhidEtadMy) = ndim x nnodes
+    Eigen::Matrix<float,3,8> dNdxdydz;
+    Eigen::Matrix<float,3,8> dNdXhidEtadMy;
+
+    // init Ke & Me to zero
+    Ke.setZero();
+    Me.setZero();
+    // gauss points same in all directions!
+    // 1/sqrt(3) = 0.57735026919
+    xhi << -0.57735,-0.57735,-0.57735,-0.57735, 0.57735, 0.57735,0.57735,0.57735;
+    eta << -0.57735,-0.57735, 0.57735,0.57735,-0.57735,-0.57735,0.57735,0.57735;
+    my  << -0.57735, 0.57735,-0.57735,0.57735,-0.57735, 0.57735,-0.57735,0.57735;
+    for (unsigned int i = 0; i < ngp; i++)
     {
-        for (unsigned short j = 0; j < ngp_per_dim; j++)
-        {
-            for (unsigned short k = 0; k < ngp_per_dim; k++)
-            {
-                dNdXhidEtadMy << -(1-eta(0,j))*(1-my(0,k)),(1-eta(0,j))*(1-my(0,k)),(1+eta(0,j))*(1-my(0,k)),-(1+eta(0,j))*(1-my(0,k)),-(1-eta(0,j))*(1+my(0,k)),(1-eta(0,j))*(1+my(0,k)),(1+eta(0,j))*(1+my(0,k)),-(1+eta(0,j))*(1+my(0,k)),
-                                 -(1-xhi(0,i))*(1-my(0,k)),-(1+xhi(0,i))*(1-my(0,k)),(1+xhi(0,i))*(1-my(0,k)),(1-xhi(0,i))*(1-my(0,k)),-(1-xhi(0,i))*(1+my(0,k)),-(1+xhi(0,i))*(1+my(0,k)),(1+xhi(0,i))*(1+my(0,k)),(1-xhi(0,i))*(1+my(0,k)),
-                                 -(1-xhi(0,i))*(1-eta(0,j)),-(1+xhi(0,i))*(1-eta(0,j)),-(1+xhi(0,i))*(1+eta(0,j)),-(1-xhi(0,i))*(1+eta(0,j)),(1-xhi(0,i))*(1-eta(0,j)),(1+xhi(0,i))*(1-eta(0,j)),(1+xhi(0,i))*(1+eta(0,j)),(1-xhi(0,i))*(1+eta(0,j));
-                dNdXhidEtadMy *= 1/8;
-                J = dNdXhidEtadMy*coord;
-                dNdxdydz = J.inverse()*dNdXhidEtadMy;
-                // make sure all values are zero
-                q_x << dNdxdydz(0,0),dNdxdydz(0,1),dNdxdydz(0,2),dNdxdydz(0,3),dNdxdydz(0,4),dNdxdydz(0,5),dNdxdydz(0,6),dNdxdydz(0,7);
-                q_y << dNdxdydz(1,0),dNdxdydz(1,1),dNdxdydz(1,2),dNdxdydz(1,3),dNdxdydz(1,4),dNdxdydz(1,5),dNdxdydz(1,6),dNdxdydz(1,7);
-                q_z << dNdxdydz(2,0),dNdxdydz(2,1),dNdxdydz(2,2),dNdxdydz(2,3),dNdxdydz(2,4),dNdxdydz(2,5),dNdxdydz(2,6),dNdxdydz(2,7);
-                // Find B
-                B <<  q_x, zero, zero,
-                     zero,  q_y, zero,
-                     zero, zero,  q_z,
-                      q_y,  q_x, zero,
-                     zero,  q_z,  q_y,
-                      q_z, zero, q_x;
-                Ke = Ke + B.transpose()*D*B*J.determinant();
-            }
-        }
+        // shape functions, 1/8=0.125
+        N(0) = (1-xhi(i))*(1-eta(i))*(1-my(i))*0.125;
+        N(1) = (1+xhi(i))*(1-eta(i))*(1-my(i))*0.125; 
+        N(2) = (1+xhi(i))*(1+eta(i))*(1-my(i))*0.125; 
+        N(3) = (1-xhi(i))*(1+eta(i))*(1-my(i))*0.125; 
+        N(4) = (1-xhi(i))*(1-eta(i))*(1+my(i))*0.125;
+        N(5) = (1+xhi(i))*(1-eta(i))*(1+my(i))*0.125;
+        N(6) = (1+xhi(i))*(1+eta(i))*(1+my(i))*0.125;
+        N(7) = (1-xhi(i))*(1+eta(i))*(1+my(i))*0.125;
+        // derive shape functions wrt xhi
+        dNdXhi(0) = -(1-eta(i))*(1-my(i))*0.125;
+        dNdXhi(1) =  (1-eta(i))*(1-my(i))*0.125;
+        dNdXhi(2) =  (1+eta(i))*(1-my(i))*0.125; 
+        dNdXhi(3) = -(1+eta(i))*(1-my(i))*0.125; 
+        dNdXhi(4) = -(1-eta(i))*(1+my(i))*0.125; 
+        dNdXhi(5) =  (1-eta(i))*(1+my(i))*0.125; 
+        dNdXhi(6) =  (1+eta(i))*(1+my(i))*0.125; 
+        dNdXhi(7) = -(1+eta(i))*(1+my(i))*0.125; 
+        // derive shape functions wrt eta
+        dNdEta(0) = -(1-xhi(i))*(1-my(i))*0.125;
+        dNdEta(1) = -(1+xhi(i))*(1-my(i))*0.125;
+        dNdEta(2) =  (1+xhi(i))*(1-my(i))*0.125;
+        dNdEta(3) =  (1-xhi(i))*(1-my(i))*0.125;
+        dNdEta(4) = -(1-xhi(i))*(1+my(i))*0.125;
+        dNdEta(5) = -(1+xhi(i))*(1+my(i))*0.125;
+        dNdEta(6) =  (1+xhi(i))*(1+my(i))*0.125;
+        dNdEta(7) =  (1-xhi(i))*(1+my(i))*0.125;
+        // derive shape functions wrt my
+        dNdMy(0)  = -(1-xhi(i))*(1-eta(i))*0.125;
+        dNdMy(1)  = -(1+xhi(i))*(1-eta(i))*0.125;
+        dNdMy(2)  = -(1+xhi(i))*(1+eta(i))*0.125;
+        dNdMy(3)  = -(1-xhi(i))*(1+eta(i))*0.125;
+        dNdMy(4)  =  (1-xhi(i))*(1-eta(i))*0.125;
+        dNdMy(5)  =  (1+xhi(i))*(1-eta(i))*0.125;
+        dNdMy(6)  =  (1+xhi(i))*(1+eta(i))*0.125;
+        dNdMy(7)  =  (1-xhi(i))*(1+eta(i))*0.125;
+        // find Jacobian for each Gauss point
+        dNdXhidEtadMy.row(0) = dNdXhi;
+        dNdXhidEtadMy.row(1) = dNdEta;
+        dNdXhidEtadMy.row(2) = dNdMy;
+        J = dNdXhidEtadMy*coord;
+        // find shape functions derivate matrix wrt x, y & z
+        dNdxdydz = J.inverse()*dNdXhidEtadMy;
+        // construct B matrix
+        B << dNdxdydz(0,0),0,0,dNdxdydz(0,1),0,0,dNdxdydz(0,2),0,0,dNdxdydz(0,3),0,0,dNdxdydz(0,4),0,0,dNdxdydz(0,5),0,0,dNdxdydz(0,6),0,0,dNdxdydz(0,7),0,0,
+             0,dNdxdydz(1,0),0,0,dNdxdydz(1,1),0,0,dNdxdydz(1,2),0,0,dNdxdydz(1,3),0,0,dNdxdydz(1,4),0,0,dNdxdydz(1,5),0,0,dNdxdydz(1,6),0,0,dNdxdydz(1,7),0,
+             0,0,dNdxdydz(2,0),0,0,dNdxdydz(2,1),0,0,dNdxdydz(2,2),0,0,dNdxdydz(2,3),0,0,dNdxdydz(2,4),0,0,dNdxdydz(2,5),0,0,dNdxdydz(2,6),0,0,dNdxdydz(2,7),
+             dNdxdydz(1,0),dNdxdydz(0,0),0,dNdxdydz(1,1),dNdxdydz(0,1),0,dNdxdydz(1,2),dNdxdydz(0,2),0,dNdxdydz(1,3),dNdxdydz(0,3),0,dNdxdydz(1,4),dNdxdydz(0,4),0,dNdxdydz(1,5),dNdxdydz(0,5),0,dNdxdydz(1,6),dNdxdydz(0,6),0,dNdxdydz(1,7),dNdxdydz(0,7),0,
+             0,dNdxdydz(2,0),dNdxdydz(0,0),0,dNdxdydz(2,1),dNdxdydz(0,1),0,dNdxdydz(2,2),dNdxdydz(0,2),0,dNdxdydz(2,3),dNdxdydz(0,3),0,dNdxdydz(2,4),dNdxdydz(0,4),0,dNdxdydz(2,5),dNdxdydz(0,5),0,dNdxdydz(2,6),dNdxdydz(0,6),0,dNdxdydz(2,7),dNdxdydz(0,7),
+             dNdxdydz(2,0),0,dNdxdydz(0,0),dNdxdydz(2,1),0,dNdxdydz(0,1),dNdxdydz(2,2),0,dNdxdydz(0,2),dNdxdydz(2,3),0,dNdxdydz(0,3),dNdxdydz(2,4),0,dNdxdydz(0,4),dNdxdydz(2,5),0,dNdxdydz(0,5),dNdxdydz(2,6),0,dNdxdydz(0,6),dNdxdydz(2,7),0,dNdxdydz(0,7);
+        // compute Gauss point contribution to element Ke matrix
+        // § 8.5. The Mass Matrix, chapter 8
+        global_N_matrix << N(0),0,0,N(1),0,0,N(2),0,0,N(3),0,0,N(4),0,0,N(5),0,0,N(6),0,0,N(7),0,0,
+                           0,N(0),0,0,N(1),0,0,N(2),0,0,N(3),0,0,N(4),0,0,N(5),0,0,N(6),0,0,N(7),0,
+                           0,0,N(0),0,0,N(1),0,0,N(2),0,0,N(3),0,0,N(4),0,0,N(5),0,0,N(6),0,0,N(7);
+        Ke = Ke + (B.transpose()*D*B*J.determinant());
+        Me = Me + mid->get_density()*global_N_matrix.transpose()*global_N_matrix;
     }
     print_element_info_to_log();
 }
-
-
-
