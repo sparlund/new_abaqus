@@ -44,25 +44,27 @@ CPS3, CPS4, C3D10, C3D8
 - [x] Add support for more keywords
   - [x] *BOUNDARY
   - [x] *CLOAD
-  - [X] *MATERIAL (=mid)
-  - [X] *SECTION (=pid)
+  - [X] *MATERIAL
+  - [X] *SECTION
   - [ ] *STEP
-  - [ ] *STATIC
-  - [ ] *EIGENFREQUENCY
+  - [X] *STATIC 
+  - [X] *EIGENFREQUENCY
   - [ ] *OUTPUT
 - [x] Point load keyword and assemble global load vector
 - [x] Solve Ka=f for linear problems
 - [ ] Calculate scalar values on elements
   - [ ] Stresses and strains
   - [ ] von Mises stress
-- [ ] Solve eigen value problem
-  - [ ] Compute mass matrix for elements
-  - [ ] Calculate mass matrix in element construction
+- [X] Solve eigen value problem
+  - [X] Calculate mass matrix in element construction (note: not available for all..)
+  - [X] Assemble mass matrix
 - [ ] Export results to VTK format to view results in ParaView
   - [x] Nodal displacement
+  - [x] Eigenmodes 
   - [ ] Stresses and strains  
 - [x] Re-direct output to a log file for debugging  
-  - [x] Print timing for each step in logfile  
+  - [x] Print timing for each step in logfile as basic profiling
+- [ ] Some basic error handling  
 - [ ] makefile
 - [ ] Automate test cases for comparison solution against abaqus or hand calculations
 
