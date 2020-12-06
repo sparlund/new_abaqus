@@ -48,8 +48,8 @@ private:
     void add_pid(std::unordered_map<std::string, std::string> options);
     void add_mid(std::unordered_map<std::string, std::string> options);
     std::string filename;
-    bool static_analysis;
-    bool eigenvalue_analysis;
+    bool static_analysis=false;
+    bool eigenvalue_analysis=false;
 public:    
     unsigned int get_pid_counter(){return pid_counter;};
     // getters and setters
@@ -68,9 +68,11 @@ public:
     Eigen::SparseMatrix<float> M;
     // global load vector
     Eigen::SparseVector<float> f;
+    unsigned int number_of_modes_to_find;
+    // size(eigenvalues) = number_of_modes*1
     Eigen::Matrix<float,Eigen::Dynamic,1> eigenvalues;
-    Eigen::Matrix<float,Eigen::Dynamic,3> eigenvectors;
-
+    // size(eigenvectors) = ndofs*number_of_modes
+    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> eigenvectors;
     // solution to Ku=f
     Eigen::Matrix<float,Eigen::Dynamic,1> u;
     std::vector<std::pair<unsigned int,float>> f_to_be_added;
@@ -78,6 +80,8 @@ public:
     std::vector<std::pair<unsigned int,float>> bc;
     void assemble();
     void solve();
+    void solve_static();
+    void solve_eigenfrequency();
     void export_2_vtk();
 
 

@@ -25,8 +25,9 @@
 #include "elements/C3D10.h"
 #include "elements/C3D8.h"
 #include "misc_string_functions.h"
-
-// unsigned int Mesh::ndofs = 0;
+// for eigenfrequency solver
+#include <Spectra/SymGEigsSolver.h>
+#include <Spectra/MatOp/SparseCholesky.h>
 
 void Mesh::export_2_vtk(){
     // output results to vtk format for the ParaView post processor
@@ -76,15 +77,47 @@ void Mesh::export_2_vtk(){
     }
     // point_data, i.e displacement on nodes
     output << "POINT_DATA " << nodes.size() << std::endl;
-    output << "FIELD displacement 1" << std::endl;
-    // data name, number of values (3 for 3D & 2D, Z is zero for 2D, datatype)
-    output << "displacement 3 " << nodes.size() << " float" << std::endl;
-    std::shared_ptr<Node> current_node;
-    for (unsigned int i = 0; i < nodes.size(); i++)
+    if (this->static_analysis == true)
     {
-        current_node = nodes.at(i);        
-        output << u(current_node->dofs.at(0).id) << " " << u(current_node->dofs.at(1).id) << " " << u(current_node->dofs.at(2).id) << std::endl;
+        output << "FIELD displacement 1" << std::endl;
+        // data name, number of values (3 for 3D & 2D, Z is zero for 2D, datatype)
+        output << "displacement 3 " << nodes.size() << " float" << std::endl;
+        std::shared_ptr<Node> current_node;
+        for (unsigned int i = 0; i < nodes.size(); i++)
+        {
+            current_node = nodes.at(i);        
+            output << u(current_node->dofs.at(0).id) << " " << u(current_node->dofs.at(1).id) << " " << u(current_node->dofs.at(2).id) << std::endl;
+        }
     }
+    if (this->eigenvalue_analysis == true)
+    {
+        // scale eigenvectors before saving to vtk file
+        // normalize against largest value in eigenvector matrix
+        eigenvectors /= eigenvectors.maxCoeff();
+        for (unsigned int mode = 0; mode < number_of_modes_to_find; mode++)
+        {
+            output << "FIELD mode" << mode << " 1" << std::endl;
+            // data name, number of values (3 for 3D & 2D, Z is zero for 2D, datatype)
+            output << "mode" << mode << " 3 " << nodes.size() << " float" << std::endl;
+            std::shared_ptr<Node> current_node;
+            for (unsigned int i = 0; i < nodes.size(); i++)
+            {
+                    current_node = nodes.at(i);
+                    std::cout << "node id=" << current_node->id << std::endl;
+                    std::cout << "dof1=" << current_node->dofs.at(0).id << ", eigenvector value for that dof="<< eigenvectors(current_node->dofs.at(0).id,0) << std::endl;
+                    std::cout << "--" << std::endl;
+                    output << current_node->x*eigenvectors(current_node->dofs.at(0).id,mode)
+                           << " " 
+                           << current_node->y*eigenvectors(current_node->dofs.at(1).id,mode)
+                           << " " 
+                           << current_node->z*eigenvectors(current_node->dofs.at(2).id,mode) << std::endl;
+            }
+            
+        }
+        
+    }
+    
+    
     // close file!
     output.close();
     duration_clock_export = ( std::clock() - clock_export ) / (float) CLOCKS_PER_SEC;
@@ -92,6 +125,72 @@ void Mesh::export_2_vtk(){
 }
 
 void Mesh::solve(){
+    if (eigenvalue_analysis == true)
+    {
+        solve_eigenfrequency();
+    }
+    if (static_analysis == true)
+    {
+        solve_static();
+    }
+}
+
+void Mesh::solve_eigenfrequency(){
+    std::cout << "---    Starting to solve eigenvalue problem    ---" << std::endl;
+    std::clock_t clock_solve;
+    float duration_clock_solve;
+    clock_solve = std::clock();  
+    Spectra::SparseSymMatProd<float> opK(K);
+    Spectra::SparseCholesky<float> opM(M);
+    // ncv must satisfy nev < ncv <= n, n is the size of matrix. But what is a good value?
+    unsigned int ncv = (2*number_of_modes_to_find) - 1;
+
+    // ncv that controls the convergence speed of the algorithm.
+    // Typically a larger `ncv` means faster convergence, but it may
+    // also result in greater memory use and more matrix operations
+    // in each iteration. This parameter must satisfy nev < ncv < n,
+    // and is advised to take ncv< 2*nev.
+    if ( (this->number_of_modes_to_find < ncv && ncv < ndofs) == false)
+    {
+        std::cout << "ERROR: nev < ncv <= n not satisfied." << std::endl;
+    }
+    std::cout << ":)" << std::endl;
+    Spectra::SymGEigsSolver<float,
+                            Spectra::SMALLEST_MAGN,
+                            Spectra::SparseSymMatProd<float>,
+                            Spectra::SparseCholesky<float>,
+                            Spectra::GEIGS_CHOLESKY> geigs(&opK, &opM, number_of_modes_to_find, ncv);
+    std::cout << ":))" << std::endl;
+    // Initialize and compute
+    geigs.init();
+    std::cout << ":)))" << std::endl;
+    std::cout << geigs.info() << std::endl;
+    geigs.compute();
+    std::cout << geigs.info() << std::endl;
+    std::cout << ":))))" << std::endl;
+    // Retrieve results
+    if(geigs.info() == Spectra::SUCCESSFUL)
+    {
+        // omega = sqrt(lambda)
+        // frequency = omega/(2*pi) 
+        std::cout << ":))))" << std::endl;
+        this->eigenvalues = geigs.eigenvalues();
+        this->eigenvectors = geigs.eigenvectors();
+        std::cout << eigenvalues.size() << std::endl;
+        std::cout << eigenvectors.size() << std::endl;
+    }
+    else
+    {
+        std::cout << "ERROR: couldn't solve eigenvalue problem" << std::endl;
+        return;
+    }
+    std::cout << "Generalized eigenvalues found:\n" << eigenvalues << std::endl;
+    std::cout << "Generalized eigenvectors found:\n" << eigenvectors << std::endl;
+    duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
+    std::cout << "---    Solution to eigenvalue problem found in " << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
+}
+
+void Mesh::solve_static(){
     std::cout << "---    Starting to solve linear problem Ku=f    ---" << std::endl;
     std::clock_t clock_solve;
     float duration_clock_solve;
@@ -113,7 +212,7 @@ void Mesh::assemble(){
     std::cout << "          Mesh size:" << std::endl;
     std::cout << "               nodes = " << nodes.size() << std::endl;
     std::cout << "            elements = " << elements.size() << std::endl;
-    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs 
+    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
     ndofs = nodes.at(0)->dofs.at(0).global_dof_id_counter; 
     std::cout << "  degrees of freedom = " << ndofs << std::endl;
     std::clock_t clock_assemble;
@@ -123,9 +222,10 @@ void Mesh::assemble(){
     M.resize(ndofs,ndofs);
     f.resize(ndofs,1);
     u.resize(ndofs,1);
-
     // assemble stiffness- and mass matrix, will alter it later due to boundary conditions
     std::shared_ptr<Element> current_element;
+
+    
     for (unsigned int i = 0; i < elements.size(); i++)
     { 
         current_element = elements.at(i);
@@ -141,19 +241,6 @@ void Mesh::assemble(){
             }
         }
     }
-    std::cout << "eigen anal" << std::endl;
-    // std::cout << "K=[" << Eigen::Matrix<float,36,36>(K) << "];" << std::endl;
-    // std::cout << "M=[" << Eigen::Matrix<float,36,36>(M) << "];" << std::endl;
-    // TODO: use https://spectralib.org/ to solve large scale eigenvalue problems
-    // for now be a retard an cast to dense matrices...
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> K_dense = Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K);
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> M_dense = Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(M);
-    Eigen::GeneralizedEigenSolver<Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>> ges(K_dense,M_dense);
-    std::cout << ":)" << std::endl;
-    // std::cout << ges.eigenvectors() << std::endl;
-    std::cout << ges.eigenvalues() << std::endl;
-    // std::cout << ges.eigenvectors() << std::endl;
-    std::cout << "eigen anal" << std::endl;
     // assemble load vector, will alter due to boundary conditions
     for (unsigned int i = 0; i < f_to_be_added.size(); i++)
     {
@@ -204,6 +291,8 @@ void Mesh::assemble(){
     duration_assemble = ( std::clock() - clock_assemble ) / (float) CLOCKS_PER_SEC;;
     std::cout << "K:" << std::endl;
     std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K) << std::endl;
+    std::cout << "M:" << std::endl;
+    std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(M) << std::endl;
     std::cout << "f:" << std::endl;
     std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
     std::cout << "---    Assembly completed in "<< duration_assemble << "seconds (wallclock time)    ---" << std::endl;
@@ -261,13 +350,22 @@ void Mesh::add_load(std::string line){
     // std::cout << global_node_id << std::endl;    
     // std::cout << local_dof  << std::endl;
     // std::cout << magnitude << std::endl;
-    std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[global_node_id]);
-    unsigned int global_dof = node->dofs.at(local_dof-1).id;
-    // we don't know complete number of dofs yet,
-    // so we can't add directly to global load vector, but have
-    // to store it here meanwhile
-    f_to_be_added.push_back(std::make_pair(global_dof,magnitude));   
-    std::cout << "*CLOAD: id=" << global_node_id << ", dof={" << local_dof << "}="<< global_dof <<", magnitude=" << magnitude << std::endl;
+    try
+    {
+        std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[global_node_id]);
+        unsigned int global_dof = node->dofs.at(local_dof-1).id;
+        // we don't know complete number of dofs yet,
+        // so we can't add directly to global load vector, but have
+        // to store it here meanwhile
+        f_to_be_added.push_back(std::make_pair(global_dof,magnitude));   
+        std::cout << "*CLOAD: id=" << global_node_id << ", dof={" << local_dof << "}="<< global_dof <<", magnitude=" << magnitude << std::endl;
+    }
+    catch(const std::exception& e)
+    {
+        std::cout << "ERROR: can't create *CLOAD because node with id " << global_node_id << " not found, exiting." << std::endl;
+        exit(1);
+    }
+    
 }
 
 void Mesh::read_file(std::string filename){
@@ -420,6 +518,13 @@ void Mesh::read_file(std::string filename){
             else if (keyword == "*FREQUENCY"){
                 // with this flag set a static analis will be ran
                 this->eigenvalue_analysis = true;
+                // peep next line and save the number of modes to find
+                // Jump to next line 
+                getline(input_file, line);
+                row_counter++;
+                std::string number_of_modes_to_find_string = misc::split_on(line, ',').at(0);
+                this->number_of_modes_to_find = std::stoi(number_of_modes_to_find_string);
+                std::cout << keyword << ": number of eigenvalues to be calculated = " << number_of_modes_to_find << std::endl;
             }
             else if (keyword == "*NODE" or keyword == "*ELEMENT")
             {
@@ -469,14 +574,25 @@ void Mesh::read_file(std::string filename){
 
 void Mesh::add_pid(std::unordered_map<std::string, std::string> options){    
     std::string pid_name = options["ELSET"];
-    // TODO: find MID pointer instead!!
     std::string mid_name = options["MATERIAL"];
-    // Find material
-    std::shared_ptr<Mid> mid = mid_name_2_mid_pointer[mid_name];
-    // Create new pid
-    std::shared_ptr<Pid> pid  = std::shared_ptr<Pid>(new Pid(pid_name,mid));
-    pids.push_back(pid);
-    pid_map[pid_name] = pid;
+    try
+    {
+        // Find material
+        std::shared_ptr<Mid> mid = mid_name_2_mid_pointer[mid_name];
+        // TODO: find MID pointer instead!!
+        // Create new pid
+        std::shared_ptr<Pid> pid  = std::shared_ptr<Pid>(new Pid(pid_name,mid));
+        pids.push_back(pid);
+        pid_map[pid_name] = pid;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        std::cout << "ERROR: material with name " << mid_name << "not found, exiting." << std::endl;
+        exit(1);
+    }
+
+    
 
 };
 
