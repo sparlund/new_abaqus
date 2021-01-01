@@ -47,10 +47,13 @@ private:
     void add_boundary(std::string line,std::unordered_map<std::string, std::string> options);
     void add_pid(std::unordered_map<std::string, std::string> options);
     void add_mid(std::unordered_map<std::string, std::string> options);
-    std::string filename;
     bool static_analysis=false;
     bool eigenvalue_analysis=false;
+    std::string eigenvalue_solution_method;
+    std::string analysis_name;
+    void print_matrix_to_mtx(Eigen::SparseMatrix<float>,std::string);
 public:    
+    void set_analysis_name(std::string string_analysis_name){this->analysis_name = string_analysis_name;return;}
     unsigned int get_pid_counter(){return pid_counter;};
     // getters and setters
     unsigned long get_number_of_elements(){return this->elements.size();}
@@ -71,6 +74,7 @@ public:
     unsigned int number_of_modes_to_find;
     // size(eigenvalues) = number_of_modes*1
     Eigen::Matrix<float,Eigen::Dynamic,1> eigenvalues;
+    Eigen::Matrix<float,Eigen::Dynamic,1> eigenfrequencies;
     // size(eigenvectors) = ndofs*number_of_modes
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> eigenvectors;
     // solution to Ku=f
