@@ -5,8 +5,15 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <numeric>
 #include <Eigen/Dense>
-#include <Eigen/SparseLU>
+#include <Eigen/Sparse>
+#include <Eigen/Cholesky>
+#include <Spectra/SymGEigsShiftSolver.h>
+#include <Spectra/MatOp/SparseSymMatProd.h>
+#include <Spectra/MatOp/SparseCholesky.h>
+#include <Spectra/Util/GEigsMode.h>
+#include <Spectra/Util/SelectionRule.h>
 #include <utility>
 #include <cmath>
 #include <fstream>
@@ -24,10 +31,34 @@
 #include "elements/CPS4.h"
 #include "elements/C3D10.h"
 #include "elements/C3D8.h"
+#include "elements/C3D20.h"
 #include "misc_string_functions.h"
 // for eigenfrequency solver
 #include <Spectra/SymGEigsSolver.h>
 #include <Spectra/MatOp/SparseCholesky.h>
+
+float squirt_and_divide_by_2pi(float in){
+    return std::sqrt(in)/(2*3.14159265359);
+}
+// float Mesh::eigenvalue_to_eigenfrequency(float in){
+//     return std::sqrt(in)/(2*3.14159265358979);
+// }
+
+void Mesh::print_matrix_to_mtx(Eigen::SparseMatrix<float> A,std::string output_filename){
+    // Print input matrix A in abaqus "COORDINATE" format in a .mtx-file
+    std::ofstream mtx;
+    mtx.open(output_filename);
+    for (int k=0; k<A.outerSize(); ++k){
+        for (Eigen::SparseMatrix<float>::InnerIterator it(A,k); it; ++it){
+            int row = it.row()+1;   // row index
+            int column = it.col()+1;   // col index (here it is equal to k)
+            // it.index(); // inner index, here it is equal to it.row()
+            float v = it.value();
+            mtx << row << " " << column << " " << v << std::endl;
+        }
+    }
+    mtx.close();
+}
 
 void Mesh::export_2_vtk(){
     // output results to vtk format for the ParaView post processor
@@ -37,9 +68,7 @@ void Mesh::export_2_vtk(){
     float duration_clock_export;
     clock_export = std::clock();
     std::cout << "---    Starting to export VTK results file    ---" << std::endl;
-    std::vector<std::string> split1 = misc::split_on(filename,'/');
-    std::vector<std::string> split2 = misc::split_on(split1.at(1),'.');
-    std::string output_filename = split2.at(0) + ".vtk";
+    std::string output_filename = analysis_name + ".vtk";
     std::ofstream output(output_filename);
     output << "# vtk DataFile Version 3.0" << std::endl;
     output << "vtk output" << std::endl;
@@ -85,8 +114,16 @@ void Mesh::export_2_vtk(){
         std::shared_ptr<Node> current_node;
         for (unsigned int i = 0; i < nodes.size(); i++)
         {
-            current_node = nodes.at(i);        
-            output << u(current_node->dofs.at(0).id) << " " << u(current_node->dofs.at(1).id) << " " << u(current_node->dofs.at(2).id) << std::endl;
+            current_node = nodes.at(i);
+            // 2 scenarios available so far: 3 dofs per node & 2 dofs per node
+            if (current_node->dofs.size() == 3)
+            {
+                output << u(current_node->dofs.at(0).id) << " " << u(current_node->dofs.at(1).id) << " " << u(current_node->dofs.at(2).id) << std::endl;
+            }
+            else{
+                output << u(current_node->dofs.at(0).id) << " " << u(current_node->dofs.at(1).id) << " 0" << std::endl;
+            }
+            
         }
     }
     if (this->eigenvalue_analysis == true)
@@ -94,30 +131,36 @@ void Mesh::export_2_vtk(){
         // scale eigenvectors before saving to vtk file
         // normalize against largest value in eigenvector matrix
         eigenvectors /= eigenvectors.maxCoeff();
-        for (unsigned int mode = 0; mode < number_of_modes_to_find; mode++)
+        for (unsigned int mode = number_of_modes_to_find-1; mode > 1; mode--)
         {
-            output << "FIELD mode" << mode << " 1" << std::endl;
+            output << "FIELD mode" << (number_of_modes_to_find - mode) << " 1" << std::endl;
             // data name, number of values (3 for 3D & 2D, Z is zero for 2D, datatype)
-            output << "mode" << mode << " 3 " << nodes.size() << " float" << std::endl;
+            output << "mode" << (number_of_modes_to_find - mode) << " 3 " << nodes.size() << " float" << std::endl;
             std::shared_ptr<Node> current_node;
             for (unsigned int i = 0; i < nodes.size(); i++)
             {
                     current_node = nodes.at(i);
-                    std::cout << "node id=" << current_node->id << std::endl;
-                    std::cout << "dof1=" << current_node->dofs.at(0).id << ", eigenvector value for that dof="<< eigenvectors(current_node->dofs.at(0).id,0) << std::endl;
-                    std::cout << "--" << std::endl;
-                    output << current_node->x*eigenvectors(current_node->dofs.at(0).id,mode)
+                    if (current_node->dofs.size() == 3)
+                    {
+                    output << eigenvectors(current_node->dofs.at(0).id,mode)
                            << " " 
-                           << current_node->y*eigenvectors(current_node->dofs.at(1).id,mode)
+                           << eigenvectors(current_node->dofs.at(1).id,mode)
                            << " " 
-                           << current_node->z*eigenvectors(current_node->dofs.at(2).id,mode) << std::endl;
+                           << eigenvectors(current_node->dofs.at(2).id,mode) << std::endl;
+                    }
+                    else
+                    {
+                        output << eigenvectors(current_node->dofs.at(0).id,mode)
+                           << " " 
+                           << eigenvectors(current_node->dofs.at(1).id,mode)
+                           << " 0" << std::endl;
+                    }
+                    
             }
             
         }
         
     }
-    
-    
     // close file!
     output.close();
     duration_clock_export = ( std::clock() - clock_export ) / (float) CLOCKS_PER_SEC;
@@ -133,72 +176,118 @@ void Mesh::solve(){
     {
         solve_static();
     }
+    export_2_vtk();
 }
 
+
+
 void Mesh::solve_eigenfrequency(){
-    std::cout << "---    Starting to solve eigenvalue problem    ---" << std::endl;
+    std::cout << "---    Starting to solve eigenvalue problem    ---" << std::endl;  
+    // Print global stiffness and mass matrices to .mtx format
+    
+    
     std::clock_t clock_solve;
     float duration_clock_solve;
     clock_solve = std::clock();  
-    Spectra::SparseSymMatProd<float> opK(K);
-    Spectra::SparseCholesky<float> opM(M);
-    // ncv must satisfy nev < ncv <= n, n is the size of matrix. But what is a good value?
-    unsigned int ncv = (2*number_of_modes_to_find) - 1;
-
-    // ncv that controls the convergence speed of the algorithm.
-    // Typically a larger `ncv` means faster convergence, but it may
-    // also result in greater memory use and more matrix operations
-    // in each iteration. This parameter must satisfy nev < ncv < n,
-    // and is advised to take ncv< 2*nev.
-    if ( (this->number_of_modes_to_find < ncv && ncv < ndofs) == false)
+    // Need to modify global stiffness matrix
+    // in order to account for boundary conditions
+    Eigen::SparseMatrix<float> K_eigen = K;
+    for (unsigned int i = 0; i < bc.size(); i++)
     {
-        std::cout << "ERROR: nev < ncv <= n not satisfied." << std::endl;
+        // if current bc==0, make all values in the corresponding row and column in K to zero
+        unsigned int current_global_dof = bc.at(i).first;
+        K_eigen.coeffRef(current_global_dof,current_global_dof) = 1e8;
     }
-    std::cout << ":)" << std::endl;
-    Spectra::SymGEigsSolver<float,
-                            Spectra::SMALLEST_MAGN,
-                            Spectra::SparseSymMatProd<float>,
-                            Spectra::SparseCholesky<float>,
-                            Spectra::GEIGS_CHOLESKY> geigs(&opK, &opM, number_of_modes_to_find, ncv);
-    std::cout << ":))" << std::endl;
-    // Initialize and compute
-    geigs.init();
-    std::cout << ":)))" << std::endl;
-    std::cout << geigs.info() << std::endl;
-    geigs.compute();
-    std::cout << geigs.info() << std::endl;
-    std::cout << ":))))" << std::endl;
-    // Retrieve results
-    if(geigs.info() == Spectra::SUCCESSFUL)
+    // if problem is smaller than, let's say 1e3 dofs, it's
+    // faster to cast the matrices to dense and just solve the problem the "hard" way
+    if (ndofs < 1e2)
     {
-        // omega = sqrt(lambda)
-        // frequency = omega/(2*pi) 
-        std::cout << ":))))" << std::endl;
-        this->eigenvalues = geigs.eigenvalues();
-        this->eigenvectors = geigs.eigenvectors();
-        std::cout << eigenvalues.size() << std::endl;
-        std::cout << eigenvectors.size() << std::endl;
+        print_matrix_to_mtx(K_eigen,"cpp_stiffness.mtx");  
+        print_matrix_to_mtx(M,"cpp_mass.mtx");  
+        Eigen::MatrixXf K_eigen_dense = Eigen::MatrixXf(K_eigen);
+        Eigen::MatrixXf M_dense = Eigen::MatrixXf(M);
+        Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXf> es(K_eigen_dense,M_dense);
+        this->eigenvalues = es.eigenvalues();
+        this->eigenvectors = es.eigenvectors();
+        // eigenfrequency = sqrt(eigenvalue)/(2*pi);
+        this->eigenfrequencies = es.eigenvalues().unaryExpr(&squirt_and_divide_by_2pi);
     }
     else
     {
-        std::cout << "ERROR: couldn't solve eigenvalue problem" << std::endl;
-        return;
-    }
-    std::cout << "Generalized eigenvalues found:\n" << eigenvalues << std::endl;
-    std::cout << "Generalized eigenvectors found:\n" << eigenvectors << std::endl;
+        Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse> opK1(K_eigen,M);
+        Spectra::SparseSymMatProd<float> opM1(M);
+        unsigned int ncv = (2*number_of_modes_to_find) - 1;
+        // abaqus defines number of eigenvalues to solve for as 
+        // the ones with smallest magntide --> sigma=0
+        double sigma = 0;
+        Spectra::SymGEigsShiftSolver<float,
+                            Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse>,
+                            Spectra::SparseSymMatProd<float>,
+                            Spectra::GEigsMode::ShiftInvert> es(opK1,
+                                                                opM1,
+                                                                number_of_modes_to_find,
+                                                                ncv,
+                                                                sigma);
+        es.init();
+        es.compute();
+        // Retrieve results
+        this->eigenvalues = es.eigenvalues();
+        this->eigenvectors = es.eigenvectors();
+        // eigenfrequency = sqrt(eigenvalue)/(2*pi);
+        this->eigenfrequencies = eigenvalues.unaryExpr(&squirt_and_divide_by_2pi);
+    }        
     duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
+    std::cout << "eigenfreqs:\n" << eigenfrequencies << std::endl;
     std::cout << "---    Solution to eigenvalue problem found in " << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
 }
+
+
 
 void Mesh::solve_static(){
     std::cout << "---    Starting to solve linear problem Ku=f    ---" << std::endl;
     std::clock_t clock_solve;
     float duration_clock_solve;
     clock_solve = std::clock();  
+    // Need to alter global stiffness matric and global load vector to account for boundary conditions
+    Eigen::SparseMatrix<float> K_static = K;
+    for (unsigned int i = 0; i < bc.size(); i++)
+    {
+        try
+        {
+            unsigned int current_global_dof = bc.at(i).first;
+            for (unsigned int j = 0; j < ndofs; j++)
+            {
+                if (j == current_global_dof)
+                {
+                    f.coeffRef(current_global_dof) = bc.at(i).second;
+                }
+                else
+                {
+                    f.coeffRef(current_global_dof) = 1e10*bc.at(i).second;
+                }
+            }        
+            // if current bc==0, make all values in the corresponding row and column in K to zero
+            K_static.row(current_global_dof) *= 0;
+            K_static.col(current_global_dof) *= 0;
+            K_static.coeffRef(current_global_dof,current_global_dof) = 1e10;
+    }
+    catch(const std::exception& e)
+    {
+        std::cout << e.what() << '\n';
+        std::cout << "i=" << i << '\n';
+    }
+    }
+    std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K_static) << std::endl;
+    std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
     // Ku=f
-    Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
-    solver.compute(K);
+    // Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
+    // solver.compute(K_static);
+    std::cout << "a" << std::endl;
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver(K_static);
+    std::cout << "b" << std::endl;
     u = solver.solve(f);
+    std::cout << "c" << std::endl;
+    // std::cout << "d" << std::endl;
     std::cout << "u:" << std::endl;
     std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(u).transpose() << std::endl;
     duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
@@ -269,32 +358,13 @@ void Mesh::assemble(){
             free_dofs.push_back(i);
         }
     }
-    for (unsigned int i = 0; i < bc.size(); i++)
-    {
-        // if current bc==0, make all values in the corresponding row and column in K to zero
-        unsigned int current_global_dof = bc.at(i).first;
-        for (unsigned int j = 0; j < ndofs; j++)
-        {
-            if (j == current_global_dof)
-            {
-                f.coeffRef(current_global_dof) = bc.at(j).second;
-            }
-            else
-            {
-                f.coeffRef(current_global_dof) = 1e8*bc.at(i).second;
-            }
-        }        
-        K.row(current_global_dof) *= 0;
-        K.col(current_global_dof) *= 0;
-        K.coeffRef(current_global_dof,current_global_dof) = 1e8;
-    }
     duration_assemble = ( std::clock() - clock_assemble ) / (float) CLOCKS_PER_SEC;;
-    std::cout << "K:" << std::endl;
-    std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K) << std::endl;
-    std::cout << "M:" << std::endl;
-    std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(M) << std::endl;
-    std::cout << "f:" << std::endl;
-    std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
+    // std::cout << "K:" << std::endl;
+    // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K) << std::endl;
+    // std::cout << "M:" << std::endl;
+    // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(M) << std::endl;
+    // std::cout << "f:" << std::endl;
+    // std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
     std::cout << "---    Assembly completed in "<< duration_assemble << "seconds (wallclock time)    ---" << std::endl;
 }
 
@@ -311,7 +381,6 @@ void Mesh::add_mid(std::unordered_map<std::string, std::string> options){
 
 
 Mesh::Mesh(){
-    // init object to hold the mesh data.
 }
 
 void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::string> options){
@@ -326,15 +395,12 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
         float        magnitude      = std::stof(data.at(3));        
         // dof is given above in the local coord system
         std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[global_node_id]);
+        std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs={" << dof_from << "-" << dof_to << "}=" << std::flush;
         for (unsigned int i = dof_from; i <= dof_to; i++)
         {
             // abaqus starts counting dof's at 1, but vectors start at 0
             bc.push_back(std::make_pair(node->dofs.at(i-1).id,magnitude));
-        }
-        std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs={" << dof_from << "-" << dof_to << "}=";
-        for (unsigned int i = 0; i < 3; i++)
-        {
-            std::cout << nodes.at(global_2_local_node_id[global_node_id])->dofs.at(i).id << ",";
+            std::cout << nodes.at(global_2_local_node_id[global_node_id])->dofs.at(i-1).id << "," << std::flush;
         }
         std::cout <<" magnitude=" << magnitude << std::endl;
     }
@@ -358,7 +424,7 @@ void Mesh::add_load(std::string line){
         // so we can't add directly to global load vector, but have
         // to store it here meanwhile
         f_to_be_added.push_back(std::make_pair(global_dof,magnitude));   
-        std::cout << "*CLOAD: id=" << global_node_id << ", dof={" << local_dof << "}="<< global_dof <<", magnitude=" << magnitude << std::endl;
+        std::cout << "*CLOAD: id=" << global_node_id << ", dof={ direction=" << local_dof << "}="<< global_dof <<", magnitude=" << magnitude << std::endl;
     }
     catch(const std::exception& e)
     {
@@ -375,9 +441,15 @@ void Mesh::read_file(std::string filename){
     float duration_clock_read_file;
     clock_read_file = std::clock();  
     misc::append_newline_to_textfile(filename);
-    this->filename = filename;
     // Create input stream object
     std::ifstream input_file(filename);
+    if (input_file.fail())
+    {
+        // file could not be opened
+        std::cout << "Error: include " << filename << " could not be opened." << std::endl;
+        exit(0);
+    }
+    
     std::string line;
     unsigned int row_counter = 0;
     while (getline(input_file, line))
@@ -388,9 +460,13 @@ void Mesh::read_file(std::string filename){
             // extract a map of parameters and their values
             std::unordered_map<std::string,std::string> options = misc::options_map(line);
 
-            // bool temp = keyword == "*SOLID SECTION";
-            // std::cout << keyword << "=" << "*SOLID SECTION" << temp << std::endl;
-            if (keyword == "*SOLID SECTION" or keyword == "*SHELL SECTION")
+            if (keyword == "*INCLUDE")
+            {
+                // Call this function recursively if found include.
+                std::string include_filename = options["INPUT"];
+                read_file(include_filename);
+            }
+            else if (keyword == "*SOLID SECTION" or keyword == "*SHELL SECTION")
             {
                 add_pid(options);
             }     
@@ -526,7 +602,42 @@ void Mesh::read_file(std::string filename){
                 this->number_of_modes_to_find = std::stoi(number_of_modes_to_find_string);
                 std::cout << keyword << ": number of eigenvalues to be calculated = " << number_of_modes_to_find << std::endl;
             }
-            else if (keyword == "*NODE" or keyword == "*ELEMENT")
+            else if (keyword == "*ELEMENT"){
+                getline(input_file, line);
+                row_counter++;
+                bool inner_loop_keyword = true;
+                while (inner_loop_keyword == true){
+                row_counter++;   
+                // Ignore if it's a comment! Still on same keyword.
+                    if (misc::is_comment(line) == false){
+                        if (keyword == "*ELEMENT")
+                        {
+                            // If the line ends with a comma (','), the next line will continue to list nodes for that element.
+                            // I don't think we will ever need 3 lines, so can hard-code for two lines.
+                            // Check if last char is a comma:
+                            if (line.back() == ',')
+                            {
+                                // Peek next row in the text file and append it to our data line
+                                std::string next_line;
+                                getline(input_file, next_line);
+                                line = line + next_line;
+                            }
+                            add_element(line,options);
+                        }
+                    }
+                    // Want to peek next line, if it's a keyword or empty line we break
+                    // the while loop and start over!
+                    unsigned int previous_pos = input_file.tellg();
+                    getline(input_file, line);
+                    // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
+                    if (misc::is_keyword(line) == true or line.empty() == true)
+                    {
+                        input_file.seekg(previous_pos);
+                        inner_loop_keyword = false;
+                    }
+                }                
+            }
+            else if (keyword == "*NODE")
             {
                 getline(input_file, line);
                 row_counter++;
@@ -538,10 +649,6 @@ void Mesh::read_file(std::string filename){
                         if (keyword == "*NODE")
                         {
                             add_node(line,options);
-                        }
-                        else if (keyword == "*ELEMENT")
-                        {
-                            add_element(line,options);
                         }
                     }
                     // Want to peek next line, if it's a keyword or empty line we break
@@ -569,7 +676,7 @@ void Mesh::read_file(std::string filename){
         }
     }       
     duration_clock_read_file = (std::clock() - clock_read_file ) / (float) CLOCKS_PER_SEC;
-    std::cout << "---    Input file read and written information to the log file, in " << duration_clock_read_file << " seconds (wallclock time)    ---" << std::endl;
+    std::cout << "---    Input file "<< filename << " read and written information to the log file, in " << duration_clock_read_file << " seconds (wallclock time)    ---" << std::endl;
 };
 
 void Mesh::add_pid(std::unordered_map<std::string, std::string> options){    
@@ -595,8 +702,6 @@ void Mesh::add_pid(std::unordered_map<std::string, std::string> options){
     
 
 };
-
-
 void Mesh::add_element(std::string line,std::unordered_map<std::string,std::string> options){
     // these options need to be available to create an element
     std::string type = options["TYPE"];
@@ -631,9 +736,13 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
         element = std::shared_ptr<Element>(new C3D10(element_id,element_connectivity,pid));
     }
     else if (type == "C3D8")
-{   
-    element = std::shared_ptr<Element>(new C3D8(element_id,element_connectivity,pid));
-}
+    {      
+        element = std::shared_ptr<Element>(new C3D8(element_id,element_connectivity,pid));
+    }
+    else if (type == "C3D20")
+    {      
+        element = std::shared_ptr<Element>(new C3D20(element_id,element_connectivity,pid));
+    }
     else
     {
         std::cout << "*ELEMENT: type=" << type << " not supported" << std::endl;
