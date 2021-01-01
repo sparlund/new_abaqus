@@ -25,6 +25,7 @@ public:
     virtual std::string    get_element_type()=0;
     virtual unsigned short get_vtk_identifier()=0;
     void print_element_info_to_log();
+    static float inv_div_by1(float in);
     virtual ~Element(){};
     Element(){};
 };

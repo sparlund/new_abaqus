@@ -8,6 +8,17 @@
 
 unsigned int Element::element_counter=0;
 
+float Element::inv_div_by1(float in){
+    if (in > std::numeric_limits<float>::min())
+    {
+        return 1/in;
+    }
+    else
+    {   
+        return std::max(1.25e9f,1/std::numeric_limits<float>::min());
+    }
+}
+
 void Element::print_element_info_to_log(){
     // print info to log file
     std::vector<std::shared_ptr<Node>> nodes = get_connectivity();
