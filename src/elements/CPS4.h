@@ -26,7 +26,6 @@ private:
     std::vector<std::shared_ptr<Node>> connectivity;
     std::shared_ptr<Pid> pid;
     Eigen::Matrix<float,2,2> J;
-    std::vector<float> detJ;
     Eigen::Matrix<float,3,8> B;
     Eigen::Matrix<float,3,3> D;
     float A;

@@ -39,6 +39,7 @@ CPS4::CPS4(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std:
     D *= E/(1-(v*v));
     xhi << -std::sqrt(0.33),  std::sqrt(0.33), -std::sqrt(0.33), std::sqrt(0.33);
     eta << -std::sqrt(0.33), -std::sqrt(0.33),  std::sqrt(0.33), std::sqrt(0.33);
+    Eigen::Matrix<float,2,8> global_N_matrix;
     for (unsigned char i = 0; i < ngp; i++)
     {            
         // shape functions
@@ -66,18 +67,23 @@ CPS4::CPS4(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std:
     }
     // Find jacobian J and det(J) for each gauss point
     float w = 1;
+    float detJ;
     for (unsigned int i = 0; i < ngp; i++)
     {
         Eigen::Matrix<float,2,4> dNdXhidEta;
         dNdXhidEta.row(0) = dNdXhi.col(i).transpose();
         dNdXhidEta.row(1) = dNdEta.col(i).transpose();
         J << dNdXhidEta*coord;
-        detJ.push_back(J.determinant());
+        detJ=J.determinant();
         dNdxdy = J.inverse()*dNdXhidEta;
         B <<    dNdxdy(0,0),            0, dNdxdy(0,1),           0, dNdxdy(0,2),           0, dNdxdy(0,3),           0,
                         0, dNdxdy(1,0),           0, dNdxdy(1,1),           0, dNdxdy(1,2),           0, dNdxdy(1,3),
                 dNdxdy(1,0), dNdxdy(0,0),dNdxdy(1,1), dNdxdy(0,1),dNdxdy(1,2), dNdxdy(0,2),dNdxdy(1,3), dNdxdy(0,3); 
-        Ke += w*detJ.at(i)*t*B.transpose()*D*B;
+        global_N_matrix << N(0),0,N(1),0,N(2),0,N(3),0,
+                           0,N(0),0,N(1),0,N(2),0,N(3);
+        Ke += w*detJ*t*B.transpose()*D*B;
+        Me = Me + mid->get_density()*global_N_matrix.transpose()*global_N_matrix*detJ;
+        std::cout << "detJ=" << detJ << std::endl;
     }
     print_element_info_to_log();
 }
