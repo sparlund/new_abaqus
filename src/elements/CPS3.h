@@ -21,7 +21,8 @@ private:
     std::shared_ptr<Pid> pid;
     Eigen::Matrix<float,2,2> J;
     Eigen::Matrix<float,3,6> B;
-    float A;
+    Eigen::Matrix<float,3,3> coord;
+    float area;
 public:
     Eigen::Matrix<float,6,6> Ke;
     Eigen::Matrix<float,6,6> Me;
