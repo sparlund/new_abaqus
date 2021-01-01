@@ -17,9 +17,11 @@ C3D8::C3D8(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std:
             Dof x = Dof();
             Dof y = Dof();
             Dof z = Dof();
+            // put Dof object itself in list of Dofs for element
             connectivity.at(i)->dofs.push_back(x);
             connectivity.at(i)->dofs.push_back(y);
             connectivity.at(i)->dofs.push_back(z);
+            // put indiviual dof id's in a list for easy access?
             dofs_id.push_back(x.id);
             dofs_id.push_back(y.id);
             dofs_id.push_back(z.id);
