@@ -33,11 +33,11 @@ CPS3, CPS4, C3D10, C3D8
   - [ ] Disregard unused nodes
 - [x] Set up classes and functions for nodes, elements, properties and materials
 - [ ] Implement logic for different elements
-  - [x] 2D tria (S2)
-  - [x] 2D quadrilateral (CPS4)
+  - [x] 2D first order tria (S2)
+  - [x] 2D first order quadrilateral (CPS4) 
   - [ ] 3D second order tetra (C3D10)
-  - [X] 3D hexahedron (C3D8)
-  - [ ] 3D second order hexahedron (C3D20)
+  - [X] 3D first order hexahedron (C3D8)
+  - [X] 3D second order hexahedron (C3D20)
 - [x] Assemble mass matrix  
 - [x] Assemble stiffness matrix
   - [x] Modify stiffness matrix and load vector to account for boundary conditions
@@ -50,14 +50,12 @@ CPS3, CPS4, C3D10, C3D8
   - [X] *STATIC 
   - [X] *EIGENFREQUENCY
   - [ ] *OUTPUT
-- [x] Point load keyword and assemble global load vector
 - [x] Solve Ka=f for linear problems
 - [ ] Calculate scalar values on elements
   - [ ] Stresses and strains
   - [ ] von Mises stress
 - [X] Solve eigen value problem
   - [X] Calculate mass matrix in element construction (note: not available for all..)
-  - [X] Assemble mass matrix
 - [ ] Export results to VTK format to view results in ParaView
   - [x] Nodal displacement
   - [x] Eigenmodes 
