@@ -51,18 +51,25 @@ CPS3, CPS4, C3D10, C3D8
   - [X] *EIGENFREQUENCY
   - [ ] *OUTPUT
 - [x] Solve Ka=f for linear problems
+- [ ] Support for simple contact mechanics
 - [ ] Calculate scalar values on elements
   - [ ] Stresses and strains
   - [ ] von Mises stress
 - [X] Solve eigen value problem
   - [X] Calculate mass matrix in element construction (note: not available for all..)
+- [ ] Add sanity checks to log-file
+  - [x] Print total model weight
+  - [ ] Print total model volume
+  - [ ] Print center of gravity
+
 - [ ] Export results to VTK format to view results in ParaView
   - [x] Nodal displacement
   - [x] Eigenmodes 
   - [ ] Stresses and strains  
 - [x] Re-direct output to a log file for debugging  
   - [x] Print timing for each step in logfile as basic profiling
-- [ ] Some basic error handling  
+- [ ] Some basic error handling
+  - [X] Print warning and exit program on small or negative Jacobian determinant  
 - [ ] makefile
 - [ ] Automate test cases for comparison solution against abaqus or hand calculations
 
