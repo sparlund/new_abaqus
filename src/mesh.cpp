@@ -53,8 +53,13 @@ void Mesh::print_matrix_to_mtx(Eigen::SparseMatrix<float> A,std::string output_f
             int row = it.row()+1;   // row index
             int column = it.col()+1;   // col index (here it is equal to k)
             // it.index(); // inner index, here it is equal to it.row()
+            // this should only print non-zero but doesn't work correctly? print zeros to, need to add a check
             float v = it.value();
+            if (v != 0.0f)
+            {
             mtx << row << " " << column << " " << v << std::endl;
+            }
+            
         }
     }
     mtx.close();
@@ -196,14 +201,14 @@ void Mesh::solve_eigenfrequency(){
     {
         // if current bc==0, make all values in the corresponding row and column in K to zero
         unsigned int current_global_dof = bc.at(i).first;
-        K_eigen.coeffRef(current_global_dof,current_global_dof) = 1e8;
+        K_eigen.coeffRef(current_global_dof,current_global_dof) = penalty_value;
     }
     // if problem is smaller than, let's say 1e3 dofs, it's
     // faster to cast the matrices to dense and just solve the problem the "hard" way
+    print_matrix_to_mtx(K_eigen,analysis_name + "_STIFF_new_abaqus.mtx");  
+    print_matrix_to_mtx(M,analysis_name + "_MASS_new_abaqus.mtx");  
     if (ndofs < 1e2)
     {
-        print_matrix_to_mtx(K_eigen,"cpp_stiffness.mtx");  
-        print_matrix_to_mtx(M,"cpp_mass.mtx");  
         Eigen::MatrixXf K_eigen_dense = Eigen::MatrixXf(K_eigen);
         Eigen::MatrixXf M_dense = Eigen::MatrixXf(M);
         Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXf> es(K_eigen_dense,M_dense);
@@ -263,13 +268,13 @@ void Mesh::solve_static(){
                 }
                 else
                 {
-                    f.coeffRef(current_global_dof) = 1e10*bc.at(i).second;
+                    f.coeffRef(current_global_dof) = penalty_value*bc.at(i).second;
                 }
             }        
             // if current bc==0, make all values in the corresponding row and column in K to zero
             K_static.row(current_global_dof) *= 0;
             K_static.col(current_global_dof) *= 0;
-            K_static.coeffRef(current_global_dof,current_global_dof) = 1e10;
+            K_static.coeffRef(current_global_dof,current_global_dof) = penalty_value;
     }
     catch(const std::exception& e)
     {
@@ -301,9 +306,18 @@ void Mesh::assemble(){
     std::cout << "          Mesh size:" << std::endl;
     std::cout << "               nodes = " << nodes.size() << std::endl;
     std::cout << "            elements = " << elements.size() << std::endl;
-    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
     ndofs = nodes.at(0)->dofs.at(0).global_dof_id_counter; 
     std::cout << "  degrees of freedom = " << ndofs << std::endl;
+    // Also print weight as a sanity check!
+    float model_total_weight = 0;
+    for (unsigned int i = 0; i < elements.size(); i++)
+    {
+        model_total_weight = model_total_weight + elements.at(i)->get_weight();
+    }
+    std::cout << "         Model info:" << std::endl;
+    std::cout << "              weight = " << model_total_weight << std::endl;
+    
+    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
     std::clock_t clock_assemble;
     float duration_assemble;
     clock_assemble = std::clock();

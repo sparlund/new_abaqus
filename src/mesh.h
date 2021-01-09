@@ -22,7 +22,7 @@ private:
     static unsigned int element_counter;
     static unsigned int pid_counter;
     static unsigned int mid_counter;
-
+    const float penalty_value = 1e36;
     // arrays of pointers to nodes and elements
     std::vector<std::shared_ptr<Node>> nodes;
     std::unordered_map<unsigned int,unsigned int> global_2_local_node_id;
