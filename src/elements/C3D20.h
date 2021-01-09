@@ -29,6 +29,7 @@ private:
     // Eigen::Matrix<float,3,10> shape_functions(Eigen::Matrix<float,1,4> evaluation_points);
     const unsigned short ngp = 27;  
     const unsigned short ngp_per_dim = 3;
+    float volume, weight;
     // Eigen::Matrix<float,1,8> xhi;
     // Eigen::Matrix<float,1,8> eta;
     // Eigen::Matrix<float,1,8> my;
@@ -73,6 +74,7 @@ private:
                                            0.171467764060357,   0.274348422496571,   0.171467764060357};
 
 public:
+    float get_weight(){return weight;};
     std::shared_ptr<Pid> get_pid(){return this->pid;};
     unsigned int get_id(){return id;};
     std::vector<unsigned int> get_element_dof_ids(){return dofs_id;};
