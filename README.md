@@ -23,8 +23,9 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
 
 Below is a bar discretized into 10 20-node hexahedron elements. It's fixed in the far end.
 <img src="src/images/ex6_2ndorder_10elements_with_bc.png" width="75%"/>
-| Eigenfrequency [Hz] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|-------------|---|---|---|---|---|---|---|---|---|---|---|---|
+
+| Eigenfrequency | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|-------------|---|---|---|---|---|---|---|---|---|---|
 | ABAQUS (c)  | 420.20 | 420.20  | 2531.3  | 2531.3  | 4009.6 | 6496.1 | 6704.7 | 6704.7 | 12029. | 12268. | 
 | new_abaqus  | 420.48 | 427.86 | 2531.56 | 2532.4 | 4009.0 | 6494.25 | 6705.02| 6705.3 | 12029.23 | 12268.6 |
 
