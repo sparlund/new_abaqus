@@ -21,7 +21,7 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
 | ABAQUS (c)      | 0.0348       |
 | new_abaqus   | 0.0346        |
 
-Below is a bar discretized into 10 20-node hexahedron elements. It's fixed in the far end.
+Below is a bar discretized into 10 20-node hexahedron elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system.  
 <img src="src/images/ex6_2ndorder_10elements_with_bc.png" width="75%"/>
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
@@ -37,6 +37,8 @@ CPS3, CPS4, C3D10, C3D8
 
 
 ### To-do & Features implemented
+- [ ] Guide how to install
+- [ ] makefile
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
 - [x] Set up classes and functions for nodes, elements, properties and materials
@@ -54,17 +56,18 @@ CPS3, CPS4, C3D10, C3D8
   - [x] *CLOAD
   - [X] *MATERIAL
   - [X] *SECTION
+  - [X] *NSET
   - [ ] *STEP
   - [X] *STATIC 
   - [X] *EIGENFREQUENCY
   - [ ] *OUTPUT
-- [x] Solve Ka=f for linear problems
+- [x] Solve Ku=f for linear problems
 - [ ] Support for simple contact mechanics
 - [ ] Calculate scalar values on elements
   - [ ] Stresses and strains
   - [ ] von Mises stress
 - [X] Solve eigen value problem
-  - [X] Calculate mass matrix in element construction (note: not available for all..)
+  - [X] Calculate mass matrix in element construction
 - [ ] Add sanity checks to log-file
   - [x] Print total model weight
   - [ ] Print total model volume
@@ -78,7 +81,7 @@ CPS3, CPS4, C3D10, C3D8
   - [x] Print timing for each step in logfile as basic profiling
 - [ ] Some basic error handling
   - [X] Print warning and exit program on small or negative Jacobian determinant  
-- [ ] makefile
+  - [ ] Print error in log file and exit when a specified material, node set, section or whatever does not exist
 - [ ] Automate test cases for comparison solution against abaqus or hand calculations
 
 
