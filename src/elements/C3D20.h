@@ -6,85 +6,46 @@
 #include "../element.h"
 #include "../pid.h"
 #include "../node.h"
-
+#include "../Gauss.h"
 
 class C3D20 : public Element
 {
-private:
+protected:
     unsigned int id;
-    static const std::string element_type;
-    static const unsigned short nnodes  = 20;
-    static const unsigned char ndofs   = 60; // 30*3
-    // https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
-    static const unsigned short vtk_identifier = 25;
-    std::vector<unsigned int> dofs_id;
     std::vector<std::shared_ptr<Node>> connectivity;
     std::shared_ptr<Pid> pid;
-    // dim(coord) = nnodes*ndim
-    Eigen::Matrix<float,20,3> coord;
-    // dim(K) = (nnodes*ndim) x (nnodes*ndim)
-    Eigen::Matrix<float,60,60> Me;
-    Eigen::Matrix<float,60,60> Ke;
-    Eigen::Matrix<float,60,1> fe;  
-    // Eigen::Matrix<float,3,10> shape_functions(Eigen::Matrix<float,1,4> evaluation_points);
-    const unsigned short ngp = 27;  
-    const unsigned short ngp_per_dim = 3;
-    float volume, weight;
-    // Eigen::Matrix<float,1,8> xhi;
-    // Eigen::Matrix<float,1,8> eta;
-    // Eigen::Matrix<float,1,8> my;
-    // Gauss points position and weights are from Calculix. Positions are standard but weights are weird, no idea where they found them lol
-    std::array<std::array<float, 3>,27> gauss_points = {{
-                                            {-0.774596669241483,  -0.774596669241483,  -0.774596669241483},
-                                            {0.000000000000000,  -0.774596669241483,  -0.774596669241483},
-                                            {0.774596669241483,  -0.774596669241483,  -0.774596669241483},
-                                            {-0.774596669241483,   0.000000000000000,  -0.774596669241483},
-                                            {0.000000000000000,   0.000000000000000,  -0.774596669241483},
-                                            {0.774596669241483,   0.000000000000000,  -0.774596669241483},
-                                            {-0.774596669241483,   0.774596669241483,  -0.774596669241483},
-                                            {0.000000000000000,   0.774596669241483,  -0.774596669241483},
-                                            {0.774596669241483,   0.774596669241483,  -0.774596669241483},
-                                            {-0.774596669241483,  -0.774596669241483,   0.000000000000000},
-                                            {0.000000000000000,  -0.774596669241483,   0.000000000000000},
-                                            {0.774596669241483,  -0.774596669241483,   0.000000000000000},
-                                            {-0.774596669241483,   0.000000000000000,   0.000000000000000},
-                                            {0.000000000000000,   0.000000000000000,   0.000000000000000},
-                                            {0.774596669241483,   0.000000000000000,   0.000000000000000},
-                                            {-0.774596669241483,   0.774596669241483,   0.000000000000000},
-                                            {0.000000000000000,   0.774596669241483,   0.000000000000000},
-                                            {0.774596669241483,   0.774596669241483,   0.000000000000000},
-                                            {-0.774596669241483,  -0.774596669241483,   0.774596669241483},
-                                            {0.000000000000000,  -0.774596669241483,   0.774596669241483},
-                                            {0.774596669241483,  -0.774596669241483,   0.774596669241483},
-                                            {-0.774596669241483,   0.000000000000000,   0.774596669241483},
-                                            {0.000000000000000,   0.000000000000000,   0.774596669241483},
-                                            {0.774596669241483,   0.000000000000000,   0.774596669241483},
-                                            {-0.774596669241483,   0.774596669241483,   0.774596669241483},
-                                            {0.000000000000000,   0.774596669241483,   0.774596669241483},
-                                            {0.774596669241483,   0.774596669241483,   0.774596669241483}   }};
-
-    std::array<float, 27> gauss_weights = { 0.171467764060357,   0.274348422496571,   0.171467764060357,
-                                           0.274348422496571,   0.438957475994513,   0.274348422496571,
-                                           0.171467764060357,   0.274348422496571,   0.171467764060357,
-                                           0.274348422496571,   0.438957475994513,   0.274348422496571,
-                                           0.438957475994513,   0.702331961591221,   0.438957475994513,
-                                           0.274348422496571,   0.438957475994513,   0.274348422496571,
-                                           0.171467764060357,   0.274348422496571,   0.171467764060357,
-                                           0.274348422496571,   0.438957475994513,   0.274348422496571,
-                                           0.171467764060357,   0.274348422496571,   0.171467764060357};
+    std::vector<unsigned int> dofs_id;
+    std::vector<float> detJ;
+    float area, volume, weight;
+    static const std::string element_type;
+    static const unsigned short nnodes          = 20;
+    static const unsigned short ndofs           = 60; 
+    static const unsigned short vtk_identifier  = 25;
+    static const unsigned short ngp             = 27;
+    static const unsigned short dimensions      = 3;
+    Eigen::Matrix<float,ndofs,1> fe;
+    Eigen::Matrix<float,ndofs,ndofs> Me;
+    Eigen::Matrix<float,ndofs,ndofs> Ke;
+    Eigen::Matrix<float,nnodes,dimensions> coord;
+    const std::array<std::array<float, dimensions>,ngp>* gauss_points = &Gauss::_3D::integration_points_3_by_3_by_3;
+    const std::array<float, ngp>* gauss_weights = &Gauss::_3D::gauss_weights_3_by_3_by_3;
 
 public:
-    float get_weight(){return weight;};
-    std::shared_ptr<Pid> get_pid(){return this->pid;};
-    unsigned int get_id(){return id;};
-    std::vector<unsigned int> get_element_dof_ids(){return dofs_id;};
-    std::vector<std::shared_ptr<Node>> get_connectivity(){return this->connectivity;};
-    unsigned short get_element_ndofs(){return ndofs;}
-    unsigned short get_element_nnodes(){return nnodes;}
-    unsigned short get_vtk_identifier(){return vtk_identifier;}
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Ke(){return Ke;}
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Me(){return Me;}
-    std::string get_element_type(){return element_type;}
+    std::vector<std::shared_ptr<Node>> get_connectivity(){return this->connectivity;}
+    std::shared_ptr<Pid>               get_pid(){return this->pid;}
+    std::vector<unsigned int>          get_element_dof_ids(){return dofs_id;}
+    unsigned short                     get_element_ndofs(){return ndofs;}
+    unsigned short                     get_element_nnodes(){return nnodes;}
+    unsigned int                       get_id(){return id;}
+    std::string                        get_element_type(){return element_type;}
+    unsigned short                     get_vtk_identifier(){return vtk_identifier;}
+    float                              get_weight(){return weight;}
+    float                              get_volume(){return volume;}
+    unsigned short                     get_ngp(){return ngp;};
+    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Ke(){return Ke;};
+    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> get_Me(){return Me;}; 
+    void calculate_Ke();
+    void calculate_Me();
     C3D20(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid);
     ~C3D20();
 };
