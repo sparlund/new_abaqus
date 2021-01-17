@@ -11,6 +11,7 @@
 #include "node.h"
 #include "element.h"
 #include "misc_string_functions.h"
+#include "set.h"
 
 class Mesh
 {
@@ -47,6 +48,10 @@ private:
     void add_boundary(std::string line,std::unordered_map<std::string, std::string> options);
     void add_pid(std::unordered_map<std::string, std::string> options);
     void add_mid(std::unordered_map<std::string, std::string> options);
+    void add_set(std::string line,std::unordered_map<std::string, std::string> options);
+    std::vector<std::shared_ptr<Set<Node>>> node_sets;
+    std::unordered_map<std::string,std::shared_ptr<Set<Node>>> node_set_from_node_set_name; 
+    std::vector<std::shared_ptr<Set<Element>>> element_sets;
     bool static_analysis=false;
     bool eigenvalue_analysis=false;
     std::string eigenvalue_solution_method;
@@ -55,14 +60,7 @@ private:
 public:    
     void set_analysis_name(std::string string_analysis_name){this->analysis_name = string_analysis_name;return;}
     unsigned int get_pid_counter(){return pid_counter;};
-    // getters and setters
     unsigned long get_number_of_elements(){return this->elements.size();}
-    // Element* get_element(unsigned long id){return this->elements.at(id);}
-    // unsigned long get_number_of_nodes(){return this->nodes.size();}
-    // Node* get_node(unsigned long id){return this->nodes.at(id);}
-    // Pid* get_pid(unsigned int pid_id) {return this->pids.at(pid_id);}
-    // Mid* get_mid(unsigned int mid_id) {return this->mids.at(mid_id);}
-
     // ndofs is counter for total number of degrees of freedom for the mesh
     unsigned int ndofs = 0;
     // global stiffness matrix

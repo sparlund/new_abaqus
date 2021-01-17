@@ -205,8 +205,8 @@ void Mesh::solve_eigenfrequency(){
     }
     // if problem is smaller than, let's say 1e3 dofs, it's
     // faster to cast the matrices to dense and just solve the problem the "hard" way
-    print_matrix_to_mtx(K_eigen,analysis_name + "_STIFF_new_abaqus.mtx");  
-    print_matrix_to_mtx(M,analysis_name + "_MASS_new_abaqus.mtx");  
+    print_matrix_to_mtx(K_eigen,analysis_name + "_STIF2_new_abaqus.mtx");  
+    print_matrix_to_mtx(M,analysis_name + "_MASS2_new_abaqus.mtx");  
     if (ndofs < 1e2)
     {
         Eigen::MatrixXf K_eigen_dense = Eigen::MatrixXf(K_eigen);
@@ -309,13 +309,13 @@ void Mesh::assemble(){
     ndofs = nodes.at(0)->dofs.at(0).global_dof_id_counter; 
     std::cout << "  degrees of freedom = " << ndofs << std::endl;
     // Also print weight as a sanity check!
-    float model_total_weight = 0;
-    for (unsigned int i = 0; i < elements.size(); i++)
-    {
-        model_total_weight = model_total_weight + elements.at(i)->get_weight();
-    }
-    std::cout << "         Model info:" << std::endl;
-    std::cout << "              weight = " << model_total_weight << std::endl;
+    // float model_total_weight = 0;
+    // for (unsigned int i = 0; i < elements.size(); i++)
+    // {
+    //     model_total_weight = model_total_weight + elements.at(i)->get_weight();
+    // }
+    // std::cout << "         Model info:" << std::endl;
+    // std::cout << "              weight = " << model_total_weight << std::endl;
     
     // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
     std::clock_t clock_assemble;
@@ -327,7 +327,13 @@ void Mesh::assemble(){
     u.resize(ndofs,1);
     // assemble stiffness- and mass matrix, will alter it later due to boundary conditions
     std::shared_ptr<Element> current_element;
+    for (unsigned int i = 0; i < elements.size(); i++)
+    {
+        current_element = elements.at(i);
+        current_element->calculate_Ke();
+        current_element->calculate_Me();
 
+    }
     
     for (unsigned int i = 0; i < elements.size(); i++)
     { 
@@ -338,7 +344,7 @@ void Mesh::assemble(){
             for(unsigned int k=0;k < dofs.size();k++){
                 unsigned int dof_column = dofs.at(k);
                 Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Ke = current_element->get_Ke();
-                Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Me = current_element->get_Me();
+                Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Me = current_element->get_Me();                
                 K.coeffRef(dof_row,dof_column) += Ke(j,k);
                 M.coeffRef(dof_row,dof_column) += Me(j,k);
             }
@@ -402,23 +408,54 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
     std::vector<std::string> data = misc::split_on(line,',');
     if (type=="DISPLACEMENT")
     {
-        // node,dof_from,dof_to,magnitude
-        unsigned int global_node_id = std::stoi(data.at(0));
+        // Check if first object is a string or int --> set pointer or node id
+        // Need to iterate through string. If there are no alpabetical chars it's
+        // a node id, otherwise it's a string!
+        // TODO: clear string of leading and trailing whitespace!
+        bool node_boundary = std::find_if(data.at(0).begin(),
+                                          data.at(0).end(),
+                                          [](unsigned char c) { return !std::isdigit(c); }) == data.at(0).end();
+        // dof is given above in the local coord system
         unsigned int dof_from       = std::stoi(data.at(1));
         unsigned int dof_to         = std::stoi(data.at(2));
         float        magnitude      = std::stof(data.at(3));        
-        // dof is given above in the local coord system
-        std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[global_node_id]);
-        std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs={" << dof_from << "-" << dof_to << "}=" << std::flush;
-        for (unsigned int i = dof_from; i <= dof_to; i++)
+        // node,dof_from,dof_to,magnitude
+        std::shared_ptr<Node> node;
+        std::shared_ptr<Set<Node>> node_set;
+        unsigned int global_node_id,number_of_nodes;
+        std::string node_set_name;
+        if (node_boundary == true)
         {
-            // abaqus starts counting dof's at 1, but vectors start at 0
-            bc.push_back(std::make_pair(node->dofs.at(i-1).id,magnitude));
-            std::cout << nodes.at(global_2_local_node_id[global_node_id])->dofs.at(i-1).id << "," << std::flush;
+            std::cout << data.at(0) << std::endl;
+            global_node_id = std::stoi(data.at(0));
+            node = nodes.at(global_2_local_node_id[global_node_id]);
+            number_of_nodes = 1;
         }
-        std::cout <<" magnitude=" << magnitude << std::endl;
+        else
+        {
+            node_set_name = data.at(0);
+            node_set = node_set_from_node_set_name[node_set_name];
+            number_of_nodes = node_set->get_number_of_entities();
+        }
+        for (unsigned int i = 0; i < number_of_nodes; i++)
+        {
+            if (number_of_nodes > 1)
+            {
+                node = node_set->get_entity(i);
+                global_node_id = node->id;
+            }
+            std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs={" << dof_from << "-" << dof_to << "}=" << std::flush;
+            for (unsigned int j = dof_from; j <= dof_to; j++)
+            {
+                // abaqus starts counting dof's at 1, but vectors start at 0
+                bc.push_back(std::make_pair(node->dofs.at(j-1).id,magnitude));
+                std::cout << nodes.at(global_2_local_node_id[global_node_id])->dofs.at(j-1).id << "," << std::flush;
+            }
+            std::cout <<" magnitude=" << magnitude << std::endl;
+
+        }
+        
     }
-    
 }
 
 void Mesh::add_load(std::string line){
@@ -438,7 +475,7 @@ void Mesh::add_load(std::string line){
         // so we can't add directly to global load vector, but have
         // to store it here meanwhile
         f_to_be_added.push_back(std::make_pair(global_dof,magnitude));   
-        std::cout << "*CLOAD: id=" << global_node_id << ", dof={ direction=" << local_dof << "}="<< global_dof <<", magnitude=" << magnitude << std::endl;
+        std::cout << "*CLOAD: id=" << global_node_id << ", dof={" << local_dof << "}="<< global_dof <<", magnitude=" << magnitude << std::endl;
     }
     catch(const std::exception& e)
     {
@@ -558,7 +595,11 @@ void Mesh::read_file(std::string filename){
                         }
                     }
                 }
-                
+                // We've added all the info we want to this specific material, let's set up the constitutive matrices for both 2D and 3D.
+                // The latest createt MID bill be att the back of the material list
+                mids.back()                
+                // 2D:
+
             }
             else if (keyword=="*BOUNDARY"){
                 getline(input_file, line);
@@ -624,20 +665,17 @@ void Mesh::read_file(std::string filename){
                 row_counter++;   
                 // Ignore if it's a comment! Still on same keyword.
                     if (misc::is_comment(line) == false){
-                        if (keyword == "*ELEMENT")
+                        // If the line ends with a comma (','), the next line will continue to list nodes for that element.
+                        // I don't think we will ever need 3 lines, so can hard-code for two lines.
+                        // Check if last char is a comma:
+                        if (line.back() == ',')
                         {
-                            // If the line ends with a comma (','), the next line will continue to list nodes for that element.
-                            // I don't think we will ever need 3 lines, so can hard-code for two lines.
-                            // Check if last char is a comma:
-                            if (line.back() == ',')
-                            {
-                                // Peek next row in the text file and append it to our data line
-                                std::string next_line;
-                                getline(input_file, next_line);
-                                line = line + next_line;
-                            }
-                            add_element(line,options);
+                            // Peek next row in the text file and append it to our data line
+                            std::string next_line;
+                            getline(input_file, next_line);
+                            line = line + next_line;
                         }
+                        add_element(line,options);
                     }
                     // Want to peek next line, if it's a keyword or empty line we break
                     // the while loop and start over!
@@ -660,10 +698,7 @@ void Mesh::read_file(std::string filename){
                 row_counter++;   
                 // Ignore if it's a comment! Still on same keyword.
                     if (misc::is_comment(line) == false){
-                        if (keyword == "*NODE")
-                        {
-                            add_node(line,options);
-                        }
+                        add_node(line,options);
                     }
                     // Want to peek next line, if it's a keyword or empty line we break
                     // the while loop and start over!
@@ -677,11 +712,42 @@ void Mesh::read_file(std::string filename){
                     }
                 }                
             }
+            else if (keyword == "*NSET"){
+                getline(input_file, line);
+                row_counter++;
+                bool inner_loop_keyword = true;
+                while (inner_loop_keyword == true){
+                    row_counter++;   
+                // Ignore if it's a comment! Still on same keyword.
+                    if (misc::is_comment(line) == false){
+                        // If the line ends with a comma (','), the next line will continue to list nodes for that element.
+                        // I don't think we will ever need 3 lines, so can hard-code for two lines.
+                        // Check if last char is a comma:
+                        if (line.back() == ',')
+                        {
+                            // Peek next row in the text file and append it to our data line
+                            std::string next_line;
+                            getline(input_file, next_line);
+                            line = line + next_line;
+                        }
+                        add_set(line,options);
+                    }
+                    // Want to peek next line, if it's a keyword or empty line we break
+                    // the while loop and start over!
+                    unsigned int previous_pos = input_file.tellg();
+                    getline(input_file, line);
+                    // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
+                    if (misc::is_keyword(line) == true or line.empty() == true)
+                    {
+                        input_file.seekg(previous_pos);
+                        inner_loop_keyword = false;
+                    }
+                }                                
+            }
             else
             {
                 std::cout << keyword << ": not supported" << std::endl;
             }
-            
             if (input_file.eof() == true)
             {
                 break;
@@ -692,6 +758,27 @@ void Mesh::read_file(std::string filename){
     duration_clock_read_file = (std::clock() - clock_read_file ) / (float) CLOCKS_PER_SEC;
     std::cout << "---    Input file "<< filename << " read and written information to the log file, in " << duration_clock_read_file << " seconds (wallclock time)    ---" << std::endl;
 };
+
+void Mesh::add_set(std::string line,std::unordered_map<std::string, std::string> options){
+    // create new node set, add it to member variable map node_sets
+    std::string set_name = options["NSET"];
+    std::shared_ptr<Set<Node>> node_set  = std::shared_ptr<Set<Node>>(new Set<Node>(set_name));
+    // Start looping line and add each node
+    std::vector<std::string> nodes_string_vector = misc::split_on(line,',');
+    for (unsigned int i = 0; i < nodes_string_vector.size(); i++)
+    {
+        // get pointer to node from the id
+        unsigned int node_id = std::stoi(nodes_string_vector.at(i));
+        std::shared_ptr<Node> node_pointer = node_id_2_node_pointer[node_id];
+        node_set->add_entity(node_pointer);
+        std::cout <<", "<< node_pointer->id;
+    }
+    std::cout << "" << std::endl;
+    // Add node set to vector of node sets
+    node_sets.push_back(node_set);
+    // Add entry to map to find node set by name
+    node_set_from_node_set_name[set_name] = node_set;
+}
 
 void Mesh::add_pid(std::unordered_map<std::string, std::string> options){    
     std::string pid_name = options["ELSET"];
@@ -735,7 +822,6 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     if (type == "S3")
     {
         element = std::shared_ptr<Element>(new S3(element_id,element_connectivity,pid));
-
     }
     else if (type == "CPS3")
     {
