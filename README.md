@@ -40,7 +40,7 @@ A tuning fork made up of 4 thousand second order tetra element (C3D10). There is
 
 Tuning fork geometry             |  First eigenmode
 :-------------------------:|:-------------------------:
-<img src="src/images/tuning_fork.png" width="60%"/>  |  <img src="src/images/tuning_fork_mode1.png" width="60%"/>
+<img src="src/images/tuning_fork.png" width="60%"/>  |  <img src="src/images/tuning_fork_mode1.gif" width="60%"/>
 
 
 
