@@ -1,11 +1,13 @@
 ### new_abaqus
-The finite element method (FEM) is way to solve engineering problem and mathematical models. Typical problem areas of interest include the traditional fields of structural analysis, heat transfer, fluid flow, mass transport, and electromagnetism... 
+The finite element method (FEM) is way to solve engineering problem and mathematical models. Typical problem areas of interest include the traditional fields of structural analysis, heat transfer, fluid flow, mass transport, and electromagnetism.
+
 Abaqus (C) is a commercial software for solving a myriad of engineering problems using FEM. This small project attempts to emulate some of its features, in the field of structural analysis. The project is far from finished, but there's a few examples below that shows great promise in showing similar results to the software it tries to be.
+
 
 One of the main features of new_abaqus is that it can read a mesh described in the specific Abaqus format. That format is explained [here](https://classes.engineering.wustl.edu/2009/spring/mase5513/abaqus/docs/v6.5/books/gss/default.htm?startat=ch02s03.html), for example. Typically one creates the mesh in a pre-processor and output the geometry to the Abaqus(C) format, one such open source software is [gmsh](https://gmsh.info/).
 
 
-The program takes 1 argument, an input file containing the mesh and load case definition. On linux:
+The program takes 1 argument: an input file containing the mesh and load case definition.
 ```
 ./new_abaqus example.inp
 ```
@@ -18,7 +20,7 @@ The name is a joke from the character YinYang in the tv-show Silicon Valley, who
 This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of quad and trias. The geometry is fixed on the left hand side and a point force F is applied on the right, see figure below. The results are exactly the same between Abaqus (C) and new_abaqus.
 Original geometry             |  Deformed geometry
 :-------------------------:|:-------------------------:
-<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="75%"/>
+<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="90%"/>
 
 | FE-solver      | Load node deflection (red arrow in figure above!) |
 | ----------- | ----------- |
