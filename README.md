@@ -43,6 +43,8 @@ A tuning fork made up of 4 thousand second order tetra element (C3D10). There re
 Tuning fork geometry             |  First eigenmode |  Second eigenmode
 -------------------------|-------------------------|-------------------------
 <img src="src/images/tuning_fork.png" width="60%"/>  |  <img src="src/images/tuning_fork_mode1.gif" width="70%"/> |  <img src="src/images/tuning_fork_mode2.gif" width="70%"/>
+
+
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |-------------|---|---|---|---|---|---|---|---|
 | ABAQUS (c)  | 158.62 | 163.19 | 378.21 | 554.76 | 1120.28 | 1155.02 | 1186.46 | 1977.45 | 2501.20 | 3467.12
