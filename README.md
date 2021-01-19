@@ -2,7 +2,7 @@
 The finite element method (FEM) is way to solve engineering problem and mathematical models. Typical problem areas of interest include the traditional fields of structural analysis, heat transfer, fluid flow, mass transport, and electromagnetism... 
 Abaqus (C) is a commercial software for solving a myriad of engineering problems using FEM. This small project attempts to emulate some of its features, in the field of structural analysis. The project is far from finished, but there's a few examples below that shows great promise in showing similar results to the software it tries to be.
 
-One of the main features of new_abaqus is that it can read a mesh described in the specific Abaqus format.
+One of the main features of new_abaqus is that it can read a mesh described in the specific Abaqus format. That format is explained [here](https://classes.engineering.wustl.edu/2009/spring/mase5513/abaqus/docs/v6.5/books/gss/default.htm?startat=ch02s03.html), for example. Typically one creates the mesh in a pre-processor and output the geometry to the Abaqus(C) format, one such open source software is [gmsh](https://gmsh.info/).
 
 
 The program takes 1 argument, an input file containing the mesh and load case definition. On linux:
@@ -18,7 +18,7 @@ The name is a joke from the character YinYang in the tv-show Silicon Valley, who
 This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of quad and trias. The results are the same between Abaqus (C) and new_abaqus.
 Original geometry             |  Deformed geometry
 :-------------------------:|:-------------------------:
-<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="120%"/>
+<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="75%"/>
 
 | FE-solver      | Load node deflection (red arrow in figure above!) |
 | ----------- | ----------- |
@@ -27,7 +27,7 @@ Original geometry             |  Deformed geometry
 
 
 ## Example #2, simple bar in 3D 
-Below is a bar discretized into 10 C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well.
+Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well.
 <img src="src/images/ex6_2ndorder_10elements_with_bc.png" width="50%"/>
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
@@ -36,14 +36,15 @@ Below is a bar discretized into 10 C3D20 (20-node hexa) elements. It's fixed in 
 | new_abaqus  | 420.48 | 427.86 | 2531.56 | 2532.4 | 4009.0 | 6494.25 | 6705.02| 6705.3 |
 
 ## Example #3, tuning fork in 3D 
-A tuning fork made up of 4 thousand second order tetra element (C3D10). There is a larger discrepancy here between the two softwares, not resolved why yet..
+A tuning fork made up of 4 thousand second order tetra element (C3D10). There results between Abaqus(C) and this software is relatively good. There is a larger discrepancy here between the two softwares than in example 2, but as the number of elements are larger that could be expected, but it's not entirely clear why..
 
 Tuning fork geometry             |  First eigenmode |  Second eigenmode
 -------------------------|-------------------------|-------------------------
 <img src="src/images/tuning_fork.png" width="60%"/>  |  <img src="src/images/tuning_fork_mode1.gif" width="70%"/> |  <img src="src/images/tuning_fork_mode2.gif" width="70%"/>
-
-
-
+| Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|-------------|---|---|---|---|---|---|---|---|
+| ABAQUS (c)  | 158.62 | 163.19 | 378.21 | 554.76 | 1120.28 | 1155.02 | 1186.46 | 1977.45 | 2501.20 | 3467.12
+| new_abaqus  | 158.24 | 232.48 | 416.13 | 590.17 | 1120.96 | 1168.65 | 1192.04 | 1982.79 | 2504.98 | 3467.45
 
 
 ### Element types available
