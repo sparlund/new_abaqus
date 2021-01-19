@@ -18,7 +18,7 @@ The name is a joke from the character YinYang in the tv-show Silicon Valley, who
 This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of quad and trias. The results are the same between Abaqus (C) and new_abaqus.
 Original geometry             |  Deformed geometry
 :-------------------------:|:-------------------------:
-<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="75%"/>
+<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="95%"/>
 
 | FE-solver      | Load node deflection (red arrow in figure above!) |
 | ----------- | ----------- |
@@ -40,7 +40,7 @@ A tuning fork made up of 4 thousand second order tetra element (C3D10). There is
 
 Tuning fork geometry             |  First eigenmode
 :-------------------------:|:-------------------------:
-<img src="src/images/tuning_fork.png" width="60%"/>  |  <img src="src/images/tuning_fork.png" width="60%"/>
+<img src="src/images/tuning_fork.png" width="60%"/>  |  <img src="src/images/tuning_fork_mode1.png" width="60%"/>
 
 
 
