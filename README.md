@@ -18,7 +18,7 @@ The name is a joke from the character YinYang in the tv-show Silicon Valley, who
 This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of quad and trias. The results are the same between Abaqus (C) and new_abaqus.
 Original geometry             |  Deformed geometry
 :-------------------------:|:-------------------------:
-<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="110%"/>
+<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="120%"/>
 
 | FE-solver      | Load node deflection (red arrow in figure above!) |
 | ----------- | ----------- |
@@ -27,13 +27,13 @@ Original geometry             |  Deformed geometry
 
 
 ## Example #2, simple bar in 3D 
-Below is a bar discretized into 10 20-node hexahedron elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. It could be said to agree very well.
+Below is a bar discretized into 10 C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well.
 <img src="src/images/ex6_2ndorder_10elements_with_bc.png" width="50%"/>
 
-| Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|-------------|---|---|---|---|---|---|---|---|---|---|
-| ABAQUS (c)  | 420.20 | 420.20  | 2531.3  | 2531.3  | 4009.6 | 6496.1 | 6704.7 | 6704.7 | 12029. | 12268. | 
-| new_abaqus  | 420.48 | 427.86 | 2531.56 | 2532.4 | 4009.0 | 6494.25 | 6705.02| 6705.3 | 12029.23 | 12268.6 |
+| Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|-------------|---|---|---|---|---|---|---|---|
+| ABAQUS (c)  | 420.20 | 420.20  | 2531.3  | 2531.3  | 4009.6 | 6496.1 | 6704.7 | 6704.7 | 
+| new_abaqus  | 420.48 | 427.86 | 2531.56 | 2532.4 | 4009.0 | 6494.25 | 6705.02| 6705.3 |
 
 ## Example #3, tuning fork in 3D 
 A tuning fork made up of 4 thousand second order tetra element (C3D10). There is a larger discrepancy here between the two softwares, not resolved why yet..
