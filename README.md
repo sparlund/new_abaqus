@@ -16,8 +16,9 @@ The name is a joke from the character YinYang in the tv-show Silicon Valley, who
 ### Examples
 ## Example #1, 2D 
 This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of quad and trias. The results are the same between Abaqus (C) and new_abaqus.
-<img src="src/images/ex3.png" width="75%"/>
-<img src="src/images/ex3_displacement.png" width="75%"/>
+Original geometry             |  Deformed geometry
+:-------------------------:|:-------------------------:
+<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="75%"/>
 
 | FE-solver      | Load node deflection (red arrow in figure above!) |
 | ----------- | ----------- |
@@ -27,7 +28,7 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
 
 ## Example #2, simple bar in 3D 
 Below is a bar discretized into 10 20-node hexahedron elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. It could be said to agree very well.
-<img src="src/images/ex6_2ndorder_10elements_with_bc.png" width="60%"/>
+<img src="src/images/ex6_2ndorder_10elements_with_bc.png" width="50%"/>
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
 |-------------|---|---|---|---|---|---|---|---|---|---|
