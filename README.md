@@ -38,7 +38,10 @@ Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's
 | new_abaqus  | 420.48 | 427.86 | 2531.56 | 2532.4 | 4009.0 | 6494.25 | 6705.02| 6705.3 |
 
 ## Example #3, tuning fork in 3D 
-A tuning fork made up of 4 thousand second order tetra element (C3D10). There results between Abaqus(C) and this software is relatively good. There is a larger discrepancy here between the two softwares than in example 2, but as the number of elements are larger that could be expected, but it's not entirely clear why..
+A tuning fork made up of 4 thousand second order tetra element (C3D10). This took close to an hour to solve on my laptop!
+
+
+There results between Abaqus(C) and this software is still good, but a few modes are off by ~40-70 Hz, which is a little strange. Not clear why that is, yet.
 
 Tuning fork geometry             |  First eigenmode |  Second eigenmode
 -------------------------|-------------------------|-------------------------
@@ -61,7 +64,9 @@ TBD... For now there only exists a vscode build file, see ```.vscode/tasks.json`
 
 ### Dependencies
 C++11
+
 [Eigen](http://eigen.tuxfamily.org/)
+
 [Spectra](https://spectralib.org/)
 
 
