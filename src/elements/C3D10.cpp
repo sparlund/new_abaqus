@@ -18,21 +18,18 @@ void C3D10::calculate_Ke(){
            0,     0,     0,           0,  (1-2*v)/2,          0,
            0,     0,     0,           0,          0,  (1-2*v)/2;
     D *= E/((1+v)*(1-2*v));
-    std::cout << D << std::endl;
-
     for (unsigned short i = 0; i < nnodes; i++)
     {
         coord(i,0) = connectivity.at(i)->x;
         coord(i,1) = connectivity.at(i)->y;
         coord(i,2) = connectivity.at(i)->z;
     }
-    Eigen::Matrix<float,3,3> J;
+    Eigen::Matrix<float,dimensions,dimensions> J;
     Eigen::Matrix<float,6,30> B;
     
-    Eigen::Matrix<float,3,10> N;
     // size(dNdXhi) = ngp*ngp, 4 vectors of (1x4)
-    Eigen::Matrix<float,3,10> dNdXhidEtadMy;
-    Eigen::Matrix<float,3,10> dNdxdydz;
+    Eigen::Matrix<float,dimensions,10> dNdXhidEtadMy;
+    Eigen::Matrix<float,dimensions,10> dNdxdydz;
 
     // init Ke zero
     Ke.setZero();
@@ -101,7 +98,7 @@ void C3D10::calculate_Ke(){
 
 }
 void C3D10::calculate_Me(){
-    Eigen::Matrix<float,3,30> N;
+    Eigen::Matrix<float,dimensions,30> N;
     // init Ke zero
     Me.setZero();
     float N1,N2,N3,N4,N5,N6,N7,N8, N9, N10;
@@ -157,6 +154,7 @@ C3D10::C3D10(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,st
             dofs_id.push_back(connectivity.at(i)->dofs.at(2).id);
         }
     }
+    print_element_info_to_log();
 }
 C3D10::~C3D10(){
 
