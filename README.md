@@ -67,8 +67,8 @@ To run this example:
 ./new_abaqus example_runfiles/example3_tuning_fork.inp
 ```
 
-## Supported keywords
-The below keywords and and its following options are supported.
+## Supported Abaqus keywords
+The below keywords and and its following options are supported. The datalines to each keyword follows the Abaqus (C) syntax defintion.
 
 *NODE
 
