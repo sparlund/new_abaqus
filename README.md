@@ -61,8 +61,11 @@ CPS3, CPS4, C3D10, C3D8, C3D20
 
 ### How to build
 Dependencies:
+
 C++11
+
 [Eigen](http://eigen.tuxfamily.org/)  
+
 [Spectra](https://spectralib.org/)
 
 Eigen is a library used for linear algebra, and Spectra is an add-on to that library that is used to solve the eigenvalue problem. Both libraries are header only, so just download them and place them wherever your compiler looks for libraries. On linux it's typically ```/usr/local/include/```.
@@ -86,7 +89,8 @@ I don't  have access to a Windows PC, but you could either copy the file ```.vsc
 - [ ] Automate test cases for comparison solution against abaqus or hand calculations
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
-- [x] Set up classes and functions for nodes, elements, properties and materials
+  - [ ] Allow entities to be defined in any order
+- [x] Create classes and relations for nodes, elements, properties and materials
 - [ ] Implement logic for different elements
   - [x] 2D first order tria (S2)
   - [x] 2D first order quadrilateral (CPS4) 
