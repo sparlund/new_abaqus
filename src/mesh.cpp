@@ -327,12 +327,17 @@ void Mesh::assemble(){
     u.resize(ndofs,1);
     // assemble stiffness- and mass matrix, will alter it later due to boundary conditions
     std::shared_ptr<Element> current_element;
+    std::cout << std::endl;
+    int progress_bar_width = 20;
+    float progress = 0;
+    int progress_bar_position = progress_bar_width * progress;
+    std::cout << "Progress assembly:" <<std::endl;
+    std::cout << "[";
     for (unsigned int i = 0; i < elements.size(); i++)
     {
         current_element = elements.at(i);
         current_element->calculate_Ke();
         current_element->calculate_Me();
-
     }
     
     for (unsigned int i = 0; i < elements.size(); i++)
@@ -426,7 +431,6 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
         std::string node_set_name;
         if (node_boundary == true)
         {
-            std::cout << data.at(0) << std::endl;
             global_node_id = std::stoi(data.at(0));
             node = nodes.at(global_2_local_node_id[global_node_id]);
             number_of_nodes = 1;
@@ -597,7 +601,7 @@ void Mesh::read_file(std::string filename){
                 }
                 // We've added all the info we want to this specific material, let's set up the constitutive matrices for both 2D and 3D.
                 // The latest createt MID bill be att the back of the material list
-                mids.back()                
+                // mids.back()                
                 // 2D:
 
             }
@@ -664,30 +668,30 @@ void Mesh::read_file(std::string filename){
                 while (inner_loop_keyword == true){
                 row_counter++;   
                 // Ignore if it's a comment! Still on same keyword.
-                    if (misc::is_comment(line) == false){
-                        // If the line ends with a comma (','), the next line will continue to list nodes for that element.
-                        // I don't think we will ever need 3 lines, so can hard-code for two lines.
-                        // Check if last char is a comma:
-                        if (line.back() == ',')
-                        {
-                            // Peek next row in the text file and append it to our data line
-                            std::string next_line;
-                            getline(input_file, next_line);
-                            line = line + next_line;
-                        }
-                        add_element(line,options);
-                    }
-                    // Want to peek next line, if it's a keyword or empty line we break
-                    // the while loop and start over!
-                    unsigned int previous_pos = input_file.tellg();
-                    getline(input_file, line);
-                    // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
-                    if (misc::is_keyword(line) == true or line.empty() == true)
+                if (misc::is_comment(line) == false){
+                    // If the line ends with a comma (','), the next line will continue to list nodes for that element.
+                    // I don't think we will ever need 3 lines, so can hard-code for two lines.
+                    // Check if last char is a comma:
+                    if (line.back() == ',')
                     {
-                        input_file.seekg(previous_pos);
-                        inner_loop_keyword = false;
+                        // Peek next row in the text file and append it to our data line
+                        std::string next_line;
+                        getline(input_file, next_line);
+                        line = line + next_line;
                     }
-                }                
+                    add_element(line,options);
+                }
+                // Want to peek next line, if it's a keyword or empty line we break
+                // the while loop and start over!
+                unsigned int previous_pos = input_file.tellg();
+                getline(input_file, line);
+                // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
+                if (misc::is_keyword(line) == true or line.empty() == true)
+                {
+                    input_file.seekg(previous_pos);
+                    inner_loop_keyword = false;
+                }
+            }                
             }
             else if (keyword == "*NODE")
             {

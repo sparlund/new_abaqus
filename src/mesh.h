@@ -85,8 +85,6 @@ public:
     void solve_static();
     void solve_eigenfrequency();
     void export_2_vtk();
-
-
     Mesh();
     void read_file(std::string filename);
     std::vector<unsigned int> Mesh_connectivity;
