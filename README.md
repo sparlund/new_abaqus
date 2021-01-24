@@ -33,6 +33,8 @@ To run this example:
 
 ## Example #2, eigenfrequency analysis of a bar
 Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well between new_abaqus and Abaqus (C)
+
+
 <img src="src/images/ex6_2ndorder_10elements_with_bc.png" width="50%"/>
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
@@ -62,7 +64,7 @@ CPS3, CPS4, C3D10, C3D8, C3D20
 
 <img src="src/images/elements_available.png" width="75%" align=left/>
 
-### How to build
+# How to build
 Dependencies:
 
 C++11
@@ -73,14 +75,14 @@ C++11
 
 Eigen is a library used for linear algebra, and Spectra is an add-on to that library that is used to solve the eigenvalue problem. Both libraries are header only, so just download them and place them wherever your compiler looks for libraries. On linux it's typically ```/usr/local/include/```.
 
-# Linux build
+## Linux build
 ```bash
 git clone https://github.com/sparlund/new_abaqus
 cd new_abaqus
 make
 make clean
 ```
-# Windows build
+## Windows build
 I don't  have access to a Windows PC, but you could either copy the file ```.vscode/tasks.json``` and run the build task in the editor [code](https://code.visualstudio.com/) or somehow just run the entire compile command:
 
 ```g++ -g -pg -Wreturn-type -Wall -std=c++11 main.cpp src/mesh.cpp src/mid.cpp src/misc_string_functions.cpp src/new_abaqus.cpp src/node.cpp src/pid.cpp src/dof.cpp src/element.cpp src/elements/S3.cpp src/elements/CPS3.cpp src/elements/CPS4.cpp src/elements/C3D10.cpp src/elements/C3D8.cpp src/elements/C3D20.cpp src/Gauss.cpp src/set.cpp -o new_abaqus```
