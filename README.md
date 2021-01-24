@@ -30,7 +30,6 @@ To run this example:
 ```bash
 ./new_abaqus example_runfiles/example1_2D.inp
 ```
-
 ## Example #2, eigenfrequency analysis of a bar
 Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well between new_abaqus and Abaqus (C)
 
@@ -41,11 +40,11 @@ Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's
 |-------------|---|---|---|---|---|---|---|---|
 | Abaqus (C)  | 420.20 | 420.20  | 2531.3  | 2531.3  | 4009.6 | 6496.1 | 6704.7 | 6704.7 | 
 | new_abaqus  | 420.48 | 427.86 | 2531.56 | 2532.4 | 4009.0 | 6494.25 | 6705.02| 6705.3 |
+
 To run this example:
 ```bash
 ./new_abaqus example_runfiles/example2_3D_bar.inp
 ```
-
 ## Example #3, tuning fork 
 A tuning fork made up of 4 thousand second order tetra element (C3D10). This mesh has 23 thousand degrees of freedom and took close to an hour to solve on my laptop.
 
@@ -68,7 +67,33 @@ To run this example:
 ./new_abaqus example_runfiles/example3_tuning_fork.inp
 ```
 
-### Element types available
+## Supported keywords
+The below keywords and and its following options are supported.
+
+*NODE
+
+*ELEMENT, type, elset
+
+*MATERIAL, name
+
+*DENSITY
+
+*ELASTIC
+
+*SOLID SECTION, name, material
+
+*BOUNDARY, type=displacement
+
+*NSET, nset
+
+*FREQUENCY
+
+*STATIC
+
+
+
+
+## Element types available
 CPS3, CPS4, C3D10, C3D8, C3D20 
 
 <img src="src/images/elements_available.png" width="75%" align=left/>
@@ -97,7 +122,7 @@ I don't  have access to a Windows PC, but you could either copy the file ```.vsc
 ```g++ -g -pg -Wreturn-type -Wall -std=c++11 main.cpp src/mesh.cpp src/mid.cpp src/misc_string_functions.cpp src/new_abaqus.cpp src/node.cpp src/pid.cpp src/dof.cpp src/element.cpp src/elements/S3.cpp src/elements/CPS3.cpp src/elements/CPS4.cpp src/elements/C3D10.cpp src/elements/C3D8.cpp src/elements/C3D20.cpp src/Gauss.cpp src/set.cpp -o new_abaqus```
 
 
-### To-do & features implemented
+# To-do & features implemented
 - [x] How to build
 - [x] makefile
 - [ ] Automate test cases for comparison solution against abaqus or hand calculations
