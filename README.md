@@ -8,36 +8,39 @@ One of the main features of new_abaqus is that it can read a mesh described in t
 
 
 The program takes 1 argument: an input file containing the mesh and load case definition.
-```
+```bash
 ./new_abaqus example.inp
 ```
-This will save an output file of the results called `example.vtk` and a logfile called `example.log`. The results can be viewed in the open source post processor ParaView.
+This will save an output file of the results called `example.vtk` and a logfile called `example.log`. The results can be viewed in the open source post processor [ParaView](https://www.paraview.org/).
 
 The name is a joke from the character YinYang in the tv-show Silicon Valley, who has the idea for "new netflix".
 
-### Examples
-## Example #1, 2D 
+## Example #1, 2D geometry with a point load
 This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of quad and trias. The geometry is fixed on the left hand side and a point force F is applied on the right, see figure below. The results are exactly the same between Abaqus (C) and new_abaqus.
 Original geometry             |  Deformed geometry
 :-------------------------:|:-------------------------:
-<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="90%"/>
+<img src="src/images/example1_2D.png" width="75%"/>  |  <img src="src/images/example1_2D_displacement.png" width="90%"/>
 
 | FE-solver      | Load node deflection (red arrow in figure above!) |
 | ----------- | ----------- |
 | ABAQUS (c)      | 0.0348       |
 | new_abaqus   | 0.0346        |
 
+To run this example:
+```bash
+./new_abaqus example1_2D.inp
+```
 
-## Example #2, simple bar in 3D 
-Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well.
+## Example #2, eigenfrequency analysis of a bar
+Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well between new_abaqus and Abaqus (C)
 <img src="src/images/ex6_2ndorder_10elements_with_bc.png" width="50%"/>
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |-------------|---|---|---|---|---|---|---|---|
-| ABAQUS (c)  | 420.20 | 420.20  | 2531.3  | 2531.3  | 4009.6 | 6496.1 | 6704.7 | 6704.7 | 
+| Abaqus (C)  | 420.20 | 420.20  | 2531.3  | 2531.3  | 4009.6 | 6496.1 | 6704.7 | 6704.7 | 
 | new_abaqus  | 420.48 | 427.86 | 2531.56 | 2532.4 | 4009.0 | 6494.25 | 6705.02| 6705.3 |
 
-## Example #3, tuning fork in 3D 
+## Example #3, tuning fork 
 A tuning fork made up of 4 thousand second order tetra element (C3D10). This mesh has 23 thousand degrees of freedom and took close to an hour to solve on my laptop.
 
 
@@ -45,7 +48,7 @@ There results between Abaqus(C) and this software is still good, but a few modes
 
 Tuning fork geometry             |  First eigenmode |  Second eigenmode
 -------------------------|-------------------------|-------------------------
-<img src="src/images/tuning_fork.png" width="60%"/>  |  <img src="src/images/tuning_fork_mode1.gif" width="70%"/> |  <img src="src/images/tuning_fork_mode2.gif" width="70%"/>
+<img src="src/images/example3_tuning_fork.png" width="60%"/>  |  <img src="src/images/example3_tuning_fork_mode1.gif" width="70%"/> |  <img src="src/images/example3_tuning_fork_mode2.gif" width="70%"/>
 
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
