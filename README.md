@@ -67,21 +67,23 @@ C++11
 
 Eigen is a library used for linear algebra, and Spectra is an add-on to that library that is used to solve the eigenvalue problem. Both libraries are header only, so just download them and place them wherever your compiler looks for libraries. On linux it's typically ```/usr/local/include/```.
 
-## Linux
+# Linux build
 ```bash
 git clone https://github.com/sparlund/new_abaqus
 cd new_abaqus
 make
 make clean
 ```
-## Windows
+# Windows build
 I don't  have access to a Windows PC, but you could either copy the file ```.vscode/tasks.json``` and run the build task in the editor [code](https://code.visualstudio.com/) or somehow just run the entire compile command:
+
 ```g++ -g -pg -Wreturn-type -Wall -std=c++11 main.cpp src/mesh.cpp src/mid.cpp src/misc_string_functions.cpp src/new_abaqus.cpp src/node.cpp src/pid.cpp src/dof.cpp src/element.cpp src/elements/S3.cpp src/elements/CPS3.cpp src/elements/CPS4.cpp src/elements/C3D10.cpp src/elements/C3D8.cpp src/elements/C3D20.cpp src/Gauss.cpp src/set.cpp -o new_abaqus```
 
 
-### To-do & Features implemented
-- [ ] Guide how to install
+### To-do & features implemented
+- [x] How to build
 - [x] makefile
+- [ ] Automate test cases for comparison solution against abaqus or hand calculations
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
 - [x] Set up classes and functions for nodes, elements, properties and materials
@@ -125,7 +127,6 @@ I don't  have access to a Windows PC, but you could either copy the file ```.vsc
 - [ ] Some basic error handling
   - [X] Print warning and exit program on small or negative Jacobian determinant  
   - [ ] Print error in log file and exit when a specified material, node set, section or whatever does not exist
-- [ ] Automate test cases for comparison solution against abaqus or hand calculations
 
 
 
