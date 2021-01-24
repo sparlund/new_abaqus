@@ -60,19 +60,29 @@ CPS3, CPS4, C3D10, C3D8, C3D20
 <img src="src/images/elements_available.png" width="75%" align=left/>
 
 ### How to install
+
+## Linux
+```git clone https://github.com/sparlund/new_abaqus```
+```cd new_abaqus```
+```make```
+```make clean```
+
+
+
+## Dependencies
+C++11
+[Eigen](http://eigen.tuxfamily.org/)
+[Spectra](https://spectralib.org/)
+
 TBD... For now there only exists a vscode build file, see ```.vscode/tasks.json```.
 
-### Dependencies
-C++11
 
-[Eigen](http://eigen.tuxfamily.org/)
 
-[Spectra](https://spectralib.org/)
 
 
 ### To-do & Features implemented
 - [ ] Guide how to install
-- [ ] makefile
+- [x] makefile
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
 - [x] Set up classes and functions for nodes, elements, properties and materials
