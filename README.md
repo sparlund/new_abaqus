@@ -8,36 +8,44 @@ One of the main features of new_abaqus is that it can read a mesh described in t
 
 
 The program takes 1 argument: an input file containing the mesh and load case definition.
-```
+```bash
 ./new_abaqus example.inp
 ```
-This will save an output file of the results called `example.vtk` and a logfile called `example.log`. The results can be viewed in the open source post processor ParaView.
+This will save an output file of the results called `example.vtk` and a logfile called `example.log`. The results can be viewed in the open source post processor [ParaView](https://www.paraview.org/).
 
 The name is a joke from the character YinYang in the tv-show Silicon Valley, who has the idea for "new netflix".
 
-### Examples
-## Example #1, 2D 
+## Example #1, 2D geometry with a point load
 This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of quad and trias. The geometry is fixed on the left hand side and a point force F is applied on the right, see figure below. The results are exactly the same between Abaqus (C) and new_abaqus.
 Original geometry             |  Deformed geometry
 :-------------------------:|:-------------------------:
-<img src="src/images/ex3.png" width="75%"/>  |  <img src="src/images/ex3_displacement.png" width="90%"/>
+<img src="src/images/example1_2D.png" width="75%"/>  |  <img src="src/images/example1_2D_displacement.png" width="90%"/>
 
 | FE-solver      | Load node deflection (red arrow in figure above!) |
 | ----------- | ----------- |
 | ABAQUS (c)      | 0.0348       |
 | new_abaqus   | 0.0346        |
 
+To run this example:
+```bash
+./new_abaqus example_runfiles/example1_2D.inp
+```
+## Example #2, eigenfrequency analysis of a bar
+Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well between new_abaqus and Abaqus (C)
 
-## Example #2, simple bar in 3D 
-Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well.
-<img src="src/images/ex6_2ndorder_10elements_with_bc.png" width="50%"/>
+
+<img src="src/images/example2_3D_bar.png" width="50%"/>
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |-------------|---|---|---|---|---|---|---|---|
-| ABAQUS (c)  | 420.20 | 420.20  | 2531.3  | 2531.3  | 4009.6 | 6496.1 | 6704.7 | 6704.7 | 
+| Abaqus (C)  | 420.20 | 420.20  | 2531.3  | 2531.3  | 4009.6 | 6496.1 | 6704.7 | 6704.7 | 
 | new_abaqus  | 420.48 | 427.86 | 2531.56 | 2532.4 | 4009.0 | 6494.25 | 6705.02| 6705.3 |
 
-## Example #3, tuning fork in 3D 
+To run this example:
+```bash
+./new_abaqus example_runfiles/example2_3D_bar.inp
+```
+## Example #3, tuning fork 
 A tuning fork made up of 4 thousand second order tetra element (C3D10). This mesh has 23 thousand degrees of freedom and took close to an hour to solve on my laptop.
 
 
@@ -45,47 +53,83 @@ There results between Abaqus(C) and this software is still good, but a few modes
 
 Tuning fork geometry             |  First eigenmode |  Second eigenmode
 -------------------------|-------------------------|-------------------------
-<img src="src/images/tuning_fork.png" width="60%"/>  |  <img src="src/images/tuning_fork_mode1.gif" width="70%"/> |  <img src="src/images/tuning_fork_mode2.gif" width="70%"/>
+<img src="src/images/example3_tuning_fork.png" width="60%"/>  |  <img src="src/images/example3_tuning_fork_mode1.gif" width="70%"/> |  <img src="src/images/example3_tuning_fork_mode2.gif" width="70%"/>
 
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |-------------|---|---|---|---|---|---|---|---|
-| ABAQUS (c)  | 158.62 | 163.19 | 378.21 | 554.76 | 1120.28 | 1155.02 | 1186.46 | 1977.45 | 2501.20 | 3467.12
+| Abaqus (c)  | 158.62 | 163.19 | 378.21 | 554.76 | 1120.28 | 1155.02 | 1186.46 | 1977.45 | 2501.20 | 3467.12
 | new_abaqus  | 158.24 | 232.48 | 416.13 | 590.17 | 1120.96 | 1168.65 | 1192.04 | 1982.79 | 2504.98 | 3467.45
 
 
-### Element types available
+To run this example:
+```bash
+./new_abaqus example_runfiles/example3_tuning_fork.inp
+```
+
+## Supported Abaqus keywords
+The below keywords and and its following options are supported. The datalines to each keyword follows the Abaqus (C) syntax defintion.
+
+*NODE
+
+*ELEMENT, type, elset
+
+*MATERIAL, name
+
+*DENSITY
+
+*ELASTIC
+
+*SOLID SECTION, name, material
+
+*BOUNDARY, type=displacement
+
+*NSET, nset
+
+*FREQUENCY
+
+*STATIC
+
+
+
+
+## Element types available
 CPS3, CPS4, C3D10, C3D8, C3D20 
 
 <img src="src/images/elements_available.png" width="75%" align=left/>
 
-### How to install
+# How to build
+Dependencies:
 
-## Linux
-```git clone https://github.com/sparlund/new_abaqus```
-```cd new_abaqus```
-```make```
-```make clean```
-
-
-
-## Dependencies
 C++11
-[Eigen](http://eigen.tuxfamily.org/)
+
+[Eigen](http://eigen.tuxfamily.org/)  
+
 [Spectra](https://spectralib.org/)
 
-TBD... For now there only exists a vscode build file, see ```.vscode/tasks.json```.
+Eigen is a library used for linear algebra, and Spectra is an add-on to that library that is used to solve the eigenvalue problem. Both libraries are header only, so just download them and place them wherever your compiler looks for libraries. On linux it's typically ```/usr/local/include/```.
+
+## Linux build
+```bash
+git clone https://github.com/sparlund/new_abaqus
+cd new_abaqus
+make
+make clean
+```
+## Windows build
+I don't  have access to a Windows PC, but you could either copy the file ```.vscode/tasks.json``` and run the build task in the editor [code](https://code.visualstudio.com/) or somehow just run the entire compile command:
+
+```g++ -g -pg -Wreturn-type -Wall -std=c++11 main.cpp src/mesh.cpp src/mid.cpp src/misc_string_functions.cpp src/new_abaqus.cpp src/node.cpp src/pid.cpp src/dof.cpp src/element.cpp src/elements/S3.cpp src/elements/CPS3.cpp src/elements/CPS4.cpp src/elements/C3D10.cpp src/elements/C3D8.cpp src/elements/C3D20.cpp src/Gauss.cpp src/set.cpp -o new_abaqus```
 
 
-
-
-
-### To-do & Features implemented
-- [ ] Guide how to install
+# To-do & features implemented
+- [x] How to build
 - [x] makefile
+- [ ] Automate test cases for comparison solution against abaqus or hand calculations
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
-- [x] Set up classes and functions for nodes, elements, properties and materials
+  - [ ] Allow entities to be defined in any order
+- [x] Create classes and relations for nodes, elements, properties and materials
 - [ ] Implement logic for different elements
   - [x] 2D first order tria (S2)
   - [x] 2D first order quadrilateral (CPS4) 
@@ -126,7 +170,6 @@ TBD... For now there only exists a vscode build file, see ```.vscode/tasks.json`
 - [ ] Some basic error handling
   - [X] Print warning and exit program on small or negative Jacobian determinant  
   - [ ] Print error in log file and exit when a specified material, node set, section or whatever does not exist
-- [ ] Automate test cases for comparison solution against abaqus or hand calculations
 
 
 
