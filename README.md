@@ -35,7 +35,7 @@ To run this example:
 Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well between new_abaqus and Abaqus (C)
 
 
-<img src="src/images/ex6_2ndorder_10elements_with_bc.png" width="50%"/>
+<img src="src/images/example2_3D_bar.png" width="50%"/>
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |-------------|---|---|---|---|---|---|---|---|
@@ -61,6 +61,7 @@ Tuning fork geometry             |  First eigenmode |  Second eigenmode
 |-------------|---|---|---|---|---|---|---|---|
 | Abaqus (c)  | 158.62 | 163.19 | 378.21 | 554.76 | 1120.28 | 1155.02 | 1186.46 | 1977.45 | 2501.20 | 3467.12
 | new_abaqus  | 158.24 | 232.48 | 416.13 | 590.17 | 1120.96 | 1168.65 | 1192.04 | 1982.79 | 2504.98 | 3467.45
+
 
 To run this example:
 ```bash
