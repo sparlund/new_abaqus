@@ -99,16 +99,6 @@ CPS3, CPS4, C3D10, C3D8, C3D20
 <img src="src/images/elements_available.png" width="75%" align=left/>
 
 # How to build
-Dependencies:
-
-C++11
-
-[Eigen](http://eigen.tuxfamily.org/)  
-
-[Spectra](https://spectralib.org/)
-
-Eigen is a library used for linear algebra, and Spectra is an add-on to that library that is used to solve the eigenvalue problem. Both libraries are header only, so just download them and place them wherever your compiler looks for libraries. On linux it's typically ```/usr/local/include/```.
-
 ## Linux build
 ```bash
 git clone https://github.com/sparlund/new_abaqus
@@ -120,6 +110,15 @@ make clean
 I don't  have access to a Windows PC, but you could either copy the file ```.vscode/tasks.json``` and run the build task in the editor [code](https://code.visualstudio.com/) or somehow just run the entire compile command:
 
 ```g++ -g -pg -Wreturn-type -Wall -std=c++11 main.cpp src/mesh.cpp src/mid.cpp src/misc_string_functions.cpp src/new_abaqus.cpp src/node.cpp src/pid.cpp src/dof.cpp src/element.cpp src/elements/S3.cpp src/elements/CPS3.cpp src/elements/CPS4.cpp src/elements/C3D10.cpp src/elements/C3D8.cpp src/elements/C3D20.cpp src/Gauss.cpp src/set.cpp -o new_abaqus```
+### Dependencies
+
+C++11
+
+[Eigen](http://eigen.tuxfamily.org/)  
+
+[Spectra](https://spectralib.org/)
+
+Eigen is a library used for linear algebra, and Spectra is an add-on to that library that is used to solve the eigenvalue problem. Both libraries are header only, and they're included in this repository for simplicity's sake... 
 
 
 # To-do & features implemented
@@ -130,7 +129,7 @@ I don't  have access to a Windows PC, but you could either copy the file ```.vsc
   - [ ] Disregard unused nodes
   - [ ] Allow entities to be defined in any order
 - [x] Create classes and relations for nodes, elements, properties and materials
-- [ ] Implement logic for different elements
+- [x] Implement logic for different elements
   - [x] 2D first order tria (S2)
   - [x] 2D first order quadrilateral (CPS4) 
   - [x] 3D second order tetra (C3D10)
@@ -142,12 +141,12 @@ I don't  have access to a Windows PC, but you could either copy the file ```.vsc
 - [x] Add support for more keywords
   - [x] *BOUNDARY
   - [x] *CLOAD
-  - [X] *MATERIAL
-  - [X] *SECTION
-  - [X] *NSET
+  - [x] *MATERIAL
+  - [x] *SECTION
+  - [x] *NSET
   - [ ] *STEP
-  - [X] *STATIC 
-  - [X] *EIGENFREQUENCY
+  - [x] *STATIC 
+  - [x] *EIGENFREQUENCY
   - [ ] *OUTPUT
 - [x] Solve Ku=f for linear problems
 - [ ] Support for simple contact mechanics
@@ -168,7 +167,7 @@ I don't  have access to a Windows PC, but you could either copy the file ```.vsc
 - [x] Re-direct output to a log file for debugging  
   - [x] Print timing for each step in logfile as basic profiling
 - [ ] Some basic error handling
-  - [X] Print warning and exit program on small or negative Jacobian determinant  
+  - [x] Print warning and exit program on small or negative Jacobian determinant  
   - [ ] Print error in log file and exit when a specified material, node set, section or whatever does not exist
 
 
