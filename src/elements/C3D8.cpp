@@ -2,7 +2,6 @@
 #include "C3D8.h"
 #include <stdlib.h>
 
-const std::string C3D8::element_type = "C3D8";
 
 C3D8::~C3D8(){}
 
@@ -130,34 +129,14 @@ void C3D8::calculate_Me(){
 }
 
 C3D8::C3D8(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid):
-id(id),connectivity(connectivity),pid(pid){
-    // add dofs to each node. can be done first now because now we know how many dofs each node should have    
-    for (unsigned int i = 0; i < connectivity.size(); i++)
-    {
-        // Check if current node already has dofs or if we need to create
-        if (connectivity.at(i)->dofs.size() != ndofs/nnodes)
-        {
-            // create 3 dofs
-            Dof x = Dof();
-            Dof y = Dof();
-            Dof z = Dof();
-            // put Dof object itself in list of Dofs for element
-            connectivity.at(i)->dofs.push_back(x);
-            connectivity.at(i)->dofs.push_back(y);
-            connectivity.at(i)->dofs.push_back(z);
-            // put indiviual dof id's in a list for easy access?
-            dofs_id.push_back(x.id);
-            dofs_id.push_back(y.id);
-            dofs_id.push_back(z.id);
-        }
-        else
-        {
-            // find dofs from node and add to dofs_id vector
-            dofs_id.push_back(connectivity.at(i)->dofs.at(0).id);
-            dofs_id.push_back(connectivity.at(i)->dofs.at(1).id);
-            dofs_id.push_back(connectivity.at(i)->dofs.at(2).id);
-        }
-        
-    }
-    print_element_info_to_log();
+    Element(8,
+            24,
+            12,
+            8,
+            3,
+            "C3D8",
+            id,
+            connectivity,
+            pid){
+
 }

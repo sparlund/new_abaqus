@@ -1,8 +1,7 @@
 #include <iostream>
-#include "C3D20.h"
 #include <stdlib.h>
+#include "C3D20.h"
 
-const std::string C3D20::element_type = "C3D20";
 
 void C3D20::calculate_Ke(){
     std::shared_ptr<Mid> mid = pid->get_mid();
@@ -18,20 +17,14 @@ void C3D20::calculate_Ke(){
            0,     0,     0,           0,          0,  (1-2*v)/2;
     D *= E/((1+v)*(1-2*v));
     
-    // coord system is located in the middle of the element
-    for (unsigned short i = 0; i < nnodes; i++)
-    {
-        coord(i,0) = connectivity.at(i)->x;
-        coord(i,1) = connectivity.at(i)->y;
-        coord(i,2) = connectivity.at(i)->z;
-    }
+    
     // Weight = volume*density
     // Formula for volume of generic hexahedron found here
     // Don't account for mid nodes...
-    volume = ((coord.row(6) - coord.row(0)).dot( (coord.row(1) - coord.row(0)).cross( (coord.row(3) - coord.row(5)) ))  + 
-              (coord.row(6) - coord.row(0)).dot( (coord.row(4) - coord.row(0)).cross( (coord.row(5) - coord.row(3)) ))  +
-              (coord.row(6) - coord.row(0)).dot( (coord.row(3) - coord.row(0)).cross( (coord.row(7) - coord.row(2)) )))*(0.16667);
-    weight = volume*mid->get_density();
+    // volume = ((coord.row(6) - coord.row(0)).dot( (coord.row(1) - coord.row(0)).cross( (coord.row(3) - coord.row(5)) ))  + 
+    //           (coord.row(6) - coord.row(0)).dot( (coord.row(4) - coord.row(0)).cross( (coord.row(5) - coord.row(3)) ))  +
+    //           (coord.row(6) - coord.row(0)).dot( (coord.row(3) - coord.row(0)).cross( (coord.row(7) - coord.row(2)) )))*(0.16667);
+    // weight = volume*mid->get_density();
     // abaqus node number -> Felipe node numbering
     // 17 -> 13
     // 18 -> 14
@@ -156,7 +149,7 @@ void C3D20::calculate_Ke(){
                     std::cout << "WARNING: Jacobian determinant less than 0.1 for element #" << this->get_id() << std::endl;
                 }
                 // This stupid shit doesnt work lol, misunderstood?
-                // Eigen::JacobiSVD<Eigen::Matrix<float,3,3>> svd(J, Eigen::ComputeFullV | Eigen::ComputeFullU);
+                // Eigen::JacobiSVD"Eigen::Matrix<float,3,3>> svd(J, Eigen::ComputeFullV | Eigen::ComputeFullU);
                 // invJ = svd.matrixV()*(svd.singularValues().unaryExpr(&inv_div_by1).asDiagonal().inverse())*svd.matrixU().transpose();
                 dNdxdydz = J.inverse()*dNdXhidEtadMy;
                 // construct B matrix
@@ -213,34 +206,14 @@ void C3D20::calculate_Me(){
 
 C3D20::~C3D20(){}
 
+
 C3D20::C3D20(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid):
-id(id),connectivity(connectivity),pid(pid){
-    // add dofs to each node. can be done first now because now we know how many dofs each node should have    
-    for (unsigned int i = 0; i < connectivity.size(); i++)
-    {
-        // Check if current node already has dofs or if we need to create
-        if (connectivity.at(i)->dofs.size() != ndofs/nnodes)
-        {
-            // create 3 dofs
-            Dof x = Dof();
-            Dof y = Dof();
-            Dof z = Dof();
-            // put Dof object itself in list of Dofs for element
-            connectivity.at(i)->dofs.push_back(x);
-            connectivity.at(i)->dofs.push_back(y);
-            connectivity.at(i)->dofs.push_back(z);
-            // put indiviual dof id's in a list for easy access?
-            dofs_id.push_back(x.id);
-            dofs_id.push_back(y.id);
-            dofs_id.push_back(z.id);
-        }
-        else
-        {
-            // find dofs from node and add to dofs_id vector
-            dofs_id.push_back(connectivity.at(i)->dofs.at(0).id);
-            dofs_id.push_back(connectivity.at(i)->dofs.at(1).id);
-            dofs_id.push_back(connectivity.at(i)->dofs.at(2).id);
-        }
-    }
-    print_element_info_to_log();
-}
+    Element(20, // nnodes
+            60, // ngp
+            25, // vtk identifier
+            27, // ngp
+            3, // dimensions
+            "C3D20",
+            id,
+            connectivity,
+            pid){}

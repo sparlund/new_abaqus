@@ -3,7 +3,6 @@
 #include "CPS4.h"
 
 
-const std::string CPS4::element_type = "CPS4";
 
 void CPS4::calculate_Ke(){
 std::shared_ptr<Mid> mid = pid->get_mid();
@@ -72,37 +71,15 @@ void CPS4::calculate_Me(){
 CPS4::~CPS4(){}
 
 CPS4::CPS4(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid):
-id(id),connectivity(connectivity),pid(pid){
-    // add dofs to each node. can be done first now because now we know how many dofs each node should have    
-    for (unsigned int i = 0; i < connectivity.size(); i++)
-    {
-        // Check if current node already has dofs or if we need to create
-        if (connectivity.at(i)->dofs.size() != ndofs/nnodes)
-        {
-            // create 2 dofs
-            Dof x = Dof();
-            Dof y = Dof();
-            connectivity.at(i)->dofs.push_back(x);
-            connectivity.at(i)->dofs.push_back(y);
-            dofs_id.push_back(x.id);
-            dofs_id.push_back(y.id);
-        }
-        else
-        {
-            // find dofs from node and add to dofs_id vector
-            dofs_id.push_back(connectivity.at(i)->dofs.at(0).id);
-            dofs_id.push_back(connectivity.at(i)->dofs.at(1).id);
-        }
-        
-    }
-     // create coord matrix needed to find Jacobian
-    for (unsigned char i = 0; i < nnodes; i++)
-    {
-        coord(i,0) = connectivity.at(i)->x;
-        coord(i,1) = connectivity.at(i)->y;
-    }
-    print_element_info_to_log();
-}
+    Element(4, // nnodes
+            8, // ngp
+            9, // vtk identifier
+            4, // ngp
+            2, // dimensions
+            "CPS4",
+            id,
+            connectivity,
+            pid){}
 
 
 

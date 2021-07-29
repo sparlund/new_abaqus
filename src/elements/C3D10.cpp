@@ -2,7 +2,6 @@
 #include "C3D10.h"
 #include <stdlib.h>
 
-const std::string C3D10::element_type = "C3D10";
 
 
 void C3D10::calculate_Ke(){
@@ -24,12 +23,12 @@ void C3D10::calculate_Ke(){
         coord(i,1) = connectivity.at(i)->y;
         coord(i,2) = connectivity.at(i)->z;
     }
-    Eigen::Matrix<float,dimensions,dimensions> J;
+    Eigen::Matrix<float,3,3> J;
     Eigen::Matrix<float,6,30> B;
     
     // size(dNdXhi) = ngp*ngp, 4 vectors of (1x4)
-    Eigen::Matrix<float,dimensions,10> dNdXhidEtadMy;
-    Eigen::Matrix<float,dimensions,10> dNdxdydz;
+    Eigen::Matrix<float,3,10> dNdXhidEtadMy;
+    Eigen::Matrix<float,3,10> dNdxdydz;
 
     // init Ke zero
     Ke.setZero();
@@ -98,7 +97,7 @@ void C3D10::calculate_Ke(){
 
 }
 void C3D10::calculate_Me(){
-    Eigen::Matrix<float,dimensions,30> N;
+    Eigen::Matrix<float,3,30> N;
     // init Ke zero
     Me.setZero();
     float N1,N2,N3,N4,N5,N6,N7,N8, N9, N10;
@@ -128,34 +127,16 @@ void C3D10::calculate_Me(){
 
 }
 // C3D10 is 10 node tetrahedron element
-C3D10::C3D10(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid):id(id),connectivity(connectivity),pid(pid){
-    // add dofs to each node. can be done first now because now we know how many dofs each node should have    
-    for (unsigned int i = 0; i < connectivity.size(); i++)
-    {
-        // Check if current node already has dofs or if we need to create
-        if (connectivity.at(i)->dofs.size() != ndofs/nnodes)
-        {
-            // create 3 dofs
-            Dof x = Dof();
-            Dof y = Dof();
-            Dof z = Dof();
-            connectivity.at(i)->dofs.push_back(x);
-            connectivity.at(i)->dofs.push_back(y);
-            connectivity.at(i)->dofs.push_back(z);
-            dofs_id.push_back(x.id);
-            dofs_id.push_back(y.id);
-            dofs_id.push_back(z.id);
-        }
-        else
-        {
-            // find dofs from node and add to dofs_id vector
-            dofs_id.push_back(connectivity.at(i)->dofs.at(0).id);
-            dofs_id.push_back(connectivity.at(i)->dofs.at(1).id);
-            dofs_id.push_back(connectivity.at(i)->dofs.at(2).id);
-        }
-    }
-    print_element_info_to_log();
-}
+C3D10::C3D10(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid):
+    Element(10, // nnodes
+            30, // ngp
+            24, // vtk identifier
+            4, // ngp
+            3, // 3
+            "C3D10",
+            id,
+            connectivity,
+            pid){}
 C3D10::~C3D10(){
 
 }
