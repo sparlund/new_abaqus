@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <Eigen/Dense>
+#include "../external_libs/Eigen/Dense"
 
 class Mid
 {
