@@ -3,8 +3,8 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
-#include <Eigen/Sparse>
-#include <Eigen/Dense>
+#include "../external_libs/Eigen/Dense"
+#include "../external_libs/Eigen/Sparse"
 #include <utility>
 #include "mid.h"
 #include "pid.h"

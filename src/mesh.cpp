@@ -4,11 +4,12 @@
 #include <unordered_map>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <memory>
 #include <numeric>
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
-#include <Eigen/Cholesky>
+#include "../external_libs/Eigen/Dense"
+#include "../external_libs/Eigen/Sparse"
+#include "../external_libs/Eigen/Cholesky"
 #include <Spectra/SymGEigsShiftSolver.h>
 #include <Spectra/MatOp/SparseSymMatProd.h>
 #include <Spectra/MatOp/SparseCholesky.h>
@@ -18,7 +19,7 @@
 #include <cmath>
 #include <fstream>
 #include <ctime>
-#include <Eigen/Eigenvalues>
+#include "../external_libs/Eigen/Eigenvalues"
 #include <stdlib.h>
 #include "mesh.h"
 #include "mid.h"
@@ -187,7 +188,7 @@ void Mesh::solve(){
 
 
 void Mesh::solve_eigenfrequency(){
-    std::cout << "---    Starting to solve eigenvalue problem    ---" << std::endl;  
+    std::cout << "---    Starting to solve eigenvalue problem    ---\n" << std::endl;  
     // Print global stiffness and mass matrices to .mtx format
     
     
@@ -242,8 +243,23 @@ void Mesh::solve_eigenfrequency(){
         this->eigenfrequencies = eigenvalues.unaryExpr(&squirt_and_divide_by_2pi);
     }        
     duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
-    std::cout << "eigenfreqs:\n" << eigenfrequencies << std::endl;
-    std::cout << "---    Solution to eigenvalue problem found in " << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
+    std::cout << "                              E I G E N V A L U E    O U T P U T\n" << std::endl;
+    std::cout << " MODE NO      EIGENVALUE              FREQUENCY         " << std::endl;//GENERALIZED MASS   COMPOSITE MODAL DAMPING" << std::endl
+    std::cout << "                             (RAD/TIME)   (CYCLES/TIME)\n\n" << std::endl;
+    int temp_mode_counter_for_text = 1;
+    for (unsigned int i = eigenfrequencies.rows(); i > 0; --i)
+    {
+                    //  1      6.97066E+06     2640.2         420.20         1.0000         0.0000     
+        std::cout << std::setw(8) << temp_mode_counter_for_text << "      " << std::setw(10) << std::scientific << eigenvalues[i] << "    " <<  std::setw(19) << std::setprecision(2)  << std::fixed << eigenfrequencies[i] << std::endl;
+        temp_mode_counter_for_text++;
+    }
+
+    // std::cout << eigenfrequencies << std::endl;
+
+    //    1      6.97066E+06     2640.2         420.20         1.0000         0.0000    
+    //    2      6.97066E+06     2640.2         420.20         1.0000         0.0000    
+
+    std::cout << "---    Solution to eigenvalue problem found in " << std::setprecision(2) << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
 }
 
 
@@ -285,7 +301,7 @@ void Mesh::solve_static(){
     std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K_static) << std::endl;
     std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
     // Ku=f
-    // Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
+    // Eigen::SparseLU"Eigen::SparseMatrix<float>> solver;
     // solver.compute(K_static);
     std::cout << "a" << std::endl;
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver(K_static);

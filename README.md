@@ -130,7 +130,7 @@ I don't  have access to a Windows PC, but you could either copy the file ```.vsc
   - [ ] Disregard unused nodes
   - [ ] Allow entities to be defined in any order
 - [x] Create classes and relations for nodes, elements, properties and materials
-- [ ] Implement logic for different elements
+- [X] Implement logic for different elements
   - [x] 2D first order tria (S2)
   - [x] 2D first order quadrilateral (CPS4) 
   - [x] 3D second order tetra (C3D10)
@@ -145,9 +145,10 @@ I don't  have access to a Windows PC, but you could either copy the file ```.vsc
   - [X] *MATERIAL
   - [X] *SECTION
   - [X] *NSET
-  - [ ] *STEP
   - [X] *STATIC 
   - [X] *EIGENFREQUENCY
+  - [ ] *INCLUDE
+  - [ ] *STEP
   - [ ] *OUTPUT
 - [x] Solve Ku=f for linear problems
 - [ ] Support for simple contact mechanics
@@ -160,7 +161,6 @@ I don't  have access to a Windows PC, but you could either copy the file ```.vsc
   - [x] Print total model weight
   - [ ] Print total model volume
   - [ ] Print center of gravity
-
 - [ ] Export results to VTK format to view results in ParaView
   - [x] Nodal displacement
   - [x] Eigenmodes 
