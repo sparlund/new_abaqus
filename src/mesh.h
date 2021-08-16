@@ -23,6 +23,7 @@ private:
     static unsigned int element_counter;
     static unsigned int pid_counter;
     static unsigned int mid_counter;
+    // the penalty value is used when solving the ODE. It's relatively large arbitrary number
     const float penalty_value = 1e36;
     // arrays of pointers to nodes and elements
     std::vector<std::shared_ptr<Node>> nodes;
@@ -34,17 +35,12 @@ private:
     std::vector<std::shared_ptr<Pid>> pids;
     // dict of pid name to pid object
     std::unordered_map<std::string,std::shared_ptr<Pid>> pid_map;
-
-    // If elements are created before the PID we want to create a boilerplate PID with the
-    // specified name
-    std::vector<std::string> pid_2_create; 
     // array of MID's belonging to the Mesh
     std::vector<std::shared_ptr<Mid>> mids;
-    // array of elements and their connectivity
-    // Method to add Node
+    // The following method are used to add entities to create the FE model
     void add_node(std::string line,std::unordered_map<std::string, std::string> options);
     void add_element(std::string line,std::unordered_map<std::string, std::string> options);
-    void add_load(std::string line);
+    void add_load(std::string line, std::unordered_map<std::string, std::string> options);
     void add_boundary(std::string line,std::unordered_map<std::string, std::string> options);
     void add_pid(std::unordered_map<std::string, std::string> options);
     void add_mid(std::unordered_map<std::string, std::string> options);
@@ -87,6 +83,8 @@ public:
     void export_2_vtk();
     Mesh();
     void read_file(std::string filename);
+    
+    void read_file_new_method(std::string filename, std::string keyword);
     std::vector<unsigned int> Mesh_connectivity;
     ~Mesh();
 };
