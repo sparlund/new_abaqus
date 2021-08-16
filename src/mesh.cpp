@@ -3,6 +3,7 @@
 #include <array>
 #include <unordered_map>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <iomanip>
 #include <memory>
@@ -501,6 +502,30 @@ void Mesh::add_load(std::string line){
     {
         std::cout << "ERROR: can't create *CLOAD because node with id " << global_node_id << " not found, exiting." << std::endl;
         exit(1);
+    }
+    
+}
+
+void Mesh::read_file_new_method(std::string filename, std::string keyword){
+    // need to add keywords in this order:
+    // nodes, mid, pid, element, nset
+    std::vector<std::string> keyword_order = {"*NODE",
+                                              "*MATERIAL",
+                                              "*SHELL SECTION",
+                                              "*SOLID SECTION",
+                                              "*ELEMENT",
+                                              "*NSET"};
+    // Corresponding list of functions to use when finding each keyword
+    std::unordered_map<std::string,std::function<void()>> keyword_order_function_pointers;
+    keyword_order_function_pointers["*NODE"] = []{add_node;};
+    keyword_order_function_pointers["*MATERIAL"] = []{add_mid;};
+    keyword_order_function_pointers["*SHELL SECTION"] = []{add_pid;};
+    keyword_order_function_pointers["*SOLID SECTION"] = []{add_pid;};
+    keyword_order_function_pointers["*ELEMENT"] = []{add_element;};
+    keyword_order_function_pointers["*NSET"] = []{add_set;};
+    for (auto &&i : keyword_order)
+    {
+        // when encountering a *INCLUDE keyword: open it and look for same keyword we are currently on
     }
     
 }
