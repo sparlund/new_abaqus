@@ -21,7 +21,7 @@ int main(int argc, char const *argv[])
     // init new_abaqus model object
     New_abaqus na;
     na.mesh.set_analysis_name(analysis_name);
-    na.mesh.read_file(input_complete_filename);
+    na.mesh.read_file_new_method(input_complete_filename);
     na.mesh.assemble();
     na.mesh.solve();
     return 0;

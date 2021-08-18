@@ -1,3 +1,6 @@
+*INCLUDE, INPUT=example_runfiles/example3_tuning_fork.inp
+*NSET, NSET=bc_nodes
+5,2,3,6,7,4,8,9
 **
 *MATERIAL, NAME=mid
 *DENSITY
@@ -169,8 +172,6 @@
 **
 **
 ** 
-*NSET, NSET=bc_nodes
-5,2,3,6,7,4,8,9
 **
 **
 *BOUNDARY, TYPE=DISPLACEMENT

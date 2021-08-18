@@ -16,28 +16,21 @@
 class Mesh
 {
 private:
-    // static counters, if we should decide to
-    // add another Mesh object they will still
-    // be available
     static unsigned int node_counter;
     static unsigned int element_counter;
     static unsigned int pid_counter;
     static unsigned int mid_counter;
     // the penalty value is used when solving the ODE. It's relatively large arbitrary number
     const float penalty_value = 1e36;
-    // arrays of pointers to nodes and elements
     std::vector<std::shared_ptr<Node>> nodes;
+    std::vector<std::shared_ptr<Element>> elements;
     std::unordered_map<unsigned int,unsigned int> global_2_local_node_id;
     std::unordered_map<unsigned int,std::shared_ptr<Node>> node_id_2_node_pointer;
     std::unordered_map<std::string, std::shared_ptr<Mid>> mid_name_2_mid_pointer;
-    std::vector<std::shared_ptr<Element>> elements;
-    // array of PID's belonging to the Mesh
     std::vector<std::shared_ptr<Pid>> pids;
-    // dict of pid name to pid object
     std::unordered_map<std::string,std::shared_ptr<Pid>> pid_map;
-    // array of MID's belonging to the Mesh
     std::vector<std::shared_ptr<Mid>> mids;
-    // The following method are used to add entities to create the FE model
+    // The following method are used to add entities from the input file to create the FE model
     void add_node(std::string line,std::unordered_map<std::string, std::string> options);
     void add_element(std::string line,std::unordered_map<std::string, std::string> options);
     void add_load(std::string line, std::unordered_map<std::string, std::string> options);
@@ -53,6 +46,16 @@ private:
     std::string eigenvalue_solution_method;
     std::string analysis_name;
     void print_matrix_to_mtx(Eigen::SparseMatrix<float>,std::string);
+    // The supported keywords needs to be added in this order!
+    const std::vector<std::string> keywords = {"*NODE",
+                                               "*MATERIAL",
+                                               "*SHELL SECTION",
+                                               "*SOLID SECTION",
+                                               "*ELEMENT",
+                                               "*NSET"
+                                               "*CLOAD",
+                                               "*STATIC",
+                                               "*FREQUENCY"};
 public:    
     void set_analysis_name(std::string string_analysis_name){this->analysis_name = string_analysis_name;return;}
     unsigned int get_pid_counter(){return pid_counter;};
@@ -82,9 +85,8 @@ public:
     void solve_eigenfrequency();
     void export_2_vtk();
     Mesh();
-    void read_file(std::string filename);
-    
-    void read_file_new_method(std::string filename, std::string keyword);
+    void read_file(std::string filename, std::string keyword);
+    void read_file_new_method(std::string filename);
     std::vector<unsigned int> Mesh_connectivity;
     ~Mesh();
 };

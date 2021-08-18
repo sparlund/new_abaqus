@@ -479,7 +479,7 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
     }
 }
 
-void Mesh::add_load(std::string line){
+void Mesh::add_load(std::string line, std::unordered_map<std::string, std::string> options){
     // for *cload line is: node, dof, magnitude
     std::vector<std::string> data   = misc::split_on(line,',');   
     unsigned int global_node_id     = std::stoi(data.at(0));
@@ -506,38 +506,25 @@ void Mesh::add_load(std::string line){
     
 }
 
-void Mesh::read_file_new_method(std::string filename, std::string keyword){
-    // need to add keywords in this order:
-    // nodes, mid, pid, element, nset
-    std::vector<std::string> keyword_order = {"*NODE",
-                                              "*MATERIAL",
-                                              "*SHELL SECTION",
-                                              "*SOLID SECTION",
-                                              "*ELEMENT",
-                                              "*NSET"};
-    // Corresponding list of functions to use when finding each keyword
-    std::unordered_map<std::string,std::function<void()>> keyword_order_function_pointers;
-    keyword_order_function_pointers["*NODE"] = []{add_node;};
-    keyword_order_function_pointers["*MATERIAL"] = []{add_mid;};
-    keyword_order_function_pointers["*SHELL SECTION"] = []{add_pid;};
-    keyword_order_function_pointers["*SOLID SECTION"] = []{add_pid;};
-    keyword_order_function_pointers["*ELEMENT"] = []{add_element;};
-    keyword_order_function_pointers["*NSET"] = []{add_set;};
-    for (auto &&i : keyword_order)
-    {
-        // when encountering a *INCLUDE keyword: open it and look for same keyword we are currently on
-    }
-    
-}
 
-void Mesh::read_file(std::string filename){
+
+void Mesh::read_file_new_method(std::string filename){
     std::vector<std::string> filename_split = misc::split_on(filename,'/');   
     std::cout << "---    Starting to read input file " << filename_split.back() << "    ---" << std::endl;
     std::clock_t clock_read_file;
     float duration_clock_read_file;
     clock_read_file = std::clock();  
     misc::append_newline_to_textfile(filename);
-    // Create input stream object
+    for (auto && keyword : keywords)
+    {
+        read_file(filename,keyword);
+    }
+    duration_clock_read_file = (std::clock() - clock_read_file ) / (float) CLOCKS_PER_SEC;
+    std::cout << "---    Input file "<< filename << " read and written information to the log file, in " << duration_clock_read_file << " seconds (wallclock time)    ---" << std::endl;
+
+}
+
+void Mesh::read_file(std::string filename, std::string keyword){
     std::ifstream input_file(filename);
     if (input_file.fail())
     {
@@ -545,205 +532,181 @@ void Mesh::read_file(std::string filename){
         std::cout << "Error: include " << filename << " could not be opened." << std::endl;
         exit(0);
     }
-    
     std::string line;
     unsigned int row_counter = 0;
     while (getline(input_file, line))
     {
         row_counter++;
         if (misc::is_keyword(line) == true){
-            std::string keyword = misc::split_on(line, ',').at(0);
-            // extract a map of parameters and their values
-            std::unordered_map<std::string,std::string> options = misc::options_map(line);
-
-            if (keyword == "*INCLUDE")
-            {
-                // Call this function recursively if found include.
-                std::string include_filename = options["INPUT"];
-                read_file(include_filename);
-            }
-            else if (keyword == "*SOLID SECTION" or keyword == "*SHELL SECTION")
-            {
-                add_pid(options);
-            }     
-            else if (keyword == "*MATERIAL")
-            {
-                // a complete material is typically described over several
-                // lines so must make a complicated loop here..
-                // Create mid:
-                add_mid(options);
-                // Add all following options to the last created material card.
-                bool material_keywords_loop = true;
-                while(material_keywords_loop == true)
+            std::string current_line_keyword = misc::split_on(line, ',').at(0);
+            if (current_line_keyword == keyword or current_line_keyword == "*INCLUDE"){
+                // extract a map of parameters and their values
+                std::unordered_map<std::string,std::string> options = misc::options_map(line);  
+                if (current_line_keyword == "*INCLUDE")
                 {
-                    // Jump to next line 
-                    getline(input_file, line);
-                    row_counter++;
-                    // Check if new line is a keyword, otherwise it's a comment and we skip that line 
-                    if (misc::is_keyword(line) == true)
+                    // Call this function recursively if found include.
+                    std::string include_filename = options["INPUT"];
+                    read_file(include_filename, keyword);
+                }
+                else if (keyword == "*SOLID SECTION" or keyword == "*SHELL SECTION")
+                {
+                    add_pid(options);
+                }     
+                else if (keyword == "*MATERIAL")
+                {
+                    // a complete material is typically described over several
+                    // lines so must make a complicated loop here..
+                    // Create mid:
+                    add_mid(options);
+                    // Add all following options to the last created material card.
+                    bool material_keywords_loop = true;
+                    while(material_keywords_loop == true)
                     {
-                        std::string keyword = misc::split_on(line, ',').at(0);
-                        if (keyword == "*DENSITY")
-                        {
-                            // Skip to next line and save the value
-                            getline(input_file, line);
-                            float density = std::stof(misc::split_on(line, ',').at(0));
-                            mids.back()->set_density(density);
-                            std::cout << keyword << " = " << density << std::endl;
-                        }
-                        else if (keyword == "*ELASTIC")
-                        {
-                            // elastic keyword has to specify an option, such as isotropic, anisotropic..
-                            std::unordered_map<std::string,std::string> options = misc::options_map(line);
-                            if (options["TYPE"] == "ISOTROPIC")
-                            {
-                                // Example:
-                                // *ELASTIC, TYPE=ISOTROPIC
-                                // E,v
-                                // Skip to next line and save the value
-                                getline(input_file, line);
-                                std::vector<std::string> values = misc::split_on(line, ',');
-                                float E = std::stof(values.at(0));
-                                float v = std::stof(values.at(1));
-                                mids.back()->set_E(E);
-                                mids.back()->set_v(v);
-                                std::cout << keyword << ", " << options["TYPE"] << ", E" << " = " << E << ", v" << " = " << v << std::endl;
-                            }
-                            
-                        }
-                        else
-                        {
-                            // std::cout << keyword << " unsupported material option" << std::endl;
-                            // we found keyword either not supported by or it's something
-                            // entirely different. set input_file to current line and start reading normal
-                            // keywords again
-                            // break;
-
-                        }
-                    }
-                    else
-                    {
-                        // peep next line, if it's not one of the 
-                        // supported material specific keywords we skip adding data to the material
-                        unsigned int previous_pos = input_file.tellg();
+                        // Jump to next line 
                         getline(input_file, line);
+                        row_counter++;
+                        // Check if new line is a keyword, otherwise it's a comment and we skip that line 
                         if (misc::is_keyword(line) == true)
                         {
                             std::string keyword = misc::split_on(line, ',').at(0);
-                            // if the new keyword is not a supported material keyword we break loop and keep reading file
-                            // otherwise keep on truckin'
-                            if (misc::is_string_in_string_vector(keyword,mids.back()->supported_material_keywords) == false)
+                            if (keyword == "*DENSITY")
                             {
+                                // Skip to next line and save the value
+                                getline(input_file, line);
+                                float density = std::stof(misc::split_on(line, ',').at(0));
+                                mids.back()->set_density(density);
+                                std::cout << keyword << " = " << density << std::endl;
+                            }
+                            else if (keyword == "*ELASTIC")
+                            {
+                                // elastic keyword has to specify an option, such as isotropic, anisotropic..
+                                std::unordered_map<std::string,std::string> options = misc::options_map(line);
+                                if (options["TYPE"] == "ISOTROPIC")
+                                {
+                                    // Example:
+                                    // *ELASTIC, TYPE=ISOTROPIC
+                                    // E,v
+                                    // Skip to next line and save the value
+                                    getline(input_file, line);
+                                    std::vector<std::string> values = misc::split_on(line, ',');
+                                    float E = std::stof(values.at(0));
+                                    float v = std::stof(values.at(1));
+                                    mids.back()->set_E(E);
+                                    mids.back()->set_v(v);
+                                    std::cout << keyword << ", " << options["TYPE"] << ", E" << " = " << E << ", v" << " = " << v << std::endl;
+                                }
+                                
+                            }
+                            else
+                            {
+                                // std::cout << keyword << " unsupported material option" << std::endl;
+                                // we found keyword either not supported by or it's something
+                                // entirely different. set input_file to current line and start reading normal
+                                // keywords again
+                                // break;
+
+                            }
+                        }
+                        else
+                        {
+                            // peep next line, if it's not one of the 
+                            // supported material specific keywords we skip adding data to the material
+                            unsigned int previous_pos = input_file.tellg();
+                            getline(input_file, line);
+                            if (misc::is_keyword(line) == true)
+                            {
+                                std::string keyword = misc::split_on(line, ',').at(0);
+                                // if the new keyword is not a supported material keyword we break loop and keep reading file
+                                // otherwise keep on truckin'
+                                if (misc::is_string_in_string_vector(keyword,mids.back()->supported_material_keywords) == false)
+                                {
+                                input_file.seekg(previous_pos);
+                                material_keywords_loop = false;
+                                }                            
+                            }
+                        }
+                    }
+                    // We've added all the info we want to this specific material, let's set up the constitutive matrices for both 2D and 3D.
+                    // The latest createt MID bill be att the back of the material list
+                    // mids.back()                
+                    // 2D:
+
+                }
+                else if (keyword=="*BOUNDARY"){
+                    getline(input_file, line);
+                    row_counter++;
+                    bool inner_loop_keyword = true;
+                    while (inner_loop_keyword == true){
+                    // Ignore if it's a comment! Still on same keyword.
+                        if (misc::is_comment(line) == false){
+                            add_boundary(line,options);
+                        }
+                        // Want to peek next line, if it's a keyword or empty line we break
+                        // the while loop and start over!
+                        unsigned int previous_pos = input_file.tellg();
+                        getline(input_file, line);
+                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        {
                             input_file.seekg(previous_pos);
-                            material_keywords_loop = false;
-                            }                            
+                            inner_loop_keyword = false;
                         }
                     }
                 }
-                // We've added all the info we want to this specific material, let's set up the constitutive matrices for both 2D and 3D.
-                // The latest createt MID bill be att the back of the material list
-                // mids.back()                
-                // 2D:
-
-            }
-            else if (keyword=="*BOUNDARY"){
-                getline(input_file, line);
-                row_counter++;
-                bool inner_loop_keyword = true;
-                while (inner_loop_keyword == true){
-                // Ignore if it's a comment! Still on same keyword.
-                    if (misc::is_comment(line) == false){
-                        add_boundary(line,options);
-                    }
-                    // Want to peek next line, if it's a keyword or empty line we break
-                    // the while loop and start over!
-                    unsigned int previous_pos = input_file.tellg();
-                    getline(input_file, line);
-                    if (misc::is_keyword(line) == true or line.empty() == true)
-                    {
-                        input_file.seekg(previous_pos);
-                        inner_loop_keyword = false;
-                    }
-                }
-            }
-            else if (keyword == "*CLOAD")
-            {
-                getline(input_file, line);
-                row_counter++;
-                bool inner_loop_keyword = true;
-                while (inner_loop_keyword == true){
-                // Ignore if it's a comment! Still on same keyword.
-                    if (misc::is_comment(line) == false){
-                        add_load(line);
-                    }
-                    // Want to peek next line, if it's a keyword or empty line we break
-                    // the while loop and start over!
-                    unsigned int previous_pos = input_file.tellg();
-                    getline(input_file, line);
-                    if (misc::is_keyword(line) == true or line.empty() == true)
-                    {
-                        input_file.seekg(previous_pos);
-                        inner_loop_keyword = false;
-                    }
-                }
-            }
-            else if (keyword == "*STATIC"){
-                // with this flag set a static analis will be ran
-                this->static_analysis = true;
-            }
-            else if (keyword == "*FREQUENCY"){
-                // with this flag set a static analis will be ran
-                this->eigenvalue_analysis = true;
-                // peep next line and save the number of modes to find
-                // Jump to next line 
-                getline(input_file, line);
-                row_counter++;
-                std::string number_of_modes_to_find_string = misc::split_on(line, ',').at(0);
-                this->number_of_modes_to_find = std::stoi(number_of_modes_to_find_string);
-                std::cout << keyword << ": number of eigenvalues to be calculated = " << number_of_modes_to_find << std::endl;
-            }
-            else if (keyword == "*ELEMENT"){
-                getline(input_file, line);
-                row_counter++;
-                bool inner_loop_keyword = true;
-                while (inner_loop_keyword == true){
-                row_counter++;   
-                // Ignore if it's a comment! Still on same keyword.
-                if (misc::is_comment(line) == false){
-                    // If the line ends with a comma (','), the next line will continue to list nodes for that element.
-                    // I don't think we will ever need 3 lines, so can hard-code for two lines.
-                    // Check if last char is a comma:
-                    if (line.back() == ',')
-                    {
-                        // Peek next row in the text file and append it to our data line
-                        std::string next_line;
-                        getline(input_file, next_line);
-                        line = line + next_line;
-                    }
-                    add_element(line,options);
-                }
-                // Want to peek next line, if it's a keyword or empty line we break
-                // the while loop and start over!
-                unsigned int previous_pos = input_file.tellg();
-                getline(input_file, line);
-                // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
-                if (misc::is_keyword(line) == true or line.empty() == true)
+                else if (keyword == "*CLOAD")
                 {
-                    input_file.seekg(previous_pos);
-                    inner_loop_keyword = false;
+                    getline(input_file, line);
+                    row_counter++;
+                    bool inner_loop_keyword = true;
+                    while (inner_loop_keyword == true){
+                    // Ignore if it's a comment! Still on same keyword.
+                        if (misc::is_comment(line) == false){
+                            add_load(line,options);
+                        }
+                        // Want to peek next line, if it's a keyword or empty line we break
+                        // the while loop and start over!
+                        unsigned int previous_pos = input_file.tellg();
+                        getline(input_file, line);
+                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        {
+                            input_file.seekg(previous_pos);
+                            inner_loop_keyword = false;
+                        }
+                    }
                 }
-            }                
-            }
-            else if (keyword == "*NODE")
-            {
-                getline(input_file, line);
-                row_counter++;
-                bool inner_loop_keyword = true;
-                while (inner_loop_keyword == true){
-                row_counter++;   
-                // Ignore if it's a comment! Still on same keyword.
+                else if (keyword == "*STATIC"){
+                    // with this flag set a static analis will be ran
+                    this->static_analysis = true;
+                }
+                else if (keyword == "*FREQUENCY"){
+                    // with this flag set a static analis will be ran
+                    this->eigenvalue_analysis = true;
+                    // peep next line and save the number of modes to find
+                    // Jump to next line 
+                    getline(input_file, line);
+                    row_counter++;
+                    std::string number_of_modes_to_find_string = misc::split_on(line, ',').at(0);
+                    this->number_of_modes_to_find = std::stoi(number_of_modes_to_find_string);
+                    std::cout << keyword << ": number of eigenvalues to be calculated = " << number_of_modes_to_find << std::endl;
+                }
+                else if (keyword == "*ELEMENT"){
+                    getline(input_file, line);
+                    row_counter++;
+                    bool inner_loop_keyword = true;
+                    while (inner_loop_keyword == true){
+                    row_counter++;   
+                    // Ignore if it's a comment! Still on same keyword.
                     if (misc::is_comment(line) == false){
-                        add_node(line,options);
+                        // If the line ends with a comma (','), the next line will continue to list nodes for that element.
+                        // We will ever need 3 lines, so can hard-code for two lines.
+                        // Check if last char is a comma:
+                        if (line.back() == ',')
+                        {
+                            // Peek next row in the text file and append it to our data line
+                            std::string next_line;
+                            getline(input_file, next_line);
+                            line = line + next_line;
+                        }
+                        add_element(line,options);
                     }
                     // Want to peek next line, if it's a keyword or empty line we break
                     // the while loop and start over!
@@ -756,43 +719,67 @@ void Mesh::read_file(std::string filename){
                         inner_loop_keyword = false;
                     }
                 }                
-            }
-            else if (keyword == "*NSET"){
-                getline(input_file, line);
-                row_counter++;
-                bool inner_loop_keyword = true;
-                while (inner_loop_keyword == true){
-                    row_counter++;   
-                // Ignore if it's a comment! Still on same keyword.
-                    if (misc::is_comment(line) == false){
-                        // If the line ends with a comma (','), the next line will continue to list nodes for that element.
-                        // I don't think we will ever need 3 lines, so can hard-code for two lines.
-                        // Check if last char is a comma:
-                        if (line.back() == ',')
-                        {
-                            // Peek next row in the text file and append it to our data line
-                            std::string next_line;
-                            getline(input_file, next_line);
-                            line = line + next_line;
-                        }
-                        add_set(line,options);
-                    }
-                    // Want to peek next line, if it's a keyword or empty line we break
-                    // the while loop and start over!
-                    unsigned int previous_pos = input_file.tellg();
+                }
+                else if (keyword == "*NODE")
+                {
                     getline(input_file, line);
-                    // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
-                    if (misc::is_keyword(line) == true or line.empty() == true)
-                    {
-                        input_file.seekg(previous_pos);
-                        inner_loop_keyword = false;
-                    }
-                }                                
+                    row_counter++;
+                    bool inner_loop_keyword = true;
+                    while (inner_loop_keyword == true){
+                    row_counter++;   
+                    // Ignore if it's a comment! Still on same keyword.
+                        if (misc::is_comment(line) == false){
+                            add_node(line,options);
+                        }
+                        // Want to peek next line, if it's a keyword or empty line we break
+                        // the while loop and start over!
+                        unsigned int previous_pos = input_file.tellg();
+                        getline(input_file, line);
+                        // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
+                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        {
+                            input_file.seekg(previous_pos);
+                            inner_loop_keyword = false;
+                        }
+                    }                
+                }
+                else if (keyword == "*NSET"){
+                    getline(input_file, line);
+                    row_counter++;
+                    bool inner_loop_keyword = true;
+                    while (inner_loop_keyword == true){
+                        row_counter++;   
+                    // Ignore if it's a comment! Still on same keyword.
+                        if (misc::is_comment(line) == false){
+                            // If the line ends with a comma (','), the next line will continue to list nodes for that element.
+                            // I don't think we will ever need 3 lines, so can hard-code for two lines.
+                            // Check if last char is a comma:
+                            if (line.back() == ',')
+                            {
+                                // Peek next row in the text file and append it to our data line
+                                std::string next_line;
+                                getline(input_file, next_line);
+                                line = line + next_line;
+                            }
+                            add_set(line,options);
+                        }
+                        // Want to peek next line, if it's a keyword or empty line we break
+                        // the while loop and start over!
+                        unsigned int previous_pos = input_file.tellg();
+                        getline(input_file, line);
+                        // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
+                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        {
+                            input_file.seekg(previous_pos);
+                            inner_loop_keyword = false;
+                        }
+                    }                                
+                }
             }
-            else
-            {
-                std::cout << keyword << ": not supported" << std::endl;
-            }
+            // else
+            // {
+            //     std::cout << keyword << ": not supported" << std::endl;
+            // }
             if (input_file.eof() == true)
             {
                 break;
@@ -800,8 +787,6 @@ void Mesh::read_file(std::string filename){
             row_counter++;   
         }
     }       
-    duration_clock_read_file = (std::clock() - clock_read_file ) / (float) CLOCKS_PER_SEC;
-    std::cout << "---    Input file "<< filename << " read and written information to the log file, in " << duration_clock_read_file << " seconds (wallclock time)    ---" << std::endl;
 };
 
 void Mesh::add_set(std::string line,std::unordered_map<std::string, std::string> options){
