@@ -120,9 +120,9 @@ make clean
 I don't  have access to a Windows PC so I don't know, use the Makefile somehow...
 
 # To-do & features implemented
-- [x] How to build
 - [x] makefile
 - [ ] Automate test cases for comparison solution against abaqus or hand calculations
+  - [ ] Set up google-test and start writing unit tests
 - [X] Set up clang-tidy for static code analysis
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
