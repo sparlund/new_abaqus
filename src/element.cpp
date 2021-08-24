@@ -6,8 +6,37 @@
 #include "dof.h"
 #include "misc_string_functions.h"
 
+Element::Element(unsigned int                 id,
+                std::vector<std::shared_ptr<Node>>  connectivity,
+                std::shared_ptr<Pid>                pid,
+                unsigned short                nnodes,
+                unsigned short                ndofs,
+                unsigned short                vtk_identifier,
+                unsigned short                ngp,
+                unsigned short                dimensions):
+                id{id},
+                connectivity{connectivity},
+                pid{pid},
+                nnodes{nnodes},
+                ndofs{ndofs},
+                vtk_identifier{vtk_identifier},
+                ngp{ngp},
+                dimensions{dimensions}{};
 
-
+std::vector<std::shared_ptr<Node>>                 Element::get_connectivity(){return connectivity;}
+std::shared_ptr<Pid>                               Element::get_pid(){return pid;}
+std::vector<unsigned int>                          Element::get_element_dof_ids(){return dofs_id;}
+unsigned short                                     Element::get_element_ndofs(){return ndofs;}
+unsigned short                                     Element::get_element_nnodes(){return nnodes;}
+unsigned int                                       Element::get_id(){return id;}
+std::string                                        Element::get_element_type(){return element_type;}
+unsigned short                                     Element::get_vtk_identifier(){return vtk_identifier;}
+float                                              Element::get_weight(){return weight;}
+float                                              Element::get_volume(){return volume;}
+unsigned short                                     Element::get_ngp(){return ngp;};
+unsigned int                                       Element::get_element_counter(){return element_counter;};
+Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Element::get_Ke(){return Ke;};
+Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Element::get_Me(){return Me;}; 
 
 unsigned int Element::element_counter=0;
 

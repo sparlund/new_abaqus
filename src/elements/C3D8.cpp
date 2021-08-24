@@ -4,8 +4,6 @@
 
 const std::string C3D8::element_type = "C3D8";
 
-C3D8::~C3D8(){}
-
 void C3D8::calculate_Ke(){
     std::shared_ptr<Mid> mid = pid->get_mid();
     float v = mid->get_v();
@@ -129,8 +127,15 @@ void C3D8::calculate_Me(){
 
 }
 
-C3D8::C3D8(unsigned int id, std::vector<std::shared_ptr<Node>> connectivity,std::shared_ptr<Pid> pid):
-id(id),connectivity(connectivity),pid(pid){
+C3D8::C3D8(unsigned int                        id,
+           std::vector<std::shared_ptr<Node>>  connectivity,
+           std::shared_ptr<Pid>                pid,
+           const unsigned short                nnodes,
+           const unsigned short                ndofs,
+           const unsigned short                vtk_identifier,
+           const unsigned short                ngp,
+           const unsigned short                dimensions):
+Element{id,connectivity,pid,nnodes,ndofs,vtk_identifier,ngp,dimensions}{
     // add dofs to each node. can be done first now because now we know how many dofs each node should have    
     for (unsigned int i = 0; i < connectivity.size(); i++)
     {
