@@ -323,7 +323,7 @@ void Mesh::assemble(){
     std::cout << "          Mesh size:" << std::endl;
     std::cout << "               nodes = " << nodes.size() << std::endl;
     std::cout << "            elements = " << elements.size() << std::endl;
-    ndofs = nodes.at(0)->dofs.at(0).global_dof_id_counter; 
+    ndofs = nodes.at(0)->dofs.at(0).get_global_dof_id_counter(); 
     std::cout << "  degrees of freedom = " << ndofs << std::endl;
     // Also print weight as a sanity check!
     // float model_total_weight = 0;
