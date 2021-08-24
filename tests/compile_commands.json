@@ -1,0 +1,87 @@
+[
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/mesh.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/mesh.cpp -o build/src/mesh.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "main.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c main.cpp -o build/main.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/element.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/element.cpp -o build/src/element.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/elements/C3D10.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/elements/C3D10.cpp -o build/src/elements/C3D10.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/elements/C3D20.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/elements/C3D20.cpp -o build/src/elements/C3D20.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/elements/C3D8.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/elements/C3D8.cpp -o build/src/elements/C3D8.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/Gauss.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/Gauss.cpp -o build/src/Gauss.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/elements/CPS3.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/elements/CPS3.cpp -o build/src/elements/CPS3.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/elements/CPS4.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/elements/CPS4.cpp -o build/src/elements/CPS4.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/elements/S3.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/elements/S3.cpp -o build/src/elements/S3.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/dof.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/dof.cpp -o build/src/dof.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/mid.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/mid.cpp -o build/src/mid.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/misc_string_functions.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/misc_string_functions.cpp -o build/src/misc_string_functions.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/new_abaqus.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/new_abaqus.cpp -o build/src/new_abaqus.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/node.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/node.cpp -o build/src/node.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/pid.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/pid.cpp -o build/src/pid.o"
+  },
+  {
+    "directory": "/home/johan/new_abaqus",
+    "file": "src/set.cpp",
+    "command": "g++  -std=c++11 -Wall -Wextra -g -D NDEBUG -I . -MP -MMD -c src/set.cpp -o build/src/set.o"
+  }
+]
