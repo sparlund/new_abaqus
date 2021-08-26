@@ -4,7 +4,7 @@
 
 
 void CPS4::calculate_Ke(){
-std::shared_ptr<Mid> mid = pid->get_mid();
+    std::shared_ptr<Mid> mid = pid->get_mid();
     float v = mid->get_v();
     float E = mid->get_E();
     Eigen::Matrix<float,3,3> D;

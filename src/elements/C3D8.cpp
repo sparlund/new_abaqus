@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdlib.h>
 
-void C3D8::calculate_Ke(){
+void C3D8::calculate_Ke(){    
     std::shared_ptr<Mid> mid = pid->get_mid();
     float v = mid->get_v();
     float E = mid->get_E();
@@ -15,9 +15,6 @@ void C3D8::calculate_Ke(){
            0,     0,     0,           0,  (1-2*v)/2,          0,
            0,     0,     0,           0,          0,  (1-2*v)/2;
     D *= E/((1+v)*(1-2*v));
-
-    setup_coord();
-    setup_dofs();
     // std::cout << "coord=" << coord << std::endl;
 
     // dim(J) = ndim x ndim
@@ -31,8 +28,6 @@ void C3D8::calculate_Ke(){
     Eigen::Matrix<float,3,8> dNdxdydz;
     Eigen::Matrix<float,3,8> dNdXhidEtadMy;
 
-    // init Ke & Me to zero
-    Ke.setZero();
     float dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi,dN5dXhi,dN6dXhi,dN7dXhi,dN8dXhi;
     float dN1dEta,dN2dEta,dN3dEta,dN4dEta,dN5dEta,dN6dEta,dN7dEta,dN8dEta;
     float dN1dMy,dN2dMy,dN3dMy,dN4dMy,dN5dMy,dN6dMy,dN7dMy,dN8dMy;
@@ -93,7 +88,6 @@ void C3D8::calculate_Ke(){
 void C3D8::calculate_Me(){
     // size(global_N_matrix) = element ndof*element ndof
     Eigen::Matrix<float,3,24> N;
-    Me.setZero();
     float N1,N2,N3,N4,N5,N6,N7,N8;
     float xhi,eta,my,w;
     for (unsigned int i = 0; i < gauss_points->size(); i++)

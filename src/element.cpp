@@ -71,7 +71,15 @@ Element::Element(unsigned int                       id,
                 vtk_identifier{vtk_identifier},
                 ngp{ngp},
                 dimensions{dimensions},
-                element_type{element_type}{print_element_info_to_log();};
+                element_type{element_type}{
+    Ke.resize(ndofs,ndofs);
+    Me.resize(ndofs,ndofs);
+    Ke.setZero();
+    Me.setZero();
+    setup_coord();
+    setup_dofs();
+    print_element_info_to_log();
+    };
 
 std::vector<std::shared_ptr<Node>>                 Element::get_connectivity(){return connectivity;}
 std::shared_ptr<Pid>                               Element::get_pid(){return pid;}

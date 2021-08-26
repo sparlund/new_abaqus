@@ -1,28 +1,8 @@
-#include <string>
-#include <vector>
-#include <array>
-#include <unordered_map>
-#include <fstream>
-#include <functional>
-#include <iostream>
-#include <iomanip>
-#include <memory>
-#include <numeric>
+#include "mesh.h"
 #include "../external_libs/Eigen/Dense"
 #include "../external_libs/Eigen/Sparse"
 #include "../external_libs/Eigen/Cholesky"
-#include <Spectra/SymGEigsShiftSolver.h>
-#include <Spectra/MatOp/SparseSymMatProd.h>
-#include <Spectra/MatOp/SparseCholesky.h>
-#include <Spectra/Util/GEigsMode.h>
-#include <Spectra/Util/SelectionRule.h>
-#include <utility>
-#include <cmath>
-#include <fstream>
-#include <ctime>
 #include "../external_libs/Eigen/Eigenvalues"
-#include <stdlib.h>
-#include "mesh.h"
 #include "mid.h"
 #include "pid.h"
 #include "node.h"
@@ -38,13 +18,31 @@
 // for eigenfrequency solver
 #include <Spectra/SymGEigsSolver.h>
 #include <Spectra/MatOp/SparseCholesky.h>
+#include <string>
+#include <vector>
+#include <array>
+#include <unordered_map>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <iomanip>
+#include <memory>
+#include <numeric>
+#include <Spectra/SymGEigsShiftSolver.h>
+#include <Spectra/MatOp/SparseSymMatProd.h>
+#include <Spectra/MatOp/SparseCholesky.h>
+#include <Spectra/Util/GEigsMode.h>
+#include <Spectra/Util/SelectionRule.h>
+#include <utility>
+#include <cmath>
+#include <fstream>
+#include <ctime>
+#include <stdlib.h>
 
+// TODO: move this to misc::
 float squirt_and_divide_by_2pi(float in){
     return std::sqrt(in)/(2*3.14159265359);
 }
-// float Mesh::eigenvalue_to_eigenfrequency(float in){
-//     return std::sqrt(in)/(2*3.14159265358979);
-// }
 
 void Mesh::print_matrix_to_mtx(Eigen::SparseMatrix<float> A,std::string output_filename){
     // Print input matrix A in abaqus "COORDINATE" format in a .mtx-file
@@ -851,27 +849,28 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     std::shared_ptr<Element> element;
     if (type == "S3")
     {
-        element = std::shared_ptr<Element>(new S3(element_id,element_connectivity,pid));
+        element = std::make_shared<S3>(element_id,element_connectivity,pid,3,9,5,1,2,"S3");
     }
     else if (type == "CPS3")
     {
-        element = std::shared_ptr<Element>(new CPS3(element_id,element_connectivity,pid));
+        element = std::make_shared<CPS3>(element_id,element_connectivity,pid,3,6,6,1,2,"CPS3");
     }
     else if (type == "CPS4")
     {   
-        element = std::shared_ptr<Element>(new CPS4(element_id,element_connectivity,pid));
+        element = std::make_shared<CPS4>(element_id,element_connectivity,pid,4,8,9,4,2,"CPS4");
     }
     else if (type == "C3D10")
     {   
-        element = std::shared_ptr<Element>(new C3D10(element_id,element_connectivity,pid));
+        element = std::make_shared<C3D10>(element_id,element_connectivity,pid,10,30,24,4,3,"C3D10");
     }
     else if (type == "C3D8")
     {      
-        element = std::shared_ptr<Element>(new C3D8(element_id,element_connectivity,pid));
+        // element = std::shared_ptr<Element>(new C3D8(element_id,element_connectivity,pid,8,24,12,8,3));
+        element = std::make_shared<C3D8>(element_id,element_connectivity,pid,8,24,12,8,3,"C3D8");
     }
     else if (type == "C3D20")
     {      
-        element = std::shared_ptr<Element>(new C3D20(element_id,element_connectivity,pid));
+        element = std::make_shared<C3D20>(element_id,element_connectivity,pid,20,60,25,27,3,"C3D20");
     }
     else
     {
