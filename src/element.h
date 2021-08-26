@@ -1,10 +1,10 @@
 #pragma once
-#include <vector>
-#include <memory>
-#include <string>
-#include <Eigen/Sparse>
 #include "node.h"
 #include "pid.h"
+#include <Eigen/Sparse>
+#include <memory>
+#include <string>
+#include <vector>
 
 // virtual class
 class Element{
@@ -14,7 +14,6 @@ protected:
     std::shared_ptr<Pid>                                pid;
     std::vector<unsigned int>                           dofs_id;
     std::vector<float>                                  detJ;
-    std::string                                         element_type;
     float                                               area, volume, weight;
     static unsigned int                                 element_counter;
     const unsigned short                                nnodes;
@@ -22,10 +21,13 @@ protected:
     const unsigned short                                vtk_identifier;
     const unsigned short                                ngp;
     const unsigned short                                dimensions;
+    std::string                                         element_type;
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>  Ke;
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>  Me;
     Eigen::Matrix<float,Eigen::Dynamic,1>               fe;
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>  coord; 
+    void                                                setup_coord();
+    void                                                setup_dofs();
 public:
     virtual void                                       calculate_Ke()=0;
     virtual void                                       calculate_Me()=0;
@@ -54,5 +56,6 @@ public:
             const unsigned short                ndofs,
             const unsigned short                vtk_identifier,
             const unsigned short                ngp,
-            const unsigned short                dimensions);
+            const unsigned short                dimensions,
+            std::string                         element_type);
 };
