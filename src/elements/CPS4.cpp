@@ -4,7 +4,7 @@
 
 
 void CPS4::calculate_Ke(){
-    std::shared_ptr<Mid> mid = pid->get_mid();
+    Mid* mid = pid->get_mid();
     float v = mid->get_v();
     float E = mid->get_E();
     Eigen::Matrix<float,3,3> D;
@@ -73,8 +73,8 @@ void CPS4::calculate_Me(){
 
 
 CPS4::CPS4(unsigned int                        id,
-           std::vector<std::shared_ptr<Node>>  connectivity,
-           std::shared_ptr<Pid>                pid,
+           std::vector<Node*>  connectivity,
+           Pid*                pid,
            const unsigned short                nnodes,
            const unsigned short                ndofs,
            const unsigned short                vtk_identifier,

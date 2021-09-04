@@ -1,27 +1,23 @@
 #pragma once
-#include <vector>
-#include <string>
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
+
+// NOTE: T is pointer!
 template <class T>
 class Set
 {
 private:
-    std::string name;
-    std::vector<std::shared_ptr<T>> entities;
+    const std::string name;
+    std::vector<T> entities;
 public:
-    unsigned int get_number_of_entities(){return entities.size();}
-    std::string get_set_name(){return name;}
-    std::shared_ptr<T> get_entity(unsigned int i){return entities.at(i);}
-    void add_entity(std::shared_ptr<T> entity_pointer){entities.push_back(entity_pointer);}
-    Set(std::string name):name(name){
-        std::cout << "*NSET: nset = " << name;
-    };
-    ~Set(){};
+    size_t get_number_of_entities() const {return entities.size();}
+    std::string get_set_name() const {return name;}
+    T get_entity(size_t i){return entities.at(i);}
+    void add_entities(std::string line);
+    void add_entity(T entity_pointer);
+    Set(std::string name);
+    ~Set() = default;
 };
-
-
-
-
-
