@@ -1,7 +1,7 @@
 #pragma once
+#include "dof.h"
 #include <array>
 #include <vector>
-#include "dof.h"
 
 class Node
 {
@@ -14,5 +14,4 @@ public:
     std::vector<Dof> dofs;  
     unsigned int get_node_counter();
     Node(unsigned int global_id, float x, float y, float z);
-    ~Node();
 };

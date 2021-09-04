@@ -1,7 +1,7 @@
-#include "set.h"
 #include "element.h"
 #include "node.h"
 #include "misc_string_functions.h"
+#include "set.h"
 
 template class Set<Node*>;
 template class Set<Element*>;
@@ -21,6 +21,6 @@ void Set<T>::add_entity(T entity_pointer){
     entities.emplace_back(entity_pointer);
     }
 template <class T>
-Set<T>::Set(std::string name):name(name){
+Set<T>::Set(const std::string& name):name{name}{
         std::cout << "*NSET: nset = " << name;
     };

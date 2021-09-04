@@ -52,8 +52,8 @@ void CPS3::calculate_Me(){
 }
 
 CPS3::CPS3(unsigned int                        id,
-           std::vector<Node*>  connectivity,
-           Pid*                pid,
+           std::vector<Node*>                  connectivity,
+           Pid*                                pid,
            const unsigned short                nnodes,
            const unsigned short                ndofs,
            const unsigned short                vtk_identifier,

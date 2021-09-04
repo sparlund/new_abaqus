@@ -18,6 +18,5 @@ public:
     T get_entity(size_t i){return entities.at(i);}
     void add_entities(std::string line);
     void add_entity(T entity_pointer);
-    Set(std::string name);
-    ~Set() = default;
+    Set(const std::string& name);
 };

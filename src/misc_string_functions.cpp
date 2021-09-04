@@ -92,7 +92,7 @@ bool misc::is_comment(std::string line){
 
 };
 
-std::vector<std::string> misc::split_on(std::string in,char split_char)
+std::vector<std::string> misc::split_on(const std::string& in,char split_char)
 {
     std::stringstream ss(in);
     std::vector<std::string> items;

@@ -47,7 +47,7 @@ private:
     bool eigenvalue_analysis=false;
     std::string eigenvalue_solution_method;
     std::string analysis_name;
-    void print_matrix_to_mtx(Eigen::SparseMatrix<float>,std::string) const;
+    void print_matrix_to_mtx(const Eigen::SparseMatrix<float>&,const std::string&) const;
     // The supported keywords needs to be added in this order!
     const std::vector<std::string> keywords = {"*NODE",
                                                "*MATERIAL",
@@ -86,7 +86,7 @@ public:
     void solve_static();
     void solve_eigenfrequency();
     void export_2_vtk();
-    Mesh();
-    void read_file(std::string filename, std::string keyword);
-    void read_file_new_method(std::string filename);
+    Mesh() = default;
+    void read_file(const std::string& filename, const std::string& keyword);
+    void read_file_new_method(const std::string& filename);
 };
