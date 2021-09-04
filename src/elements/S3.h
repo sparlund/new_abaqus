@@ -13,7 +13,7 @@ public:
     void calculate_Ke();
     void calculate_Me();
     S3(unsigned int                        id,
-       std::vector<Node*>  connectivity,
+       std::vector<Node*>                  connectivity,
        Pid*                                pid,
        const unsigned short                nnodes,
        const unsigned short                ndofs,

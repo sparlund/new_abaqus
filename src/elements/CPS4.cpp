@@ -73,8 +73,8 @@ void CPS4::calculate_Me(){
 
 
 CPS4::CPS4(unsigned int                        id,
-           std::vector<Node*>  connectivity,
-           Pid*                pid,
+           std::vector<Node*>                  connectivity,
+           Pid*                                pid,
            const unsigned short                nnodes,
            const unsigned short                ndofs,
            const unsigned short                vtk_identifier,

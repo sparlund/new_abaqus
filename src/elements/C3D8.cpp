@@ -115,8 +115,8 @@ void C3D8::calculate_Me(){
 }
 
 C3D8::C3D8(unsigned int                        id,
-           std::vector<Node*>  connectivity,
-           Pid*                pid,
+           std::vector<Node*>                  connectivity,
+           Pid*                                pid,
            const unsigned short                nnodes,
            const unsigned short                ndofs,
            const unsigned short                vtk_identifier,

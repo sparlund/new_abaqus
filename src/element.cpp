@@ -64,14 +64,14 @@ Element::Element(unsigned int                       id,
                 unsigned short                      dimensions,
                 std::string                         element_type):
                 id{id},
-                connectivity{connectivity},
+                connectivity{std::move(connectivity)},
                 pid{pid},
                 nnodes{nnodes},
                 ndofs{ndofs},
                 vtk_identifier{vtk_identifier},
                 ngp{ngp},
                 dimensions{dimensions},
-                element_type{element_type}{
+                element_type{std::move(element_type)}{
     Ke.resize(ndofs,ndofs);
     Me.resize(ndofs,ndofs);
     Ke.setZero();

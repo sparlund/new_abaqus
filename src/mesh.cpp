@@ -45,7 +45,7 @@ float squirt_and_divide_by_2pi(float in){
     return std::sqrt(in)/(2*3.14159265359);
 }
 
-void Mesh::print_matrix_to_mtx(Eigen::SparseMatrix<float> A,std::string output_filename) const
+void Mesh::print_matrix_to_mtx(const Eigen::SparseMatrix<float>& A,const std::string& output_filename) const
 {
     // Print input matrix A in abaqus "COORDINATE" format in a .mtx-file
     std::ofstream mtx;
@@ -112,7 +112,7 @@ void Mesh::export_2_vtk(){
     }
     // point_data, i.e displacement on nodes
     output << "POINT_DATA " << nodes.size() << std::endl;
-    if (this->static_analysis == true)
+    if (static_analysis)
     {
         output << "FIELD displacement 1" << std::endl;
         // data name, number of values (3 for 3D & 2D, Z is zero for 2D, datatype)
@@ -130,7 +130,7 @@ void Mesh::export_2_vtk(){
             
         }
     }
-    if (this->eigenvalue_analysis == true)
+    if (eigenvalue_analysis)
     {
         // scale eigenvectors before saving to vtk file
         // normalize against largest value in eigenvector matrix
@@ -176,16 +176,16 @@ void Mesh::export_2_vtk(){
         }          
     }    
     output.close();
-    duration_clock_export = ( std::clock() - clock_export ) / (float) CLOCKS_PER_SEC;
+    duration_clock_export = ( std::clock() - clock_export ) / static_cast<float>(CLOCKS_PER_SEC);
     std::cout << "---    Exported to VTK format in " << duration_clock_export << " seconds (wallclock time)   ---" << std::endl;
 }
 
 void Mesh::solve(){
-    if (eigenvalue_analysis == true)
+    if (eigenvalue_analysis)
     {
         solve_eigenfrequency();
     }
-    if (static_analysis == true)
+    if (static_analysis)
     {
         solve_static();
     }
@@ -205,10 +205,10 @@ void Mesh::solve_eigenfrequency(){
     // Need to modify global stiffness matrix
     // in order to account for boundary conditions
     Eigen::SparseMatrix<float> K_eigen = K;
-    for (unsigned int i = 0; i < bc.size(); i++)
+    for(const auto& i : bc)
     {
         // if current bc==0, make all values in the corresponding row and column in K to zero
-        unsigned int current_global_dof = bc.at(i).first;
+        unsigned int current_global_dof = i.first;
         K_eigen.coeffRef(current_global_dof,current_global_dof) = penalty_value;
     }
     // if problem is smaller than, let's say 1e3 dofs, it's
@@ -249,7 +249,7 @@ void Mesh::solve_eigenfrequency(){
         // eigenfrequency = sqrt(eigenvalue)/(2*pi);
         this->eigenfrequencies = eigenvalues.unaryExpr(&squirt_and_divide_by_2pi);
     }        
-    duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
+    duration_clock_solve = ( std::clock() - clock_solve ) / static_cast<float>(CLOCKS_PER_SEC);
     std::cout << "                              E I G E N V A L U E    O U T P U T\n" << std::endl;
     std::cout << " MODE NO      EIGENVALUE              FREQUENCY         " << std::endl;//GENERALIZED MASS   COMPOSITE MODAL DAMPING" << std::endl
     std::cout << "                             (RAD/TIME)   (CYCLES/TIME)\n\n" << std::endl;
@@ -388,9 +388,9 @@ void Mesh::assemble(){
     // want to find free indices!
     std::vector<unsigned int> free_dofs;
     std::vector<unsigned int> dirichlet_dofs;
-    for (unsigned int i = 0; i < bc.size(); i++)
+    for(const auto& i : bc)
     {
-        dirichlet_dofs.push_back(bc.at(i).first);
+        dirichlet_dofs.push_back(i.first);
     }
     for (unsigned int i = 0; i < ndofs; i++)
     {
@@ -422,10 +422,6 @@ void Mesh::add_mid(std::unordered_map<std::string, std::string> options){
     mids.push_back(std::move(mid));  
 };
 
-
-Mesh::Mesh(){
-}
-
 void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::string> options){
     const auto& type = options["TYPE"];
     const auto& data = misc::split_on(line,',');
@@ -443,7 +439,7 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
         unsigned int dof_to         = std::stoi(data.at(2));
         auto magnitude      = std::stof(data.at(3));
         // node,dof_from,dof_to,magnitude
-        size_t number_of_nodes,global_node_id;
+        size_t global_node_id;
         if (node_boundary)
         {
             global_node_id = std::stoi(data.at(0));
@@ -490,7 +486,7 @@ void Mesh::add_load(std::string line, std::unordered_map<std::string, std::strin
         // we don't know complete number of dofs yet,
         // so we can't add directly to global load vector, but have
         // to store it here meanwhile
-        f_to_be_added.push_back(std::make_pair(global_dof,magnitude));   
+        f_to_be_added.emplace_back(std::make_pair(global_dof,magnitude));   
         std::cout << "*CLOAD: id=" << global_node_id << ", dof={" << local_dof << "}="<< global_dof <<", magnitude=" << magnitude << std::endl;
     }
     catch(const std::exception& e)
@@ -503,7 +499,7 @@ void Mesh::add_load(std::string line, std::unordered_map<std::string, std::strin
 
 
 
-void Mesh::read_file_new_method(std::string filename){
+void Mesh::read_file_new_method(const std::string& filename){
     std::vector<std::string> filename_split = misc::split_on(filename,'/');   
     std::cout << "---    Starting to read input file " << filename_split.back() << "    ---" << std::endl;
     std::clock_t clock_read_file;
@@ -514,12 +510,12 @@ void Mesh::read_file_new_method(std::string filename){
     {
         read_file(filename,keyword);
     }
-    duration_clock_read_file = (std::clock() - clock_read_file ) / (float) CLOCKS_PER_SEC;
+    duration_clock_read_file = (std::clock() - clock_read_file ) / static_cast<float>(CLOCKS_PER_SEC);
     std::cout << "---    Input file "<< filename << " read and written information to the log file, in " << duration_clock_read_file << " seconds (wallclock time)    ---" << std::endl;
 
 }
 
-void Mesh::read_file(std::string filename, std::string keyword){
+void Mesh::read_file(const std::string& filename, const std::string& keyword){
     std::ifstream input_file(filename);
     if (input_file.fail())
     {
@@ -532,7 +528,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
     while (getline(input_file, line))
     {
         row_counter++;
-        if (misc::is_keyword(line) == true){
+        if (misc::is_keyword(line)){
             std::string current_line_keyword = misc::split_on(line, ',').at(0);
             if (current_line_keyword == keyword or current_line_keyword == "*INCLUDE"){
                 // extract a map of parameters and their values
@@ -552,7 +548,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                     // auto nset = nsets.back();
                     // Read line by line and add all the comma-separated nodes
                     bool inner_loop_keyword = true;
-                    while(inner_loop_keyword == true)
+                    while(inner_loop_keyword)
                     {
                         // Jump to next line 
                         getline(input_file, line);
@@ -570,7 +566,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                         // the while loop and start over!
                         unsigned int previous_pos = input_file.tellg();
                         getline(input_file, line);
-                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        if (misc::is_keyword(line) or line.empty())
                         {
                             input_file.seekg(previous_pos);
                             inner_loop_keyword = false;
@@ -585,13 +581,13 @@ void Mesh::read_file(std::string filename, std::string keyword){
                     add_mid(options);
                     // Add all following options to the last created material card.
                     bool material_keywords_loop = true;
-                    while(material_keywords_loop == true)
+                    while(material_keywords_loop)
                     {
                         // Jump to next line 
                         getline(input_file, line);
                         row_counter++;
                         // Check if new line is a keyword, otherwise it's a comment and we skip that line 
-                        if (misc::is_keyword(line) == true)
+                        if (misc::is_keyword(line))
                         {
                             std::string keyword = misc::split_on(line, ',').at(0);
                             if (keyword == "*DENSITY")
@@ -638,7 +634,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                             // supported material specific keywords we skip adding data to the material
                             unsigned int previous_pos = input_file.tellg();
                             getline(input_file, line);
-                            if (misc::is_keyword(line) == true)
+                            if (misc::is_keyword(line))
                             {
                                 std::string keyword = misc::split_on(line, ',').at(0);
                                 // if the new keyword is not a supported material keyword we break loop and keep reading file
@@ -661,7 +657,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                     getline(input_file, line);
                     row_counter++;
                     bool inner_loop_keyword = true;
-                    while (inner_loop_keyword == true){
+                    while (inner_loop_keyword){
                     // Ignore if it's a comment! Still on same keyword.
                         if (misc::is_comment(line) == false){
                             add_boundary(line,options);
@@ -670,7 +666,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                         // the while loop and start over!
                         unsigned int previous_pos = input_file.tellg();
                         getline(input_file, line);
-                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        if (misc::is_keyword(line) or line.empty())
                         {
                             input_file.seekg(previous_pos);
                             inner_loop_keyword = false;
@@ -682,7 +678,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                     getline(input_file, line);
                     row_counter++;
                     bool inner_loop_keyword = true;
-                    while (inner_loop_keyword == true){
+                    while (inner_loop_keyword){
                     // Ignore if it's a comment! Still on same keyword.
                         if (misc::is_comment(line) == false){
                             add_load(line,options);
@@ -691,7 +687,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                         // the while loop and start over!
                         unsigned int previous_pos = input_file.tellg();
                         getline(input_file, line);
-                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        if (misc::is_keyword(line) or line.empty())
                         {
                             input_file.seekg(previous_pos);
                             inner_loop_keyword = false;
@@ -717,7 +713,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                     getline(input_file, line);
                     row_counter++;
                     bool inner_loop_keyword = true;
-                    while (inner_loop_keyword == true){
+                    while (inner_loop_keyword){
                     row_counter++;   
                     // Ignore if it's a comment! Still on same keyword.
                     if (misc::is_comment(line) == false){
@@ -729,7 +725,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                             // Peek next row in the text file and append it to our data line
                             std::string next_line;
                             getline(input_file, next_line);
-                            line = line + next_line;
+                            line += next_line;
                         }
                         add_element(line,options);
                     }
@@ -738,7 +734,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                     unsigned int previous_pos = input_file.tellg();
                     getline(input_file, line);
                     // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
-                    if (misc::is_keyword(line) == true or line.empty() == true)
+                    if (misc::is_keyword(line) or line.empty())
                     {
                         input_file.seekg(previous_pos);
                         inner_loop_keyword = false;
@@ -750,7 +746,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                     getline(input_file, line);
                     row_counter++;
                     bool inner_loop_keyword = true;
-                    while (inner_loop_keyword == true){
+                    while (inner_loop_keyword){
                     row_counter++;   
                     // Ignore if it's a comment! Still on same keyword.
                         if (misc::is_comment(line) == false){
@@ -761,7 +757,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                         unsigned int previous_pos = input_file.tellg();
                         getline(input_file, line);
                         // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
-                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        if (misc::is_keyword(line) or line.empty())
                         {
                             input_file.seekg(previous_pos);
                             inner_loop_keyword = false;
@@ -772,7 +768,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                     getline(input_file, line);
                     row_counter++;
                     bool inner_loop_keyword = true;
-                    while (inner_loop_keyword == true){
+                    while (inner_loop_keyword){
                         row_counter++;   
                     // Ignore if it's a comment! Still on same keyword.
                         if (misc::is_comment(line) == false){
@@ -793,7 +789,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
                         unsigned int previous_pos = input_file.tellg();
                         getline(input_file, line);
                         // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
-                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        if (misc::is_keyword(line) or line.empty())
                         {
                             input_file.seekg(previous_pos);
                             inner_loop_keyword = false;
@@ -805,7 +801,7 @@ void Mesh::read_file(std::string filename, std::string keyword){
             // {
             //     std::cout << keyword << ": not supported" << std::endl;
             // }
-            if (input_file.eof() == true)
+            if (input_file.eof())
             {
                 break;
             }
