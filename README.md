@@ -17,7 +17,7 @@ The name is a joke from the character YinYang in the tv-show Silicon Valley, who
 
 ## Example #1, 2D geometry with a point load
 This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of quad and trias. The geometry is fixed on the left hand side and a point force F is applied on the right, see figure below. The results are exactly the same between Abaqus (C) and new_abaqus.
-Original geometry             |  Deformed geometry
+| Original geometry             | Deformed geometry | 
 :-------------------------:|:-------------------------:
 <img src="src/images/example1_2D.png" width="75%"/>  |  <img src="src/images/example1_2D_displacement.png" width="90%"/>
 

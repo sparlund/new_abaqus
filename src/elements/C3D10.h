@@ -18,8 +18,8 @@ public:
     void calculate_Ke();
     void calculate_Me();
     C3D10(unsigned int                        id,
-          std::vector<std::shared_ptr<Node>>  connectivity,
-          std::shared_ptr<Pid>                pid,
+          std::vector<Node*>  connectivity,
+          Pid*                pid,
           const unsigned short                nnodes,
           const unsigned short                ndofs,
           const unsigned short                vtk_identifier,

@@ -27,7 +27,7 @@ void CPS3::calculate_Ke(){
     Eigen::Matrix<float,2,6> global_N_matrix;
     // global_N_matrix << 1 x1
     // TODO: plane strain
-    std::shared_ptr<Mid> mid = pid->get_mid();
+    Mid* mid = pid->get_mid();
     float v = mid->get_v();
     float E = mid->get_E();        
     float t = 1.0;
@@ -52,8 +52,8 @@ void CPS3::calculate_Me(){
 }
 
 CPS3::CPS3(unsigned int                        id,
-           std::vector<std::shared_ptr<Node>>  connectivity,
-           std::shared_ptr<Pid>                pid,
+           std::vector<Node*>  connectivity,
+           Pid*                pid,
            const unsigned short                nnodes,
            const unsigned short                ndofs,
            const unsigned short                vtk_identifier,

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 void C3D8::calculate_Ke(){    
-    std::shared_ptr<Mid> mid = pid->get_mid();
+    Mid* mid = pid->get_mid();
     float v = mid->get_v();
     float E = mid->get_E();
     Eigen::Matrix<float,6,6> D;
@@ -115,8 +115,8 @@ void C3D8::calculate_Me(){
 }
 
 C3D8::C3D8(unsigned int                        id,
-           std::vector<std::shared_ptr<Node>>  connectivity,
-           std::shared_ptr<Pid>                pid,
+           std::vector<Node*>  connectivity,
+           Pid*                pid,
            const unsigned short                nnodes,
            const unsigned short                ndofs,
            const unsigned short                vtk_identifier,

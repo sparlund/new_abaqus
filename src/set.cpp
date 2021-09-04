@@ -1,14 +1,26 @@
 #include "set.h"
-#include "node.h"
 #include "element.h"
+#include "node.h"
+#include "misc_string_functions.h"
 
-// template class Set<Node>;
-// template class Set<Element>;
+template class Set<Node*>;
+template class Set<Element*>;
 
-// Set::Set(/* args */)
-// {
-// }
+template <class T>
+void Set<T>::add_entities(std::string line){
+    // split on comma
+    // std::vector<std::string> entities = misc::split_on(std::string in, ',');
+    // for (const auto& entity : entities)
+    // {
 
-// Set::~Set()
-// {
-// }
+    // }
+};
+
+template <class T>
+void Set<T>::add_entity(T entity_pointer){
+    entities.emplace_back(entity_pointer);
+    }
+template <class T>
+Set<T>::Set(std::string name):name(name){
+        std::cout << "*NSET: nset = " << name;
+    };

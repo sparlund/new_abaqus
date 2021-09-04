@@ -15,6 +15,7 @@
 #include "elements/C3D8.h"
 #include "elements/C3D20.h"
 #include "misc_string_functions.h"
+#include "set.h"
 // for eigenfrequency solver
 #include <Spectra/SymGEigsSolver.h>
 #include <Spectra/MatOp/SparseCholesky.h>
@@ -44,7 +45,8 @@ float squirt_and_divide_by_2pi(float in){
     return std::sqrt(in)/(2*3.14159265359);
 }
 
-void Mesh::print_matrix_to_mtx(Eigen::SparseMatrix<float> A,std::string output_filename){
+void Mesh::print_matrix_to_mtx(Eigen::SparseMatrix<float> A,std::string output_filename) const
+{
     // Print input matrix A in abaqus "COORDINATE" format in a .mtx-file
     std::ofstream mtx;
     mtx.open(output_filename);
@@ -83,31 +85,30 @@ void Mesh::export_2_vtk(){
     // no need to use double precision on printing results
     output << "POINTS " << nodes.size() << " float" << std::endl;
     // print nodes to result file
-    for (unsigned int i = 0; i < nodes.size() ; i++)
+    for(const auto& node: nodes)
     {
-        output << nodes.at(i)->x << " " << nodes.at(i)->y << " " << nodes.at(i)->z << std::endl;
+        output << node->x << " " << node->y << " " << node->z << std::endl;
     }
     unsigned int total_amount_of_used_nodes=0;
-    for (unsigned int i = 0; i < elements.size(); i++)
+    for(const auto& element: elements)
     {
-        total_amount_of_used_nodes += elements.at(i)->get_element_nnodes();
+        total_amount_of_used_nodes += element->get_element_nnodes();
     }    
     output << "CELLS " << elements.size() << " " << elements.size() + total_amount_of_used_nodes  << std::endl;
-    for (unsigned int i = 0; i < elements.size(); i++)
+    for(const auto& element: elements)
     {
-        output << elements.at(i)->get_element_nnodes() << " ";
-        std::vector<std::shared_ptr<Node>> connectivity =  elements.at(i)->get_connectivity();
-        for (unsigned int  j = 0; j < connectivity.size(); j++)
+        output << element->get_element_nnodes() << " ";
+        for (unsigned int  j = 0; j < element->get_connectivity().size(); j++)
         {
-            output << global_2_local_node_id[connectivity.at(j)->id] << " ";
+            output << global_2_local_node_id[element->get_connectivity().at(j)->id] << " ";
         }
         output << std::endl;
     }
     
     output << "CELL_TYPES " << elements.size() << std::endl;
-    for (unsigned int i = 0; i < elements.size(); i++)
+    for(const auto& element: elements)
     {
-        output << elements.at(i)->get_vtk_identifier() << std::endl;
+        output << element->get_vtk_identifier() << std::endl;
     }
     // point_data, i.e displacement on nodes
     output << "POINT_DATA " << nodes.size() << std::endl;
@@ -116,17 +117,15 @@ void Mesh::export_2_vtk(){
         output << "FIELD displacement 1" << std::endl;
         // data name, number of values (3 for 3D & 2D, Z is zero for 2D, datatype)
         output << "displacement 3 " << nodes.size() << " float" << std::endl;
-        std::shared_ptr<Node> current_node;
-        for (unsigned int i = 0; i < nodes.size(); i++)
+        for(const auto& node: nodes)
         {
-            current_node = nodes.at(i);
             // 2 scenarios available so far: 3 dofs per node & 2 dofs per node
-            if (current_node->dofs.size() == 3)
+            if (node->dofs.size() == 3)
             {
-                output << u(current_node->dofs.at(0).id) << " " << u(current_node->dofs.at(1).id) << " " << u(current_node->dofs.at(2).id) << std::endl;
+                output << u(node->dofs.at(0).id) << " " << u(node->dofs.at(1).id) << " " << u(node->dofs.at(2).id) << std::endl;
             }
             else{
-                output << u(current_node->dofs.at(0).id) << " " << u(current_node->dofs.at(1).id) << " 0" << std::endl;
+                output << u(node->dofs.at(0).id) << " " << u(node->dofs.at(1).id) << " 0" << std::endl;
             }
             
         }
@@ -141,32 +140,41 @@ void Mesh::export_2_vtk(){
             output << "FIELD mode" << (number_of_modes_to_find - mode) << " 1" << std::endl;
             // data name, number of values (3 for 3D & 2D, Z is zero for 2D, datatype)
             output << "mode" << (number_of_modes_to_find - mode) << " 3 " << nodes.size() << " float" << std::endl;
-            std::shared_ptr<Node> current_node;
-            for (unsigned int i = 0; i < nodes.size(); i++)
+            // for (unsigned int i = 0; i < nodes.size(); i++)
+            for(const auto& node: nodes)
             {
-                    current_node = nodes.at(i);
-                    if (current_node->dofs.size() == 3)
-                    {
-                    output << eigenvectors(current_node->dofs.at(0).id,mode)
-                           << " " 
-                           << eigenvectors(current_node->dofs.at(1).id,mode)
-                           << " " 
-                           << eigenvectors(current_node->dofs.at(2).id,mode) << std::endl;
-                    }
-                    else
-                    {
-                        output << eigenvectors(current_node->dofs.at(0).id,mode)
-                           << " " 
-                           << eigenvectors(current_node->dofs.at(1).id,mode)
-                           << " 0" << std::endl;
-                    }
-                    
+                if (node->dofs.size() == 3)
+                {
+                    output << eigenvectors(node->dofs.at(0).id,mode)
+                            << " " 
+                            << " " 
+                            << " " 
+                            << " " 
+                            << " " 
+                            << " " 
+                            << " " 
+                            << eigenvectors(node->dofs.at(1).id,mode)
+                            << " " 
+                            << " " 
+                            << " " 
+                            << eigenvectors(node->dofs.at(2).id,mode) << std::endl;
+                }
+                else
+                {
+                    output << eigenvectors(node->dofs.at(0).id,mode)
+                        << " " 
+                        << " " 
+                        << " " 
+                        << " " 
+                        << " " 
+                        << " " 
+                        << " " 
+                        << eigenvectors(node->dofs.at(1).id,mode)
+                        << " 0" << std::endl;
+                }   
             }
-            
-        }
-        
-    }
-    // close file!
+        }          
+    }    
     output.close();
     duration_clock_export = ( std::clock() - clock_export ) / (float) CLOCKS_PER_SEC;
     std::cout << "---    Exported to VTK format in " << duration_clock_export << " seconds (wallclock time)   ---" << std::endl;
@@ -341,30 +349,26 @@ void Mesh::assemble(){
     f.resize(ndofs,1);
     u.resize(ndofs,1);
     // assemble stiffness- and mass matrix, will alter it later due to boundary conditions
-    std::shared_ptr<Element> current_element;
     std::cout << std::endl;
     int progress_bar_width = 20;
     float progress = 0;
     int progress_bar_position = progress_bar_width * progress;
     std::cout << "Progress assembly:" <<std::endl;
-    std::cout << "[";
-    for (unsigned int i = 0; i < elements.size(); i++)
+    for(const auto& element: elements)
     {
-        current_element = elements.at(i);
-        current_element->calculate_Ke();
-        current_element->calculate_Me();
+        element->calculate_Ke();
+        element->calculate_Me();
     }
-    
-    for (unsigned int i = 0; i < elements.size(); i++)
+    // once we've calculated all Ke and Me, let's assemble
+    for(const auto& element:elements)
     { 
-        current_element = elements.at(i);
-        std::vector<unsigned int> dofs = current_element->get_element_dof_ids();
+        std::vector<unsigned int> dofs = element->get_element_dof_ids();
         for(unsigned int j=0;j < dofs.size();j++){
             unsigned int dof_row = dofs.at(j);
             for(unsigned int k=0;k < dofs.size();k++){
                 unsigned int dof_column = dofs.at(k);
-                Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Ke = current_element->get_Ke();
-                Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Me = current_element->get_Me();                
+                Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Ke = element->get_Ke();
+                Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Me = element->get_Me();                
                 K.coeffRef(dof_row,dof_column) += Ke(j,k);
                 M.coeffRef(dof_row,dof_column) += Me(j,k);
             }
@@ -388,7 +392,6 @@ void Mesh::assemble(){
     {
         dirichlet_dofs.push_back(bc.at(i).first);
     }
-    
     for (unsigned int i = 0; i < ndofs; i++)
     {
         // if i not in dirichlet_dofs
@@ -414,9 +417,9 @@ void Mesh::add_mid(std::unordered_map<std::string, std::string> options){
     // Other functions add mtrl data such as density etc
     // MID has to have a name
     std::string mid_name = options["NAME"];
-    std::shared_ptr<Mid> mid  = std::shared_ptr<Mid>(new Mid(mid_name));
-    mid_name_2_mid_pointer[mid_name] = mid;
-    mids.push_back(mid);  
+    auto mid = std::make_unique<Mid>(mid_name);
+    mid_name_2_mid_pointer[mid_name] = mid.get();
+    mids.push_back(std::move(mid));  
 };
 
 
@@ -424,8 +427,8 @@ Mesh::Mesh(){
 }
 
 void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::string> options){
-    std::string type = options["TYPE"];
-    std::vector<std::string> data = misc::split_on(line,',');
+    const auto& type = options["TYPE"];
+    const auto& data = misc::split_on(line,',');
     if (type=="DISPLACEMENT")
     {
         // Check if first object is a string or int --> set pointer or node id
@@ -438,42 +441,36 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
         // dof is given above in the local coord system
         unsigned int dof_from       = std::stoi(data.at(1));
         unsigned int dof_to         = std::stoi(data.at(2));
-        float        magnitude      = std::stof(data.at(3));        
+        auto magnitude      = std::stof(data.at(3));
         // node,dof_from,dof_to,magnitude
-        std::shared_ptr<Node> node;
-        std::shared_ptr<Set<Node>> node_set;
-        unsigned int global_node_id,number_of_nodes;
-        std::string node_set_name;
-        if (node_boundary == true)
+        size_t number_of_nodes,global_node_id;
+        if (node_boundary)
         {
             global_node_id = std::stoi(data.at(0));
-            node = nodes.at(global_2_local_node_id[global_node_id]);
-            number_of_nodes = 1;
+            const auto& node = nodes.at(global_2_local_node_id[global_node_id]);
+            std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs={" << dof_from << "-" << dof_to << "}=" << ", magnitude=" << magnitude << std::endl;
+            for(unsigned int j = dof_from; j <= dof_to; j++){
+                bc.push_back(std::make_pair(node->dofs.at(j-1).id,magnitude));
+            }
+            return;
         }
         else
         {
-            node_set_name = data.at(0);
-            node_set = node_set_from_node_set_name[node_set_name];
-            number_of_nodes = node_set->get_number_of_entities();
+            auto node_set_name = data.at(0);
+            auto& node_set = node_set_from_node_set_name[node_set_name];
+            // number_of_nodes = node_set.get_number_of_entities();
+            // for (unsigned int i = 0; i < number_of_nodes; i++)
+            // {
+            //     auto& node = node_set.get_entity(i);
+            //     global_node_id = 
+            //     std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs={" << dof_from << "-" << dof_to << "}=" << ", magnitude=" << magnitude << std::endl;
+            //     for (unsigned int j = dof_from; j <= dof_to; j++)
+            //     {
+            //         // abaqus starts counting dof's at 1, but vectors start at 0
+            //         const auto& node = node_set.get_entity(i);
+            //         bc.push_back(std::make_pair(node->dofs.at(j-1).id,magnitude));
+            //     }
         }
-        for (unsigned int i = 0; i < number_of_nodes; i++)
-        {
-            if (number_of_nodes > 1)
-            {
-                node = node_set->get_entity(i);
-                global_node_id = node->id;
-            }
-            std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs={" << dof_from << "-" << dof_to << "}=" << std::flush;
-            for (unsigned int j = dof_from; j <= dof_to; j++)
-            {
-                // abaqus starts counting dof's at 1, but vectors start at 0
-                bc.push_back(std::make_pair(node->dofs.at(j-1).id,magnitude));
-                std::cout << nodes.at(global_2_local_node_id[global_node_id])->dofs.at(j-1).id << "," << std::flush;
-            }
-            std::cout <<" magnitude=" << magnitude << std::endl;
-
-        }
-        
     }
 }
 
@@ -488,7 +485,7 @@ void Mesh::add_load(std::string line, std::unordered_map<std::string, std::strin
     // std::cout << magnitude << std::endl;
     try
     {
-        std::shared_ptr<Node> node = nodes.at(global_2_local_node_id[global_node_id]);
+        auto& node = nodes.at(global_2_local_node_id[global_node_id]);
         unsigned int global_dof = node->dofs.at(local_dof-1).id;
         // we don't know complete number of dofs yet,
         // so we can't add directly to global load vector, but have
@@ -549,7 +546,37 @@ void Mesh::read_file(std::string filename, std::string keyword){
                 else if (keyword == "*SOLID SECTION" or keyword == "*SHELL SECTION")
                 {
                     add_pid(options);
-                }     
+                }
+                else if(keyword == "*NSET"){
+                    add_set(line,options);
+                    // auto nset = nsets.back();
+                    // Read line by line and add all the comma-separated nodes
+                    bool inner_loop_keyword = true;
+                    while(inner_loop_keyword == true)
+                    {
+                        // Jump to next line 
+                        getline(input_file, line);
+                        row_counter++;
+                        if (misc::is_comment(line) == false){
+                            std::vector<std::string> entity_ids = misc::split_on(line, ',');
+                            // for (const auto& entity_id : entity_ids)
+                            // {
+                            //     auto entity_id_int = std::stoi(entity_id);
+                            //     auto& node_pointer = node_id_2_node_pointer[entity_id_int];
+                            //     nset.add_entity(node_pointer)
+                            // }
+                        }
+                        // Want to peek next line, if it's a keyword or empty line we break
+                        // the while loop and start over!
+                        unsigned int previous_pos = input_file.tellg();
+                        getline(input_file, line);
+                        if (misc::is_keyword(line) == true or line.empty() == true)
+                        {
+                            input_file.seekg(previous_pos);
+                            inner_loop_keyword = false;
+                        }
+                    }
+                }    
                 else if (keyword == "*MATERIAL")
                 {
                     // a complete material is typically described over several
@@ -789,23 +816,22 @@ void Mesh::read_file(std::string filename, std::string keyword){
 
 void Mesh::add_set(std::string line,std::unordered_map<std::string, std::string> options){
     // create new node set, add it to member variable map node_sets
-    std::string set_name = options["NSET"];
-    std::shared_ptr<Set<Node>> node_set  = std::shared_ptr<Set<Node>>(new Set<Node>(set_name));
+    const auto set_name = options["NSET"];
+    auto node_set  = std::make_unique<Set<Node*>>(set_name);
     // Start looping line and add each node
-    std::vector<std::string> nodes_string_vector = misc::split_on(line,',');
-    for (unsigned int i = 0; i < nodes_string_vector.size(); i++)
+    auto node_ids = misc::split_on(line,',');
+    for(const auto& node_id: node_ids)
     {
         // get pointer to node from the id
-        unsigned int node_id = std::stoi(nodes_string_vector.at(i));
-        std::shared_ptr<Node> node_pointer = node_id_2_node_pointer[node_id];
-        node_set->add_entity(node_pointer);
-        std::cout <<", "<< node_pointer->id;
+        auto* node = node_id_2_node_pointer[std::stoi(node_id)];
+        node_set->add_entity(node);
+        std::cout <<", "<< node->id;
     }
     std::cout << "" << std::endl;
     // Add node set to vector of node sets
-    node_sets.push_back(node_set);
+    nsets.push_back(std::move(node_set));
     // Add entry to map to find node set by name
-    node_set_from_node_set_name[set_name] = node_set;
+    node_set_from_node_set_name[set_name] = node_set.get();
 }
 
 void Mesh::add_pid(std::unordered_map<std::string, std::string> options){    
@@ -814,12 +840,12 @@ void Mesh::add_pid(std::unordered_map<std::string, std::string> options){
     try
     {
         // Find material
-        std::shared_ptr<Mid> mid = mid_name_2_mid_pointer[mid_name];
+        auto mid = mid_name_2_mid_pointer[mid_name];
         // TODO: find MID pointer instead!!
         // Create new pid
-        std::shared_ptr<Pid> pid  = std::shared_ptr<Pid>(new Pid(pid_name,mid));
-        pids.push_back(pid);
-        pid_map[pid_name] = pid;
+        auto pid  = std::make_unique<Pid>(pid_name,mid);
+        pids.push_back(std::move(pid));
+        pid_map[pid_name] = pid.get();
     }
     catch(const std::exception& e)
     {
@@ -833,52 +859,49 @@ void Mesh::add_pid(std::unordered_map<std::string, std::string> options){
 };
 void Mesh::add_element(std::string line,std::unordered_map<std::string,std::string> options){
     // these options need to be available to create an element
-    std::string type = options["TYPE"];
-    std::string pid_name = options["ELSET"];
-    std::shared_ptr<Pid> pid = pid_map[pid_name];
-    std::vector<std::string> dataline_items = misc::split_on(line,',');
-    // std::cout << "added data line: " << line << "\n";
+    auto type = options["TYPE"];
+    auto pid_name = options["ELSET"];
+    auto pid = pid_map[pid_name];
+    auto dataline_items = misc::split_on(line,',');
     unsigned int element_id = std::stoi(dataline_items.at(0));
     // Find node pointers for each node
-    std::vector<std::shared_ptr<Node>> element_connectivity;
-    for (unsigned int i = 1; i < dataline_items.size(); i++)
+    std::vector<Node*> element_connectivity;
+    for(const auto& item: dataline_items)
     {
-        unsigned int node_id = std::stoi(dataline_items.at(i));
+        unsigned int node_id = std::stoi(item);
         element_connectivity.push_back(node_id_2_node_pointer[node_id]);
     }
-    std::shared_ptr<Element> element;
+    std::unique_ptr<Element> element;
     if (type == "S3")
     {
-        element = std::make_shared<S3>(element_id,element_connectivity,pid,3,9,5,1,2,"S3");
+        element = std::make_unique<S3>(element_id,element_connectivity,pid,3,9,5,1,2,"S3");
     }
     else if (type == "CPS3")
     {
-        element = std::make_shared<CPS3>(element_id,element_connectivity,pid,3,6,6,1,2,"CPS3");
+        element = std::make_unique<CPS3>(element_id,element_connectivity,pid,3,6,6,1,2,"CPS3");
     }
     else if (type == "CPS4")
     {   
-        element = std::make_shared<CPS4>(element_id,element_connectivity,pid,4,8,9,4,2,"CPS4");
+        element = std::make_unique<CPS4>(element_id,element_connectivity,pid,4,8,9,4,2,"CPS4");
     }
     else if (type == "C3D10")
     {   
-        element = std::make_shared<C3D10>(element_id,element_connectivity,pid,10,30,24,4,3,"C3D10");
+        element = std::make_unique<C3D10>(element_id,element_connectivity,pid,10,30,24,4,3,"C3D10");
     }
     else if (type == "C3D8")
     {      
-        // element = std::shared_ptr<Element>(new C3D8(element_id,element_connectivity,pid,8,24,12,8,3));
-        element = std::make_shared<C3D8>(element_id,element_connectivity,pid,8,24,12,8,3,"C3D8");
+        element = std::make_unique<C3D8>(element_id,element_connectivity,pid,8,24,12,8,3,"C3D8");
     }
     else if (type == "C3D20")
     {      
-        element = std::make_shared<C3D20>(element_id,element_connectivity,pid,20,60,25,27,3,"C3D20");
+        element = std::make_unique<C3D20>(element_id,element_connectivity,pid,20,60,25,27,3,"C3D20");
     }
     else
     {
         std::cout << "*ELEMENT: type=" << type << " not supported" << std::endl;
         return;
     }    
-    elements.push_back(element);
-    
+    elements.push_back(std::move(element));
     };
 void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string> options){
     // aba docs:
@@ -892,17 +915,14 @@ void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string
     // Third direction cosine of the normal at the node (optional). For nodes entered in a spherical system, this entry is an angle given in degrees.
     
     // another node added to the Mesh!
-    std::vector<std::string> dataline_items = misc::split_on(line,',');    
+    auto         dataline_items = misc::split_on(line,',');
     // TODO: add support for more node options like coordinate system and stuff
     unsigned int             id = std::stoi(dataline_items.at(0));
-    float                     x = std::stof(dataline_items.at(1));
-    float                     y = std::stof(dataline_items.at(2));
-    float                     z = std::stof(dataline_items.at(3));
-    std::shared_ptr<Node> node  = std::shared_ptr<Node>(new Node(id,x,y,z));
-    nodes.push_back(node);
-    node_id_2_node_pointer[id] = node;
-    global_2_local_node_id[id] = nodes.size()-1;
+    auto                      x = std::stof(dataline_items.at(1));
+    auto                      y = std::stof(dataline_items.at(2));
+    auto                      z = std::stof(dataline_items.at(3));
+    auto node                   = std::make_unique<Node>(id,x,y,z);
+    node_id_2_node_pointer[id]  = node.get();
+    global_2_local_node_id[id]  = nodes.size()-1;
+    nodes.push_back(std::move(node));
 };
-Mesh::~Mesh(){};
-
-
