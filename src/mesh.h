@@ -30,10 +30,10 @@ private:
     std::vector<std::unique_ptr<Mid>>                   mids;
     std::unordered_map<unsigned int,unsigned int>       global_2_local_node_id;
     std::unordered_map<unsigned int, Node*>             node_id_2_node_pointer;
-    std::unordered_map<std::string, Mid*>         mid_name_2_mid_pointer;
-    std::unordered_map<std::string, Pid*>         pid_map;
-    std::vector<std::unique_ptr<Set<Node*>>>                       nsets;
-    std::vector<std::unique_ptr<Set<Element*>>>                    esets;
+    std::unordered_map<std::string, Mid*>               mid_map;
+    std::unordered_map<std::string, Pid*>               pid_map;
+    std::vector<std::unique_ptr<Set<Node*>>>            nsets;
+    std::vector<std::unique_ptr<Set<Element*>>>         esets;
     std::unordered_map<std::string, Set<Node*>*>  node_set_from_node_set_name; 
     // The following method are used to add entities from the input file to create the FE model
     void add_node(std::string line,std::unordered_map<std::string, std::string> options);
@@ -61,7 +61,10 @@ private:
 public:    
     void          set_analysis_name(std::string string_analysis_name){this->analysis_name = string_analysis_name;return;}
     unsigned int  get_pid_counter() const {return pid_counter;};
+    size_t        get_number_of_nodes() const {return nodes.size();}
     unsigned long get_number_of_elements() const {return this->elements.size();}
+    Pid*          get_pid_by_name(std::string pid_name) {return pid_map[pid_name];}
+    Mid*          get_mid_by_name(std::string mid_name) {return mid_map[mid_name];}
     // ndofs is counter for total number of degrees of freedom for the mesh
     unsigned int ndofs = 0;
     // global stiffness matrix

@@ -13,5 +13,5 @@ public:
     const float x, y, z;
     std::vector<Dof> dofs;  
     unsigned int get_node_counter();
-    Node(unsigned int global_id, float x, float y, float z);
+    Node(unsigned int global_id, float x, float y, float z = 0);
 };
