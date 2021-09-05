@@ -418,7 +418,7 @@ void Mesh::add_mid(std::unordered_map<std::string, std::string> options){
     // MID has to have a name
     std::string mid_name = options["NAME"];
     auto mid = std::make_unique<Mid>(mid_name);
-    mid_name_2_mid_pointer[mid_name] = mid.get();
+    mid_map[mid_name] = mid.get();
     mids.push_back(std::move(mid));  
 };
 
@@ -836,8 +836,7 @@ void Mesh::add_pid(std::unordered_map<std::string, std::string> options){
     try
     {
         // Find material
-        auto mid = mid_name_2_mid_pointer[mid_name];
-        // TODO: find MID pointer instead!!
+        auto mid = mid_map[mid_name];
         // Create new pid
         auto pid  = std::make_unique<Pid>(pid_name,mid);
         pids.push_back(std::move(pid));
