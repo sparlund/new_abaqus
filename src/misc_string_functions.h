@@ -4,7 +4,7 @@
 #include <unordered_map>
 namespace misc
 {
-    void trim(std::string& string);
+    void trim_leading_and_ending_whitespace(std::string& string);
     std::vector<std::string> split_on(const std::string& in, char);
     bool is_string_in_string_vector(std::string, std::vector<std::string>);
     std::string to_lower(std::string);
