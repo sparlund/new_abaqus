@@ -12,10 +12,8 @@ void CPS4::calculate_Ke(){
          v, 1, 0,
          0, 0, 0.5*(1-v);
     D *= E/(1-(v*v));
-    // add dofs to each node. can be done first now because now we know how many dofs each node should have    
-    setup_dofs();
      // create coord matrix needed to find Jacobian
-    setup_coord();
+    // setup_coord();
     Eigen::Matrix<float,2,4> dNdXhidEta;
     Eigen::Matrix<float,2,4> dNdxdy;
     Eigen::Matrix<float,2,2> J;

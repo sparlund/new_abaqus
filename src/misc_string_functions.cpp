@@ -20,7 +20,7 @@ bool misc::is_string_in_string_vector(std::string input_string, std::vector<std:
     
 }
 
-void misc::trim(std::string& string){
+void misc::trim_leading_and_ending_whitespace(std::string& string){
     const auto strBegin = string.find_first_not_of(" ");
     if (strBegin == std::string::npos){
         return;
@@ -44,7 +44,7 @@ std::unordered_map<std::string,std::string> misc::options_map(std::string line){
         std::vector<std::string> key_and_value = misc::split_on(strings.at(i), '=');
         std::string key = key_and_value.at(0);
         // trim leading and trailing whitespace of string
-        misc::trim(key);
+        misc::trim_leading_and_ending_whitespace(key);
         try
         {
             std::string value = key_and_value.at(1);

@@ -15,4 +15,5 @@ public:
     Pid(std::string name, Mid* mid);
     std::unordered_map<std::string,std::string>* get_options();
     Mid* get_mid();
+    std::string get_name() const;
 };

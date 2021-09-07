@@ -326,9 +326,10 @@ void Mesh::solve_static(){
 void Mesh::assemble(){
     // By the time of assemble we know the number of dofs --> pre-allocate K, f & solution u
     std::cout << "---    Starting stiffness matrix assembly    ---" << std::endl;
-    std::cout << "          Mesh size:" << std::endl;
+    std::cout << "           Mesh size:" << std::endl;
     std::cout << "               nodes = " << nodes.size() << std::endl;
     std::cout << "            elements = " << elements.size() << std::endl;
+    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
     ndofs = nodes.at(0)->dofs.at(0).get_global_dof_id_counter(); 
     std::cout << "  degrees of freedom = " << ndofs << std::endl;
     // Also print weight as a sanity check!
@@ -340,7 +341,6 @@ void Mesh::assemble(){
     // std::cout << "         Model info:" << std::endl;
     // std::cout << "              weight = " << model_total_weight << std::endl;
     
-    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
     std::clock_t clock_assemble;
     float duration_assemble;
     clock_assemble = std::clock();
@@ -349,11 +349,11 @@ void Mesh::assemble(){
     f.resize(ndofs,1);
     u.resize(ndofs,1);
     // assemble stiffness- and mass matrix, will alter it later due to boundary conditions
-    std::cout << std::endl;
     int progress_bar_width = 20;
     float progress = 0;
     int progress_bar_position = progress_bar_width * progress;
-    std::cout << "Progress assembly:" <<std::endl;
+    // std::cout << std::endl;
+    // std::cout << "Progress assembly:" <<std::endl;
     for(const auto& element: elements)
     {
         element->calculate_Ke();
@@ -419,7 +419,7 @@ void Mesh::add_mid(std::unordered_map<std::string, std::string> options){
     std::string mid_name = options["NAME"];
     auto mid = std::make_unique<Mid>(mid_name);
     mid_map[mid_name] = mid.get();
-    mids.push_back(std::move(mid));  
+    mids.push_back(std::move(mid));
 };
 
 void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::string> options){
@@ -427,24 +427,24 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
     const auto& data = misc::split_on(line,',');
     if (type=="DISPLACEMENT")
     {
-        // Check if first object is a string or int --> set pointer or node id
+        // Check if first object is a string or int <--> set* or node_id
         // Need to iterate through string. If there are no alpabetical chars it's
         // a node id, otherwise it's a string!
-        // TODO: clear string of leading and trailing whitespace!
-        bool node_boundary = std::find_if(data.at(0).begin(),
-                                          data.at(0).end(),
-                                          [](unsigned char c) { return !std::isdigit(c); }) == data.at(0).end();
-        // dof is given above in the local coord system
-        unsigned int dof_from       = std::stoi(data.at(1));
-        unsigned int dof_to         = std::stoi(data.at(2));
-        auto magnitude      = std::stof(data.at(3));
+        // TODO: clear data[0] of leading and trailing whitespace!
+        auto node_id_or_nset_name = data.at(0);
+        misc::trim_leading_and_ending_whitespace(node_id_or_nset_name);
+        bool node_boundary     = std::find_if(node_id_or_nset_name.begin(),
+                                              node_id_or_nset_name.end(),
+                                              [](unsigned char c) { return !std::isdigit(c); }) == node_id_or_nset_name.end();
+        unsigned int dof_from  = std::stoi(data.at(1));
+        unsigned int dof_to    = std::stoi(data.at(2));
+        auto         magnitude = std::stof(data.at(3));
         // node,dof_from,dof_to,magnitude
-        size_t global_node_id;
         if (node_boundary)
         {
-            global_node_id = std::stoi(data.at(0));
-            const auto& node = nodes.at(global_2_local_node_id[global_node_id]);
-            std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs={" << dof_from << "-" << dof_to << "}=" << ", magnitude=" << magnitude << std::endl;
+            unsigned int global_node_id     = std::stoi(data.at(0));
+            const auto& node = node_map[global_node_id];
+            std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs=" << dof_from << "-" << dof_to << ", magnitude=" << magnitude << std::endl;
             for(unsigned int j = dof_from; j <= dof_to; j++){
                 bc.push_back(std::make_pair(node->dofs.at(j-1).id,magnitude));
             }
@@ -452,36 +452,36 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
         }
         else
         {
-            auto node_set_name = data.at(0);
-            auto& node_set = node_set_from_node_set_name[node_set_name];
-            // number_of_nodes = node_set.get_number_of_entities();
-            // for (unsigned int i = 0; i < number_of_nodes; i++)
-            // {
-            //     auto& node = node_set.get_entity(i);
-            //     global_node_id = 
-            //     std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs={" << dof_from << "-" << dof_to << "}=" << ", magnitude=" << magnitude << std::endl;
-            //     for (unsigned int j = dof_from; j <= dof_to; j++)
-            //     {
-            //         // abaqus starts counting dof's at 1, but vectors start at 0
-            //         const auto& node = node_set.get_entity(i);
-            //         bc.push_back(std::make_pair(node->dofs.at(j-1).id,magnitude));
-            //     }
+            const auto& node_set = node_set_from_node_set_name[node_id_or_nset_name];
+            auto number_of_nodes = node_set->get_number_of_entities();
+            for (unsigned int i = 0; i < number_of_nodes; i++)
+            {
+                const auto& node           = node_set->get_entity(i);
+                const auto& global_node_id = node->id;
+                std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs={" << dof_from << "-" << dof_to << "}=" << ", magnitude=" << magnitude << std::endl;
+                for (unsigned int j = dof_from; j <= dof_to; j++)
+                {
+                    // abaqus starts counting dof's at 1, but vectors start at 0
+                    const auto& node = node_set->get_entity(i);
+                    bc.push_back(std::make_pair(node->dofs.at(j-1).id,magnitude));
+                }
+            }
         }
     }
 }
 
 void Mesh::add_load(std::string line, std::unordered_map<std::string, std::string> options){
     // for *cload line is: node, dof, magnitude
-    std::vector<std::string> data   = misc::split_on(line,',');   
+    auto         data               = misc::split_on(line,',');   
     unsigned int global_node_id     = std::stoi(data.at(0));
     unsigned int local_dof          = std::stoi(data.at(1));
-    float magnitude                 = std::stof(data.at(2));
+    float        magnitude          = std::stof(data.at(2));
     // std::cout << global_node_id << std::endl;    
     // std::cout << local_dof  << std::endl;
     // std::cout << magnitude << std::endl;
     try
     {
-        auto& node = nodes.at(global_2_local_node_id[global_node_id]);
+        auto         node       = node_map[global_node_id]; 
         unsigned int global_dof = node->dofs.at(local_dof-1).id;
         // we don't know complete number of dofs yet,
         // so we can't add directly to global load vector, but have
@@ -539,7 +539,7 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                     std::string include_filename = options["INPUT"];
                     read_file(include_filename, keyword);
                 }
-                else if (keyword == "*SOLID SECTION" or keyword == "*SHELL SECTION")
+                else if (keyword == "*SOLID SECTION")
                 {
                     add_pid(options);
                 }
@@ -558,7 +558,7 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                             // for (const auto& entity_id : entity_ids)
                             // {
                             //     auto entity_id_int = std::stoi(entity_id);
-                            //     auto& node_pointer = node_id_2_node_pointer[entity_id_int];
+                            //     auto& node_pointer = node_map[entity_id_int];
                             //     nset.add_entity(node_pointer)
                             // }
                         }
@@ -609,23 +609,18 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                                     // E,v
                                     // Skip to next line and save the value
                                     getline(input_file, line);
-                                    std::vector<std::string> values = misc::split_on(line, ',');
+                                    auto values = misc::split_on(line, ',');
                                     float E = std::stof(values.at(0));
                                     float v = std::stof(values.at(1));
                                     mids.back()->set_E(E);
                                     mids.back()->set_v(v);
                                     std::cout << keyword << ", " << options["TYPE"] << ", E" << " = " << E << ", v" << " = " << v << std::endl;
                                 }
-                                
                             }
                             else
                             {
-                                // std::cout << keyword << " unsupported material option" << std::endl;
-                                // we found keyword either not supported by or it's something
-                                // entirely different. set input_file to current line and start reading normal
-                                // keywords again
-                                // break;
-
+                                std::cout << keyword << ": unsupported material option" << std::endl;
+                                break;
                             }
                         }
                         else
@@ -634,19 +629,20 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                             // supported material specific keywords we skip adding data to the material
                             unsigned int previous_pos = input_file.tellg();
                             getline(input_file, line);
-                            if (misc::is_keyword(line))
+                            if (misc::is_keyword(line) or line.empty())
                             {
                                 std::string keyword = misc::split_on(line, ',').at(0);
                                 // if the new keyword is not a supported material keyword we break loop and keep reading file
                                 // otherwise keep on truckin'
                                 if (misc::is_string_in_string_vector(keyword,mids.back()->supported_material_keywords) == false)
                                 {
-                                input_file.seekg(previous_pos);
-                                material_keywords_loop = false;
+                                    input_file.seekg(previous_pos);
+                                    material_keywords_loop = false;
                                 }                            
                             }
                         }
                     }
+                    // TODO:
                     // We've added all the info we want to this specific material, let's set up the constitutive matrices for both 2D and 3D.
                     // The latest createt MID bill be att the back of the material list
                     // mids.back()                
@@ -819,7 +815,7 @@ void Mesh::add_set(std::string line,std::unordered_map<std::string, std::string>
     for(const auto& node_id: node_ids)
     {
         // get pointer to node from the id
-        auto* node = node_id_2_node_pointer[std::stoi(node_id)];
+        auto* node = node_map[std::stoi(node_id)];
         node_set->add_entity(node);
         std::cout <<", "<< node->id;
     }
@@ -833,24 +829,12 @@ void Mesh::add_set(std::string line,std::unordered_map<std::string, std::string>
 void Mesh::add_pid(std::unordered_map<std::string, std::string> options){    
     std::string pid_name = options["ELSET"];
     std::string mid_name = options["MATERIAL"];
-    try
-    {
-        // Find material
-        auto mid = mid_map[mid_name];
-        // Create new pid
-        auto pid  = std::make_unique<Pid>(pid_name,mid);
-        pids.push_back(std::move(pid));
-        pid_map[pid_name] = pid.get();
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;
-        std::cout << "ERROR: material with name " << mid_name << "not found, exiting." << std::endl;
-        exit(1);
-    }
-
-    
-
+    // Find material
+    auto mid = mid_map[mid_name];
+    // Create new pid
+    auto pid  = std::make_unique<Pid>(pid_name,mid);
+    pid_map[pid_name] = pid.get();
+    pids.push_back(std::move(pid));
 };
 void Mesh::add_element(std::string line,std::unordered_map<std::string,std::string> options){
     // these options need to be available to create an element
@@ -861,10 +845,11 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     unsigned int element_id = std::stoi(dataline_items.at(0));
     // Find node pointers for each node
     std::vector<Node*> element_connectivity;
-    for(const auto& item: dataline_items)
+    // for(const auto& item: dataline_items)
+    for(size_t i = 1; i < dataline_items.size();i++)
     {
-        unsigned int node_id = std::stoi(item);
-        element_connectivity.push_back(node_id_2_node_pointer[node_id]);
+        unsigned int global_node_id = std::stoi(dataline_items.at(i));
+        element_connectivity.push_back(node_map[global_node_id]);
     }
     std::unique_ptr<Element> element;
     if (type == "S3")
@@ -912,12 +897,12 @@ void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string
     // another node added to the Mesh!
     auto         dataline_items = misc::split_on(line,',');
     // TODO: add support for more node options like coordinate system and stuff
-    unsigned int             id = std::stoi(dataline_items.at(0));
+    unsigned int      global_id = std::stoi(dataline_items.at(0));
     auto                      x = std::stof(dataline_items.at(1));
     auto                      y = std::stof(dataline_items.at(2));
     auto                      z = std::stof(dataline_items.at(3));
-    auto node                   = std::make_unique<Node>(id,x,y,z);
-    node_id_2_node_pointer[id]  = node.get();
-    global_2_local_node_id[id]  = nodes.size()-1;
+    auto                   node = std::make_unique<Node>(global_id,x,y,z);
+    node_map[global_id] = node.get();
+    global_2_local_node_id[global_id] = nodes.size()-1;
     nodes.push_back(std::move(node));
 };

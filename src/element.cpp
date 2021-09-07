@@ -24,8 +24,8 @@ void Element::setup_dofs(){
             dofs_id.push_back(x.id);
             dofs_id.push_back(y.id);
             if(dimensions == 3){
-            connectivity.at(i)->dofs.push_back(z);
-            dofs_id.push_back(z.id);
+                connectivity.at(i)->dofs.push_back(z);
+                dofs_id.push_back(z.id);
             }
         }
         else
@@ -48,9 +48,7 @@ void Element::setup_coord(){
     {
         coord(i,0) = connectivity.at(i)->x;
         coord(i,1) = connectivity.at(i)->y;
-        if(dimensions == 3){
-            coord(i,2) = connectivity.at(i)->z;
-        }
+        coord(i,2) = connectivity.at(i)->z;
     }
 };
 
@@ -74,11 +72,11 @@ Element::Element(unsigned int                       id,
                 element_type{std::move(element_type)}{
     Ke.resize(ndofs,ndofs);
     Me.resize(ndofs,ndofs);
+    coord.resize(nnodes,dimensions);
     Ke.setZero();
     Me.setZero();
-    setup_coord();
     setup_dofs();
-    print_element_info_to_log();
+    setup_coord();
     };
 
 std::vector<Node*>                                 Element::get_connectivity() const {return connectivity;}
