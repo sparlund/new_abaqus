@@ -28,13 +28,15 @@ private:
     std::vector<std::unique_ptr<Element>>               elements;
     std::vector<std::unique_ptr<Pid>>                   pids;
     std::vector<std::unique_ptr<Mid>>                   mids;
-    std::unordered_map<unsigned int,unsigned int>       global_2_local_node_id;
-    std::unordered_map<unsigned int, Node*>             node_id_2_node_pointer;
-    std::unordered_map<std::string, Mid*>               mid_map;
-    std::unordered_map<std::string, Pid*>               pid_map;
     std::vector<std::unique_ptr<Set<Node*>>>            nsets;
     std::vector<std::unique_ptr<Set<Element*>>>         esets;
-    std::unordered_map<std::string, Set<Node*>*>  node_set_from_node_set_name; 
+    std::vector<std::pair<unsigned int,float>>          bc;
+    std::unordered_map<unsigned int,unsigned int>       global_2_local_node_id;
+    // global node id to pointer
+    std::unordered_map<unsigned int, Node*>             node_map;
+    std::unordered_map<std::string, Mid*>               mid_map;
+    std::unordered_map<std::string, Pid*>               pid_map;
+    std::unordered_map<std::string, Set<Node*>*>        node_set_from_node_set_name; 
     // The following method are used to add entities from the input file to create the FE model
     void add_node(std::string line,std::unordered_map<std::string, std::string> options);
     void add_element(std::string line,std::unordered_map<std::string, std::string> options);
@@ -51,10 +53,10 @@ private:
     // The supported keywords needs to be added in this order!
     const std::vector<std::string> keywords = {"*NODE",
                                                "*MATERIAL",
-                                               "*SHELL SECTION",
                                                "*SOLID SECTION",
                                                "*ELEMENT",
-                                               "*NSET"
+                                               "*NSET",
+                                               "*BOUNDARY",
                                                "*CLOAD",
                                                "*STATIC",
                                                "*FREQUENCY"};
@@ -65,6 +67,7 @@ public:
     unsigned long get_number_of_elements() const {return this->elements.size();}
     Pid*          get_pid_by_name(std::string pid_name) {return pid_map[pid_name];}
     Mid*          get_mid_by_name(std::string mid_name) {return mid_map[mid_name];}
+    auto          get_bc() const {return &bc;}
     // ndofs is counter for total number of degrees of freedom for the mesh
     unsigned int ndofs = 0;
     // global stiffness matrix
@@ -83,7 +86,6 @@ public:
     Eigen::Matrix<float,Eigen::Dynamic,1> u;
     std::vector<std::pair<unsigned int,float>> f_to_be_added;
     // bc: global dof, value
-    std::vector<std::pair<unsigned int,float>> bc;
     void assemble();
     void solve();
     void solve_static();
