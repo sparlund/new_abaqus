@@ -8,7 +8,6 @@ class Node
 private:
     static unsigned int node_counter;
 public:
-    // Node has id and positional data
     const unsigned int id;
     const float x, y, z;
     std::vector<Dof> dofs;  
