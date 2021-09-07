@@ -2,6 +2,10 @@
 #include "mid.h"
 #include <iostream>
 
+std::string Pid::get_name() const {
+    return name;
+};
+
 Mid* Pid::get_mid(){return this->mid;};
 
 std::unordered_map<std::string,std::string>* Pid::get_options(){return &options;};
