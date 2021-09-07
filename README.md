@@ -169,6 +169,19 @@ I don't  have access to a Windows PC so I don't know, use the Makefile somehow..
   - [X] Print warning and exit program on small or negative Jacobian determinant  
   - [ ] Print error in log file and exit when a specified material, node set, section or whatever does not exist
 
+# Program size
+The binary new_abaqus is 48mb on my system.
+--------------------------------------------------
+Language           Number of files   Lines of code
+--------------------------------------------------
+C++                             18            1593
+C/C++ Header                    16             426
+JSON                             2             144
+Python                           1               9
+--------------------------------------------------
+SUM:                            37            2172
+--------------------------------------------------
+
 
 
 
