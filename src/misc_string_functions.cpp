@@ -20,6 +20,16 @@ bool misc::is_string_in_string_vector(std::string input_string, std::vector<std:
     
 }
 
+bool misc::is_valid_name(std::string entity_name){
+    if (entity_name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_;") != std::string::npos)
+    {
+        return false;
+    }
+    else{
+        return true;
+    }
+};
+
 void misc::trim_leading_and_ending_whitespace(std::string& string){
     const auto strBegin = string.find_first_not_of(" ");
     if (strBegin == std::string::npos){
@@ -81,16 +91,25 @@ bool misc::is_keyword(std::string line){
     }
 };
 
-bool misc::is_comment(std::string line){
+bool misc::is_comment(const std::string& line){
     // NOTE: compare return 0 if equal
     if (line.compare(0, 2, "**") == 0){
         return true;
     }
-    else{
+    else {
     return false;
     };   
 
 };
+
+bool misc::is_whitespace(std::string s){
+    for(size_t index = 0; index < s.length(); index++){
+        if(!std::isspace(s[index])){
+            return false;
+        }
+    }
+    return true;
+}
 
 std::vector<std::string> misc::split_on(const std::string& in,char split_char)
 {
@@ -100,7 +119,9 @@ std::vector<std::string> misc::split_on(const std::string& in,char split_char)
     {
         std::string item;
         getline(ss, item, split_char);
-        items.push_back(item);
+        if(!is_whitespace(item)){
+            items.push_back(item);
+        }
     };
     return items;
 };
