@@ -172,7 +172,10 @@ I don't  have access to a Windows PC so I don't know, use the Makefile somehow..
   - [ ] Print error in log file and exit when a specified material, node set, section or whatever does not exist
 
 # Program size
+
 The binary new_abaqus is 6.7mb on my system.
+<!-- language: lang-none -->
+
 --------------------------------------------------
 Language           Number of files   Lines of code
 --------------------------------------------------
