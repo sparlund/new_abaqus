@@ -122,7 +122,9 @@ I don't  have access to a Windows PC so I don't know, use the Makefile somehow..
 # To-do & features implemented
 - [x] makefile
 - [ ] Automate test cases for comparison solution against abaqus or hand calculations
-  - [ ] Set up google-test and start writing unit tests
+  - [X] Set up google-test
+  - [X] Unit test for reading input file
+  - [ ] Unit test for all entities
 - [X] Set up clang-tidy for static code analysis
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
@@ -170,18 +172,14 @@ I don't  have access to a Windows PC so I don't know, use the Makefile somehow..
   - [ ] Print error in log file and exit when a specified material, node set, section or whatever does not exist
 
 # Program size
-The binary new_abaqus is 48mb on my system.
+The binary new_abaqus is 6.7mb on my system.
 --------------------------------------------------
 Language           Number of files   Lines of code
 --------------------------------------------------
-C++                             18            1593
-C/C++ Header                    16             426
+C++                             18            1627
+C/C++ Header                    16             434
 JSON                             2             144
 Python                           1               9
 --------------------------------------------------
-SUM:                            37            2172
+SUM:                            37            2214
 --------------------------------------------------
-
-
-
-
