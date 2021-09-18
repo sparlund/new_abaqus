@@ -1,5 +1,5 @@
 #pragma once
-
+#include <iostream>
 class Dof
 {
 private:
@@ -10,5 +10,6 @@ public:
     unsigned int get_global_dof_id_counter();
     float get_value();
     Dof();
+    ~Dof();
 };
 

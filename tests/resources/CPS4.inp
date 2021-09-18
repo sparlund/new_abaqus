@@ -1,0 +1,29 @@
+*SOLID SECTION, ELSET=pid, MATERIAL=mid
+                      1.,
+** 
+*NODE
+** 
+       1,                         0,                       0.,                       0.
+       2,                         1,                       0.,                       0.
+       3,                         1,                       1.,                       0.
+       4,                         0,                       1.,                       0.
+** 
+*ELEMENT, TYPE=CPS4, ELSET=pid
+** 
+       1,        1,        2,        3,        4
+** 
+*MATERIAL, NAME=mid
+*DENSITY
+                 7.85E-9,
+*ELASTIC, TYPE=ISOTROPIC
+                 210000.,                      0.3
+** 
+** 
+*BOUNDARY, TYPE=DISPLACEMENT
+     1,1,        2,                       0
+       2,        1,        2,                       0.
+** 
+*CLOAD
+    4,        2, -1e5.
+** 
+
