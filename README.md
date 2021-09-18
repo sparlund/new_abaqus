@@ -174,8 +174,8 @@ I don't  have access to a Windows PC so I don't know, use the Makefile somehow..
 # Program size
 
 The binary new_abaqus is 6.7mb on my system.
-<!-- language: lang-none -->
 
+```
 --------------------------------------------------
 Language           Number of files   Lines of code
 --------------------------------------------------
@@ -186,3 +186,4 @@ Python                           1               9
 --------------------------------------------------
 SUM:                            37            2214
 --------------------------------------------------
+```
