@@ -9,4 +9,4 @@ Dof::~Dof(){
     --global_dof_id_counter;
 }
 
-Dof::Dof():value{0.f},id{++Dof::global_dof_id_counter}{}
+Dof::Dof():value{0.f},id{Dof::global_dof_id_counter++}{}
