@@ -101,7 +101,7 @@ CPS3, CPS4, C3D10, C3D8, C3D20
 # How to build
 Dependencies:
 
-C++11
+C++14
 
 [Eigen](http://eigen.tuxfamily.org/)  
 
@@ -128,6 +128,8 @@ I don't  have access to a Windows PC so I don't know, use the Makefile somehow..
 - [X] Set up clang-tidy for static code analysis
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
+  - [ ] Allow for commentented lines to start with whitespace
+  - [ ] Exit if trying to create element with a N/A node
   - [X] Allow entities to be defined in any order
 - [x] Create classes and relations for nodes, elements, properties and materials
 - [X] Implement logic for different elements
@@ -172,7 +174,10 @@ I don't  have access to a Windows PC so I don't know, use the Makefile somehow..
   - [ ] Print error in log file and exit when a specified material, node set, section or whatever does not exist
 
 # Program size
-The binary new_abaqus is 6.7mb on my system.
+
+The binary new_abaqus is ~0.4mB on my system.
+
+```
 --------------------------------------------------
 Language           Number of files   Lines of code
 --------------------------------------------------
@@ -183,3 +188,4 @@ Python                           1               9
 --------------------------------------------------
 SUM:                            37            2214
 --------------------------------------------------
+```

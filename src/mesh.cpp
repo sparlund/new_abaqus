@@ -45,6 +45,11 @@ float squirt_and_divide_by_2pi(float in){
     return std::sqrt(in)/(2*3.14159265359);
 }
 
+unsigned int Mesh::get_number_of_dofs() const{
+    const auto& temp_ndofs = nodes.at(0)->dofs.at(0)->get_global_dof_id_counter();
+    return temp_ndofs;
+}
+
 void Mesh::print_matrix_to_mtx(const Eigen::SparseMatrix<float>& A,const std::string& output_filename) const
 {
     // Print input matrix A in abaqus "COORDINATE" format in a .mtx-file
@@ -277,7 +282,7 @@ void Mesh::solve_static(){
     float duration_clock_solve;
     clock_solve = std::clock();  
     // Need to alter global stiffness matric and global load vector to account for boundary conditions
-    Eigen::SparseMatrix<float> K_static = K;
+    auto K_static = K;
     for (unsigned int i = 0; i < bc.size(); i++)
     {
         try
@@ -293,7 +298,7 @@ void Mesh::solve_static(){
                 {
                     f.coeffRef(current_global_dof) = penalty_value*bc.at(i).second;
                 }
-            }        
+            }
             // if current bc==0, make all values in the corresponding row and column in K to zero
             K_static.row(current_global_dof) *= 0;
             K_static.col(current_global_dof) *= 0;
@@ -305,16 +310,18 @@ void Mesh::solve_static(){
         std::cout << "i=" << i << '\n';
     }
     }
-    std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K_static) << std::endl;
-    std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
+    // std::cout << "K after bc:" << std::endl;
+    // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K_static) << std::endl;
+    // std::cout << "f after bc:" << std::endl;
+    // std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
     // Ku=f
     // Eigen::SparseLU"Eigen::SparseMatrix<float>> solver;
     // solver.compute(K_static);
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver(K_static);
     u = solver.solve(f);
     // std::cout << "d" << std::endl;
-    std::cout << "u:" << std::endl;
-    std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(u).transpose() << std::endl;
+    // std::cout << "u:" << std::endl;
+    // std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(u).transpose() << std::endl;
     duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
     std::cout << "---    Solution to linear problem found in " << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
 }
@@ -345,9 +352,9 @@ void Mesh::assemble(){
     f.resize(get_number_of_dofs(),1);
     u.resize(get_number_of_dofs(),1);
     // assemble stiffness- and mass matrix, will alter it later due to boundary conditions
-    int progress_bar_width = 20;
-    float progress = 0;
-    int progress_bar_position = progress_bar_width * progress;
+    // int progress_bar_width = 20;
+    // float progress = 0;
+    // int progress_bar_position = progress_bar_width * progress;
     // std::cout << std::endl;
     // std::cout << "Progress assembly:" <<std::endl;
     for(const auto& element: elements)
@@ -355,7 +362,6 @@ void Mesh::assemble(){
         element->calculate_Ke();
         element->calculate_Me();
     }
-    // once we've calculated all Ke and Me, let's assemble
     for(const auto& element:elements)
     { 
         auto dofs = element->get_element_dof_ids();
@@ -398,12 +404,12 @@ void Mesh::assemble(){
         }
     }
     duration_assemble = ( std::clock() - clock_assemble ) / (float) CLOCKS_PER_SEC;;
-    std::cout << "K:" << std::endl;
-    std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K) << std::endl;
-    std::cout << "M:" << std::endl;
-    std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(M) << std::endl;
-    std::cout << "f:" << std::endl;
-    std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
+    // std::cout << "K:" << std::endl;
+    // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K) << std::endl;
+    // std::cout << "M:" << std::endl;
+    // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(M) << std::endl;
+    // std::cout << "f:" << std::endl;
+    // std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
     std::cout << "---    Assembly completed in "<< duration_assemble << "seconds (wallclock time)    ---" << std::endl;
 }
 
@@ -426,6 +432,11 @@ void Mesh::add_mid(std::unordered_map<std::string, std::string> options){
 };
 
 void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::string> options){
+    if(options.find("TYPE") == options.end()){
+        std::cout << "ERROR: terminate at line " << row_counter << " in file " << current_inputfile << std::endl;
+        std::cout << "ERROR: missing parameter TYPE" << std::endl;
+        std::terminate();
+    }
     const auto& type = options["TYPE"];
     const auto& data = misc::split_on(line,',');
     if (type=="DISPLACEMENT")
@@ -433,7 +444,6 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
         // Check if first object is a string or int <--> set* or node_id
         // Need to iterate through string. If there are no alpabetical chars it's
         // a node id, otherwise it's a string!
-        // TODO: clear data[0] of leading and trailing whitespace!
         auto node_id_or_nset_name = data.at(0);
         misc::trim_leading_and_ending_whitespace(node_id_or_nset_name);
         bool node_boundary     = std::find_if(node_id_or_nset_name.begin(),
@@ -622,7 +632,6 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                             }
                             else
                             {
-                                std::cout << keyword << ": unsupported material option" << std::endl;
                                 break;
                             }
                         }
@@ -755,7 +764,6 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                         // the while loop and start over!
                         unsigned int previous_pos = input_file.tellg();
                         getline(input_file, line);
-                        // std::cout << line << ", is  keyword?"<< misc::is_keyword(line) << ", row_counter = " << row_counter <<  "\n";
                         if (misc::is_keyword(line) or line.empty())
                         {
                             input_file.seekg(previous_pos);
@@ -788,6 +796,11 @@ void Mesh::add_pid(std::unordered_map<std::string, std::string> options){
     if(misc::is_valid_name(pid_name)){
         std::string mid_name = options["MATERIAL"];
         // Find material
+        if(mid_map.find(mid_name) == mid_map.end()){
+            std::cout << "ERROR: terminate at line " << row_counter << " in file " << current_inputfile << std::endl;
+            std::cout << "ERROR: invalid material name" << std::endl;
+            std::terminate();
+        }
         auto mid = mid_map[mid_name];
         // Create new pid
         auto pid  = std::make_unique<Pid>(pid_name,mid);
@@ -818,15 +831,15 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     std::unique_ptr<Element> element;
     if (type == "S3")
     {
-        element = std::make_unique<S3>(element_id,element_connectivity,pid,3,3*3,5,1,3,"S3");
+        element = std::make_unique<S3>(element_id,element_connectivity,pid,3,3*3,5,1,2,"S3");
     }
     else if (type == "CPS3")
     {
-        element = std::make_unique<CPS3>(element_id,element_connectivity,pid,3,3*3,6,1,3,"CPS3");
+        element = std::make_unique<CPS3>(element_id,element_connectivity,pid,3,3*3,6,1,2,"CPS3");
     }
     else if (type == "CPS4")
     {   
-        element = std::make_unique<CPS4>(element_id,element_connectivity,pid,4,4*3,9,4,3,"CPS4");
+        element = std::make_unique<CPS4>(element_id,element_connectivity,pid,4,4*2,9,4,2,"CPS4");
     }
     else if (type == "C3D10")
     {   
@@ -858,14 +871,14 @@ void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string
     // Second direction cosine of the normal at the node (optional). For nodes entered in a cylindrical or spherical system, this entry is an angle given in degrees.
     // Third direction cosine of the normal at the node (optional). For nodes entered in a spherical system, this entry is an angle given in degrees.
     
-    auto         dataline_items = misc::split_on(line,',');
+    auto               dataline_items = misc::split_on(line,',');
     // TODO: add support for more node options like coordinate system and stuff
-    unsigned int      global_id = std::stoi(dataline_items.at(0));
-    auto                      x = std::stof(dataline_items.at(1));
-    auto                      y = std::stof(dataline_items.at(2));
-    auto                      z = std::stof(dataline_items.at(3));
-    auto                   node = std::make_unique<Node>(global_id,x,y,z);
-    node_map[global_id] = node.get();
-    global_2_local_node_id[global_id] = nodes.size()-1;
+    unsigned int            global_id = std::stoi(dataline_items.at(0));
+    auto                            x = std::stof(dataline_items.at(1));
+    auto                            y = std::stof(dataline_items.at(2));
+    auto                            z = std::stof(dataline_items.at(3));
+    auto                         node = std::make_unique<Node>(global_id,x,y,z);
+    node_map[global_id]               = node.get();
     nodes.push_back(std::move(node));
+    global_2_local_node_id[global_id] = nodes.size()-1;
 };

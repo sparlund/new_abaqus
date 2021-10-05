@@ -37,6 +37,7 @@ public:
     unsigned short                                      get_element_ndofs() const ;
     unsigned short                                      get_element_nnodes() const ;
     unsigned int                                        get_id() const ;
+    unsigned short                                      get_dimensions() const;
     std::string                                         get_element_type() const ;
     unsigned short                                      get_vtk_identifier() const ;
     float                                               get_weight() const ;

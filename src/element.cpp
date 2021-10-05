@@ -3,6 +3,7 @@
 #include "misc_string_functions.h"
 #include "node.h"
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -13,31 +14,33 @@ void Element::setup_dofs(){
         // Check if current node already has dofs or if we need to create
         if (connectivity.at(i)->dofs.size() != ndofs/nnodes)
         {
-            // create 3 dofs
-            Dof x = Dof();
-            Dof y = Dof();
-            Dof z = Dof();
-            // put Dof object itself in list of Dofs for element
-            connectivity.at(i)->dofs.push_back(x);
-            connectivity.at(i)->dofs.push_back(y);
+            // create 2 dofs
+            auto x  = std::make_unique<Dof>();
+            auto y  = std::make_unique<Dof>();
             // put indiviual dof id's in a list for easy access?
-            dofs_id.push_back(x.id);
-            dofs_id.push_back(y.id);
+            dofs_id.push_back(x->id);
+            dofs_id.push_back(y->id);
+            // put Dof object itself in list of Dofs for element
+            connectivity.at(i)->dofs.emplace_back(std::move(x));
+            connectivity.at(i)->dofs.emplace_back(std::move(y));
             if(dimensions == 3){
-                connectivity.at(i)->dofs.push_back(z);
-                dofs_id.push_back(z.id);
+                auto z  = std::make_unique<Dof>();
+                dofs_id.push_back(z->id);
+                connectivity.at(i)->dofs.emplace_back(std::move(z));
             }
         }
         else
         {
+
             // find dofs from node and add to dofs_id vector
-            dofs_id.push_back(connectivity.at(i)->dofs.at(0).id);
-            dofs_id.push_back(connectivity.at(i)->dofs.at(1).id);
-            if(dimensions == 3){
-                dofs_id.push_back(connectivity.at(i)->dofs.at(2).id);
+            dofs_id.push_back(connectivity.at(i)->dofs.at(0)->id);
+            dofs_id.push_back(connectivity.at(i)->dofs.at(1)->id);
+            if (dimensions == 3)
+            {
+                dofs_id.push_back(connectivity.at(i)->dofs.at(2)->id);
             }
+            
         }
-        
     }
 };
 
@@ -48,7 +51,11 @@ void Element::setup_coord(){
     {
         coord(i,0) = connectivity.at(i)->x;
         coord(i,1) = connectivity.at(i)->y;
-        coord(i,2) = connectivity.at(i)->z;
+        if (dimensions == 3)
+        {
+            coord(i,2) = connectivity.at(i)->z;
+        }
+        
     }
 };
 
@@ -85,6 +92,7 @@ std::vector<unsigned int>                          Element::get_element_dof_ids(
 unsigned short                                     Element::get_element_ndofs() const {return ndofs;}
 unsigned short                                     Element::get_element_nnodes() const {return nnodes;}
 unsigned int                                       Element::get_id() const {return id;}
+unsigned short                                     Element::get_dimensions() const {return dimensions;};
 std::string                                        Element::get_element_type() const {return element_type;}
 unsigned short                                     Element::get_vtk_identifier() const {return vtk_identifier;}
 float                                              Element::get_weight() const {return weight;}
@@ -110,7 +118,7 @@ float Element::inv_div_by1(float in) const {
 void Element::print_element_info_to_log() const {
     // print info to log file
     std::vector<Node*> nodes = get_connectivity();
-    std::cout << "*ELEMENT: type=" << get_element_type() << ", id=" << get_id() << ", nodes=";
+    std::cout << "*ELEMENT: type=" << get_element_type() << ", PID = " << get_pid()->get_name() << ", id=" << get_id() << ", nodes=";
     for (unsigned short i = 0; i < get_element_nnodes() ; i++)
     {
         std::cout << nodes.at(i)->id << ",";        
@@ -120,7 +128,7 @@ void Element::print_element_info_to_log() const {
     {   
         for (unsigned short j = 0; j < get_element_ndofs()/get_element_nnodes() ; j++)
         {
-            std::cout << nodes.at(i)->dofs.at(j).id << ",";
+            std::cout << nodes.at(i)->dofs.at(j)->id << ",";
         }
     }
     std::cout << std::endl;
