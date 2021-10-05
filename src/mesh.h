@@ -79,7 +79,7 @@ public:
     auto          get_number_of_mids() const {return mids.size();};
     auto          get_number_of_nodes() const {return nodes.size();}
     auto          get_number_of_elements() const {return elements.size();}
-    auto          get_number_of_dofs() const {return nodes.size()*3;}
+    unsigned int  get_number_of_dofs() const;
     unsigned int number_of_modes_to_find;
     // size(eigenvalues) = number_of_modes*1
     Eigen::Matrix<float,Eigen::Dynamic,1> eigenvalues;
