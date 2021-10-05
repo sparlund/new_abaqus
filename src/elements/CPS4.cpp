@@ -25,7 +25,7 @@ void CPS4::calculate_Ke(){
     {            
         xhi = gauss_points->at(i).at(0);
         eta = gauss_points->at(i).at(1);
-        w = gauss_weights->at(i);
+        w   = gauss_weights->at(i);
         // shape functions derivatives wrt xhi
         dN1dXhi = -0.25*(1-eta);
         dN2dXhi =  0.25*(1-eta);
@@ -41,11 +41,14 @@ void CPS4::calculate_Ke(){
         dNdXhidEta.row(1) << dN1dEta,dN2dEta,dN3dEta,dN4dEta;
         J = dNdXhidEta*coord;
         detJ.push_back(J.determinant());
+        if (detJ.back() < 0.1f)
+        {
+            std::cout << "WARNING: Jacobian determinant less than 0.1 for element #" << this->get_id() << std::endl;    
+        }
         dNdxdy = J.inverse()*dNdXhidEta;
-        B <<    dNdxdy(0,0),            0, dNdxdy(0,1),           0, dNdxdy(0,2),           0, dNdxdy(0,3),           0,
-                        0, dNdxdy(1,0),           0, dNdxdy(1,1),           0, dNdxdy(1,2),           0, dNdxdy(1,3),
-                dNdxdy(1,0), dNdxdy(0,0),dNdxdy(1,1), dNdxdy(0,1),dNdxdy(1,2), dNdxdy(0,2),dNdxdy(1,3), dNdxdy(0,3); 
-        
+        B <<    dNdxdy(0,0),           0, dNdxdy(0,1),           0, dNdxdy(0,2),           0, dNdxdy(0,3),           0,
+                          0, dNdxdy(1,0),           0, dNdxdy(1,1),           0, dNdxdy(1,2),           0, dNdxdy(1,3),
+                dNdxdy(1,0), dNdxdy(0,0), dNdxdy(1,1), dNdxdy(0,1), dNdxdy(1,2), dNdxdy(0,2), dNdxdy(1,3), dNdxdy(0,3); 
         Ke = Ke + w*(B.transpose()*D*B*detJ.back());
     }
 };
@@ -63,8 +66,8 @@ void CPS4::calculate_Me(){
         N2 = 0.25*(1+xhi)*(1-eta),
         N3 = 0.25*(1+xhi)*(1+eta),
         N4 = 0.25*(1-xhi)*(1+eta);
-        N <<  N1,0.0f,0.0f,N2,0.0f,0.0f,N3,0.0f,0.0f,N4,0.0f,0.0f,
-            0.0f,N1,0.0f,0.0f,N2,0.0f,0.0f,N3,0.0f,0.0f,N4,0.0f;
+        N <<  N1, 0.f,  0.f,   N2,  0.f,  0.f,   N3,  0.f,  0.f,   N4,  0.f,  0.f,
+             0.f,  N1,  0.f,  0.f,   N2,  0.f,  0.f,   N3,  0.f,  0.f,   N4,  0.f;
         Me = Me + w*pid->get_mid()->get_density()*N.transpose()*N*detJ.at(i);
     }
 };
@@ -79,7 +82,9 @@ CPS4::CPS4(unsigned int                        id,
            const unsigned short                ngp,
            const unsigned short                dimensions,
            std::string                         element_type):
-Element{id,connectivity,pid,nnodes,ndofs,vtk_identifier,ngp,dimensions,element_type}{}
+Element{id,connectivity,pid,nnodes,ndofs,vtk_identifier,ngp,dimensions,element_type}{
+    print_element_info_to_log();
+}
 
 
 
