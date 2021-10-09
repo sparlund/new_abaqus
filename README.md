@@ -30,30 +30,15 @@ To run this example:
 ```bash
 ./new_abaqus example_runfiles/example1_2D.inp
 ```
-## Example #2, eigenfrequency analysis of a bar
-Below is a bar discretized into 10 pieces of C3D20 (20-node hexa) elements. It's fixed in the far end. The table under contains the first ten eigenfrequencies for the system. The results could be said to agree very well between new_abaqus and Abaqus (C)
 
+## Example #2, 3D tuning fork 
+A tuning fork made up of 4 thousand second order tetra element (C3D10). This mesh has 23 thousand degrees of freedom and took close to an hour to solve on my laptop. However, it takes only 7 seconds to solve on the same computer using [Calculix](http://www.calculix.de/) which is another FEM solver that also follows the Abaqus(C) input file format.
 
-<img src="src/images/example2_3D_bar.png" width="50%"/>
+The comparison of results between Abaqus(C) and new_abaqus is still decent in this example, but a few modes are off by ~40-70 Hz, which I chalk up to the eigenvalue solver.
 
-| Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
-|-------------|---|---|---|---|---|---|---|---|
-| Abaqus (C)  | 420.20 | 420.20  | 2531.3  | 2531.3  | 4009.6 | 6496.1 | 6704.7 | 6704.7 | 
-| new_abaqus  | 420.48 | 427.86 | 2531.56 | 2532.4 | 4009.0 | 6494.25 | 6705.02| 6705.3 |
-
-To run this example:
-```bash
-./new_abaqus example_runfiles/example2_3D_bar.inp
-```
-## Example #3, tuning fork 
-A tuning fork made up of 4 thousand second order tetra element (C3D10). This mesh has 23 thousand degrees of freedom and took close to an hour to solve on my laptop.
-
-
-There results between Abaqus(C) and this software is still good, but a few modes are off by ~40-70 Hz, which is a little strange. Not clear why that is, yet.
-
-Tuning fork geometry             |  First eigenmode |  Second eigenmode
+Tuning fork geometry | 1st eigenmode | 4th eigenmode
 -------------------------|-------------------------|-------------------------
-<img src="src/images/example3_tuning_fork.png" width="60%"/>  |  <img src="src/images/example3_tuning_fork_mode1.gif" width="70%"/> |  <img src="src/images/example3_tuning_fork_mode2.gif" width="70%"/>
+<img src="src/images/example3_tuning_fork.png" width="50%"/>  |  <img src="src/images/example3_tuning_fork_mode1.gif" width="100%"/> |  <img src="src/images/example3_tuning_fork_mode4.gif" width="100%"/>
 
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
@@ -117,7 +102,7 @@ make
 make clean
 ```
 ## Windows build
-I don't  have access to a Windows PC so I don't know, use the Makefile somehow...
+I don't have access to a Windows PC so I don't know, use the Makefile somehow...
 
 # To-do & features implemented
 - [x] makefile
