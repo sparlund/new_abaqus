@@ -38,7 +38,7 @@ The comparison of results between Abaqus(C) and new_abaqus is still decent in th
 
 Tuning fork geometry | 1st eigenmode | 4th eigenmode
 -------------------------|-------------------------|-------------------------
-<img src="src/images/example3_tuning_fork.png" width="50%"/>  |  <img src="src/images/example3_tuning_fork_mode1.gif" width="100%"/> |  <img src="src/images/example3_tuning_fork_mode4.gif" width="100%"/>
+<img src="src/images/example2_tuning_fork.png" width="50%"/>  |  <img src="src/images/example2_tuning_fork_mode1.gif" width="100%"/> |  <img src="src/images/example2_tuning_fork_mode4.gif" width="100%"/>
 
 
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
