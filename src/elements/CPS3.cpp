@@ -14,10 +14,8 @@ void CPS3::calculate_Ke(){
     float y2 = connectivity.at(1)->y;
     float y3 = connectivity.at(2)->y;
     // create coord matrix needed to find area
-    coord << 1, x1, y1,
-                1, x2, y2,
-                1, x3, y3;
-    area = 0.5*coord.determinant();
+    // TODO: calculate area
+    // area = 0.5*coord.determinant();
     J << x1-x3, y1 - y3,
             x2-x3, y2 - y3;
     B << J(1,1), 0, -J(0,1), 0, -J(1,1)+J(0,1), 0,
