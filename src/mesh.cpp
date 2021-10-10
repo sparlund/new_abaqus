@@ -205,7 +205,6 @@ void Mesh::solve_eigenfrequency(){
     
     
     std::clock_t clock_solve;
-    float duration_clock_solve;
     clock_solve = std::clock();  
     // Need to modify global stiffness matrix
     // in order to account for boundary conditions
@@ -216,36 +215,24 @@ void Mesh::solve_eigenfrequency(){
         unsigned int current_global_dof = i.first;
         K_eigen.coeffRef(current_global_dof,current_global_dof) = penalty_value;
     }
-    // if problem is smaller than, let's say 1e3 dofs, it's
-    // faster to cast the matrices to dense and just solve the problem the "hard" way
-    print_matrix_to_mtx(K_eigen,analysis_name + "_STIF2_new_abaqus.mtx");  
-    print_matrix_to_mtx(M,analysis_name + "_MASS2_new_abaqus.mtx");  
-    if (get_number_of_dofs() < 1e2)
-    {
-        Eigen::MatrixXf K_eigen_dense = Eigen::MatrixXf(K_eigen);
-        Eigen::MatrixXf M_dense = Eigen::MatrixXf(M);
-        Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXf> es(K_eigen_dense,M_dense);
-        this->eigenvalues = es.eigenvalues();
-        this->eigenvectors = es.eigenvectors();
-        // eigenfrequency = sqrt(eigenvalue)/(2*pi);
-        this->eigenfrequencies = es.eigenvalues().unaryExpr(&squirt_and_divide_by_2pi);
-    }
-    else
-    {
-        Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse> opK1(K_eigen,M);
-        Spectra::SparseSymMatProd<float> opM1(M);
-        unsigned int ncv = (2*number_of_modes_to_find) - 1;
+    print_matrix_to_mtx(K_eigen,analysis_name + "_STIF2_new_abaqus.mtx");
+    print_matrix_to_mtx(M,analysis_name + "_MASS2_new_abaqus.mtx");
+    Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse> opK1(K_eigen,M);
+    Spectra::SparseSymMatProd<float> opM1(M);
+    unsigned int ncv = (2*number_of_modes_to_find) - 1;
+    // abaqus defines number of eigenvalues to solve for as 
         // abaqus defines number of eigenvalues to solve for as 
-        // the ones with smallest magntide --> sigma=0
-        double sigma = 0;
-        Spectra::SymGEigsShiftSolver<float,
-                            Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse>,
-                            Spectra::SparseSymMatProd<float>,
-                            Spectra::GEigsMode::ShiftInvert> es(opK1,
-                                                                opM1,
-                                                                number_of_modes_to_find,
-                                                                ncv,
-                                                                sigma);
+    // abaqus defines number of eigenvalues to solve for as 
+    // the ones with smallest magntide --> sigma=0
+    double sigma = 0;
+    Spectra::SymGEigsShiftSolver<float,
+                        Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse>,
+                        Spectra::SparseSymMatProd<float>,
+                        Spectra::GEigsMode::ShiftInvert> es(opK1,
+                                                            opM1,
+                                                            number_of_modes_to_find,
+                                                            ncv,
+                                                            sigma);
         es.init();
         es.compute();
         // Retrieve results
@@ -253,24 +240,17 @@ void Mesh::solve_eigenfrequency(){
         this->eigenvectors = es.eigenvectors();
         // eigenfrequency = sqrt(eigenvalue)/(2*pi);
         this->eigenfrequencies = eigenvalues.unaryExpr(&squirt_and_divide_by_2pi);
-    }        
-    duration_clock_solve = ( std::clock() - clock_solve ) / static_cast<float>(CLOCKS_PER_SEC);
+    // }        
+    auto duration_clock_solve = ( std::clock() - clock_solve ) / static_cast<float>(CLOCKS_PER_SEC);
     std::cout << "                              E I G E N V A L U E    O U T P U T\n" << std::endl;
     std::cout << " MODE NO      EIGENVALUE              FREQUENCY         " << std::endl;//GENERALIZED MASS   COMPOSITE MODAL DAMPING" << std::endl
     std::cout << "                             (RAD/TIME)   (CYCLES/TIME)\n\n" << std::endl;
     int temp_mode_counter_for_text = 1;
-    for (unsigned int i = eigenfrequencies.rows(); i > 0; --i)
+    for (unsigned int i = eigenfrequencies.rows()-1; i > 0; --i)
     {
-                    //  1      6.97066E+06     2640.2         420.20         1.0000         0.0000     
         std::cout << std::setw(8) << temp_mode_counter_for_text << "      " << std::setw(10) << std::scientific << eigenvalues[i] << "    " <<  std::setw(19) << std::setprecision(2)  << std::fixed << eigenfrequencies[i] << std::endl;
         temp_mode_counter_for_text++;
     }
-
-    // std::cout << eigenfrequencies << std::endl;
-
-    //    1      6.97066E+06     2640.2         420.20         1.0000         0.0000    
-    //    2      6.97066E+06     2640.2         420.20         1.0000         0.0000    
-
     std::cout << "---    Solution to eigenvalue problem found in " << std::setprecision(2) << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
 }
 
@@ -329,12 +309,12 @@ void Mesh::solve_static(){
 
 void Mesh::assemble(){
     // By the time of assemble we know the number of dofs --> pre-allocate K, f & solution u
-    std::cout << "---    Starting stiffness matrix assembly    ---" << std::endl;
+    std::cout << "---    Starting matrix assembly    ---" << std::endl;
     std::cout << "           Mesh size:" << std::endl;
     std::cout << "               nodes = " << nodes.size() << std::endl;
     std::cout << "            elements = " << elements.size() << std::endl;
     // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
-    std::cout << "  degrees of freedom = " << get_number_of_dofs() << std::endl;
+    std::cout << "  degrees of freedom = " << get_number_of_dofs() << std::endl << std::endl;
     // Also print weight as a sanity check!
     // float model_total_weight = 0;
     // for (unsigned int i = 0; i < elements.size(); i++)
@@ -352,30 +332,38 @@ void Mesh::assemble(){
     f.resize(get_number_of_dofs(),1);
     u.resize(get_number_of_dofs(),1);
     // assemble stiffness- and mass matrix, will alter it later due to boundary conditions
-    // int progress_bar_width = 20;
-    // float progress = 0;
-    // int progress_bar_position = progress_bar_width * progress;
-    // std::cout << std::endl;
-    // std::cout << "Progress assembly:" <<std::endl;
+    std::cout << "Calculating all element stiffness and or mass matrices:" <<std::endl;
+    size_t current_element_counter = 1;
+    size_t nel = get_number_of_elements();
     for(const auto& element: elements)
     {
+        std::cout << "[" << current_element_counter << "/" << nel << "]\r";
+        std::cout.flush();
         element->calculate_Ke();
         element->calculate_Me();
+        current_element_counter++;
     }
+    std::cout << std::endl;
+    std::cout << "Progress assembly:" <<std::endl;
+    current_element_counter = 1;
     for(const auto& element:elements)
     { 
+        std::cout << "[" << current_element_counter << "/" << nel << "]\r";
+        std::cout.flush();
         auto dofs = element->get_element_dof_ids();
         for(unsigned int j=0;j < dofs.size();j++){
             unsigned int dof_row = dofs.at(j);
             for(unsigned int k=0;k < dofs.size();k++){
                 auto dof_column = dofs.at(k);
                 auto Ke         = element->get_Ke();
-                auto Me         = element->get_Me();                
+                auto Me         = element->get_Me();
                 K.coeffRef(dof_row,dof_column) += Ke(j,k);
                 M.coeffRef(dof_row,dof_column) += Me(j,k);
             }
         }
+        current_element_counter++;
     }
+    std::cout << std::endl;
     // assemble load vector, will alter due to boundary conditions
     for (unsigned int i = 0; i < f_to_be_added.size(); i++)
     {
@@ -410,7 +398,7 @@ void Mesh::assemble(){
     // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(M) << std::endl;
     // std::cout << "f:" << std::endl;
     // std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
-    std::cout << "---    Assembly completed in "<< duration_assemble << "seconds (wallclock time)    ---" << std::endl;
+    std::cout << "---    Assembly completed in " << std::setprecision(2) << duration_assemble << "seconds (wallclock time)    ---" << std::endl;
 }
 
 
@@ -835,7 +823,7 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     }
     else if (type == "CPS3")
     {
-        element = std::make_unique<CPS3>(element_id,element_connectivity,pid,3,3*3,6,1,2,"CPS3");
+        element = std::make_unique<CPS3>(element_id,element_connectivity,pid,3,3*2,6,1,2,"CPS3");
     }
     else if (type == "CPS4")
     {   
