@@ -346,23 +346,34 @@ void Mesh::assemble(){
     std::cout << std::endl;
     std::cout << "Progress assembly:" <<std::endl;
     current_element_counter = 1;
+    std::vector<Eigen::Triplet<float>> K_tripletList;
+    std::vector<Eigen::Triplet<float>> M_tripletList;
+    unsigned int estimation_of_entries = 0;
     for(const auto& element:elements)
-    { 
+    {
+        estimation_of_entries += element->get_element_dof_ids().size();
+    }
+    K_tripletList.reserve(estimation_of_entries);
+    M_tripletList.reserve(estimation_of_entries);
+    for(const auto& element:elements)
+    {
         std::cout << "[" << current_element_counter << "/" << nel << "]\r";
         std::cout.flush();
-        auto dofs = element->get_element_dof_ids();
+        auto Ke         = element->get_Ke();
+        auto Me         = element->get_Me();
+        auto dofs       = element->get_element_dof_ids();
         for(unsigned int j=0;j < dofs.size();j++){
             unsigned int dof_row = dofs.at(j);
             for(unsigned int k=0;k < dofs.size();k++){
                 auto dof_column = dofs.at(k);
-                auto Ke         = element->get_Ke();
-                auto Me         = element->get_Me();
-                K.coeffRef(dof_row,dof_column) += Ke(j,k);
-                M.coeffRef(dof_row,dof_column) += Me(j,k);
+                K_tripletList.push_back(Eigen::Triplet<float>(dof_row,dof_column,Ke(j,k)));
+                M_tripletList.push_back(Eigen::Triplet<float>(dof_row,dof_column,Me(j,k)));
             }
         }
         current_element_counter++;
     }
+    K.setFromTriplets(K_tripletList.begin(), K_tripletList.end());
+    M.setFromTriplets(M_tripletList.begin(), M_tripletList.end());
     std::cout << std::endl;
     // assemble load vector, will alter due to boundary conditions
     for (unsigned int i = 0; i < f_to_be_added.size(); i++)
