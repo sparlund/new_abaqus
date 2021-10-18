@@ -1,17 +1,18 @@
 #pragma once
+#include "elements/element.h"
+#include "mid.h"
+#include "misc_string_functions.h"
+#include "node.h"
+#include "pid.h"
+#include "set.h"
+#include "../external_libs/Eigen/Dense"
+#include "../external_libs/Eigen/Sparse"
+
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <memory>
-#include "../external_libs/Eigen/Dense"
-#include "../external_libs/Eigen/Sparse"
 #include <utility>
-#include "mid.h"
-#include "pid.h"
-#include "node.h"
-#include "element.h"
-#include "misc_string_functions.h"
-#include "set.h"
 
 class Mesh
 {

@@ -1,6 +1,7 @@
 #pragma once
-#include "node.h"
-#include "pid.h"
+#include "../node.h"
+#include "../pid.h"
+
 #include <Eigen/Sparse>
 #include <memory>
 #include <string>

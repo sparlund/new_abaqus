@@ -1,11 +1,12 @@
 #pragma once
-#include <vector>
-#include <memory>
-#include <Eigen/Dense>
-#include "../element.h"
-#include "../pid.h"
-#include "../node.h"
+#include "element.h"
 #include "../Gauss.h"
+#include "../node.h"
+#include "../pid.h"
+
+#include <Eigen/Dense>
+#include <memory>
+#include <vector>
 
 // CPS4 is 4 node quadrilateral element
 // *---------* 

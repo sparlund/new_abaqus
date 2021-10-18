@@ -1,7 +1,7 @@
-#include "element.h"
-#include "node.h"
-#include "misc_string_functions.h"
 #include "set.h"
+#include "elements/element.h"
+#include "misc_string_functions.h"
+#include "node.h"
 
 template class Set<Node*>;
 template class Set<Element*>;

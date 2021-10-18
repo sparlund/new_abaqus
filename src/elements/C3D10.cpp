@@ -128,6 +128,8 @@ C3D10::C3D10(unsigned int                        id,
              const unsigned short                ngp,
              const unsigned short                dimensions,
              std::string                         element_type):
-Element{id,connectivity,pid,nnodes,ndofs,vtk_identifier,ngp,dimensions,element_type}{}
+Element{id,connectivity,pid,nnodes,ndofs,vtk_identifier,ngp,dimensions,element_type}{
+    print_element_info_to_log();
+}
 
 
