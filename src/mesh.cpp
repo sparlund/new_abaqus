@@ -1,13 +1,5 @@
 #include "mesh.h"
-#include "../external_libs/Eigen/Dense"
-#include "../external_libs/Eigen/Sparse"
-#include "../external_libs/Eigen/Cholesky"
-#include "../external_libs/Eigen/Eigenvalues"
-#include "mid.h"
-#include "pid.h"
-#include "node.h"
 #include "dof.h"
-#include "element.h"
 #include "elements/S3.h"
 #include "elements/CPS3.h"
 #include "elements/CPS4.h"
@@ -16,6 +8,10 @@
 #include "elements/C3D20.h"
 #include "misc_string_functions.h"
 #include "set.h"
+#include "../external_libs/Eigen/Dense"
+#include "../external_libs/Eigen/Sparse"
+#include "../external_libs/Eigen/Cholesky"
+#include "../external_libs/Eigen/Eigenvalues"
 // for eigenfrequency solver
 #include <Spectra/SymGEigsSolver.h>
 #include <Spectra/MatOp/SparseCholesky.h>
@@ -219,9 +215,7 @@ void Mesh::solve_eigenfrequency(){
     print_matrix_to_mtx(M,analysis_name + "_MASS2_new_abaqus.mtx");
     Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse> opK1(K_eigen,M);
     Spectra::SparseSymMatProd<float> opM1(M);
-    unsigned int ncv = (2*number_of_modes_to_find) - 1;
-    // abaqus defines number of eigenvalues to solve for as 
-        // abaqus defines number of eigenvalues to solve for as 
+    unsigned int ncv = (2*number_of_modes_to_find);
     // abaqus defines number of eigenvalues to solve for as 
     // the ones with smallest magntide --> sigma=0
     double sigma = 0;
@@ -233,20 +227,23 @@ void Mesh::solve_eigenfrequency(){
                                                             number_of_modes_to_find,
                                                             ncv,
                                                             sigma);
-        es.init();
-        es.compute();
-        // Retrieve results
-        this->eigenvalues = es.eigenvalues();
-        this->eigenvectors = es.eigenvectors();
-        // eigenfrequency = sqrt(eigenvalue)/(2*pi);
-        this->eigenfrequencies = eigenvalues.unaryExpr(&squirt_and_divide_by_2pi);
-    // }        
+    es.init();
+    es.compute(Spectra::SortRule::LargestMagn, 1e4,1e-18);
+    // Retrieve results
+    this->eigenvalues = es.eigenvalues();
+    this->eigenvectors = es.eigenvectors();
+    // eigenfrequency = sqrt(eigenvalue)/(2*pi);
+    this->eigenfrequencies = eigenvalues.unaryExpr(&squirt_and_divide_by_2pi);
+
+    // Eigen::MatrixXd Mdense = M;
+    // Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXd> es(A, Bdense);
     auto duration_clock_solve = ( std::clock() - clock_solve ) / static_cast<float>(CLOCKS_PER_SEC);
     std::cout << "                              E I G E N V A L U E    O U T P U T\n" << std::endl;
     std::cout << " MODE NO      EIGENVALUE              FREQUENCY         " << std::endl;//GENERALIZED MASS   COMPOSITE MODAL DAMPING" << std::endl
     std::cout << "                             (RAD/TIME)   (CYCLES/TIME)\n\n" << std::endl;
     int temp_mode_counter_for_text = 1;
     for (unsigned int i = eigenfrequencies.rows()-1; i > 0; --i)
+    // for(unsigned int i = 0;i < eigenfrequencies.rows();i++)
     {
         std::cout << std::setw(8) << temp_mode_counter_for_text << "      " << std::setw(10) << std::scientific << eigenvalues[i] << "    " <<  std::setw(19) << std::setprecision(2)  << std::fixed << eigenfrequencies[i] << std::endl;
         temp_mode_counter_for_text++;
@@ -337,8 +334,7 @@ void Mesh::assemble(){
     size_t nel = get_number_of_elements();
     for(const auto& element: elements)
     {
-        std::cout << "[" << current_element_counter << "/" << nel << "]\r";
-        std::cout.flush();
+        std::cout << "[" << current_element_counter << "/" << nel << "]" << "\r" << std::flush;
         element->calculate_Ke();
         element->calculate_Me();
         current_element_counter++;
@@ -348,13 +344,8 @@ void Mesh::assemble(){
     current_element_counter = 1;
     std::vector<Eigen::Triplet<float>> K_tripletList;
     std::vector<Eigen::Triplet<float>> M_tripletList;
-    unsigned int estimation_of_entries = 0;
-    for(const auto& element:elements)
-    {
-        estimation_of_entries += element->get_element_dof_ids().size();
-    }
-    K_tripletList.reserve(estimation_of_entries);
-    M_tripletList.reserve(estimation_of_entries);
+    K_tripletList.reserve(get_number_of_dofs());
+    M_tripletList.reserve(get_number_of_dofs());
     for(const auto& element:elements)
     {
         std::cout << "[" << current_element_counter << "/" << nel << "]\r";
@@ -409,7 +400,7 @@ void Mesh::assemble(){
     // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(M) << std::endl;
     // std::cout << "f:" << std::endl;
     // std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
-    std::cout << "---    Assembly completed in " << std::setprecision(2) << duration_assemble << "seconds (wallclock time)    ---" << std::endl;
+    std::cout << "---    Assembly completed in " << std::setprecision(2) << duration_assemble << " seconds (wallclock time)    ---" << std::endl;
 }
 
 
