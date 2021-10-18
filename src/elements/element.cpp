@@ -1,7 +1,8 @@
-#include "dof.h"
 #include "element.h"
-#include "misc_string_functions.h"
-#include "node.h"
+#include "../dof.h"
+#include "../misc_string_functions.h"
+#include "../node.h"
+
 #include <iostream>
 #include <memory>
 #include <string>
