@@ -46,6 +46,11 @@ private:
     void add_set(std::string line,std::unordered_map<std::string, std::string> options);
     bool static_analysis=false;
     bool eigenvalue_analysis=false;
+    bool steady_state_dynamics_analysis=false;
+    
+    float steady_state_dynamics_lower_limit = 0;
+    float steady_state_dynamics_upper_limit = 20e3;
+    int   steady_state_dynamics_number_of_points = 1;
     std::string eigenvalue_solution_method;
     std::string analysis_name;
     // The supported keywords needs to be added in this order!
@@ -57,7 +62,9 @@ private:
                                                "*BOUNDARY",
                                                "*CLOAD",
                                                "*STATIC",
-                                               "*FREQUENCY"};
+                                               "*FREQUENCY",
+                                               "*STEADY STATE DYNAMICS",
+                                               "*MATRIX GENERATE"};
     // global stiffness matrix
     Eigen::SparseMatrix<float> K;
     // global mass matrix
@@ -94,6 +101,7 @@ public:
     void solve();
     void solve_static();
     void solve_eigenfrequency();
+    void solve_steady_state_dynamics();
     void export_2_vtk();
     void read_file(const std::string& filename, const std::string& keyword);
     void read_file_new_method(const std::string& filename);

@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <complex>
 #include <unordered_map>
 #include <fstream>
 #include <functional>
@@ -190,9 +191,60 @@ void Mesh::solve(){
     {
         solve_static();
     }
+    if(steady_state_dynamics_analysis)
+    {
+        solve_steady_state_dynamics();
+    }
     export_2_vtk();
 }
 
+void Mesh::solve_steady_state_dynamics()
+{
+    std::cout << "---    Starting to solve frequency response function    ---\n" << std::endl;  
+    std::clock_t clock_solve;
+    auto duration_clock_solve = std::clock();
+    // K_eff = -w^2 * M + K;
+    auto frequency_step_width = (steady_state_dynamics_upper_limit - steady_state_dynamics_lower_limit) / steady_state_dynamics_number_of_points;
+    float w, frequency;
+    auto ndofs = get_number_of_dofs();
+    // Eigen::SparseVector<float> F{ndofs};
+    Eigen::SparseMatrix<std::complex<float>> H{ndofs,ndofs};
+    const std::complex<float> i{0.0,1.0};
+    Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
+    std::cout << "A" << std::endl;
+    for(unsigned int k = 0; k < 1; k++)
+    {
+        frequency = steady_state_dynamics_lower_limit + k*frequency_step_width;
+        w = frequency*2*M_PIl;
+        // want to solve (-w^2*M +K)*u = F'
+        //               <--------->
+        //                    H
+        auto F = f*std::exp(i*w);
+        std::cout << "E" << std::endl;
+        auto t = std::pow(w,2)*M;
+        std::cout << "F" << std::endl;
+        Eigen::SparseMatrix<float> H = M + K;
+        solver.compute(H);
+        if(solver.info()!=Eigen::Success)
+        {
+            std::cout << "decomposition failed!" << std::endl;
+            exit(0);
+        }
+        std::cout << "G" << std::endl;
+        auto Ft = F.conjugate().transpose();
+        std::cout << "Ft=" << Ft << std::endl;
+        std::cout << "I" << std::endl;
+        u = solver.solve(Ft);
+        if(solver.info()!=Eigen::Success)
+        {
+            std::cout << "solver failed!" << std::endl;
+            exit(0);
+        }
+    }
+    std::cout << "u=" << u << std::endl;
+    duration_clock_solve = ( std::clock() - clock_solve ) / static_cast<float>(CLOCKS_PER_SEC);
+    std::cout << "---    Solution to eigenvalue problem found in " << std::setprecision(2) << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
+}
 
 
 void Mesh::solve_eigenfrequency(){
@@ -211,8 +263,6 @@ void Mesh::solve_eigenfrequency(){
         unsigned int current_global_dof = i.first;
         K_eigen.coeffRef(current_global_dof,current_global_dof) = penalty_value;
     }
-    print_matrix_to_mtx(K_eigen,analysis_name + "_STIF2_new_abaqus.mtx");
-    print_matrix_to_mtx(M,analysis_name + "_MASS2_new_abaqus.mtx");
     Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse> opK1(K_eigen,M);
     Spectra::SparseSymMatProd<float> opM1(M);
     unsigned int ncv = (2*number_of_modes_to_find);
@@ -393,6 +443,9 @@ void Mesh::assemble(){
             free_dofs.push_back(i);
         }
     }
+    print_matrix_to_mtx(K,analysis_name + "_STIF2_new_abaqus.mtx");
+    print_matrix_to_mtx(M,analysis_name + "_MASS2_new_abaqus.mtx");
+    print_matrix_to_mtx(f,analysis_name + "_LOAD2_new_abaqus.mtx");
     duration_assemble = ( std::clock() - clock_assemble ) / (float) CLOCKS_PER_SEC;;
     // std::cout << "K:" << std::endl;
     // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K) << std::endl;
@@ -706,6 +759,20 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                     std::string number_of_modes_to_find_string = misc::split_on(line, ',').at(0);
                     this->number_of_modes_to_find = std::stoi(number_of_modes_to_find_string);
                     std::cout << keyword << ": number of eigenvalues to be calculated = " << number_of_modes_to_find << std::endl;
+                }
+                else if("*MATRIX GENERATE")
+                {
+                    
+                }
+                else if (keyword == "*STEADY STATE DYNAMICS")
+                {
+                    this->steady_state_dynamics_analysis = true;
+                    getline(input_file, line);
+                    row_counter++;
+                    auto lowLim_and_uppLim_and_total_noPoints = misc::split_on(line, ',');
+                    steady_state_dynamics_lower_limit      = std::stof(lowLim_and_uppLim_and_total_noPoints.at(0));
+                    steady_state_dynamics_upper_limit      = std::stof(lowLim_and_uppLim_and_total_noPoints.at(1));
+                    steady_state_dynamics_number_of_points = std::stoi(lowLim_and_uppLim_and_total_noPoints.at(2));
                 }
                 else if (keyword == "*ELEMENT"){
                     getline(input_file, line);
