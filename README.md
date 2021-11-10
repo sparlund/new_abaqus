@@ -88,7 +88,9 @@ Dependencies:
 
 C++14
 
-[Eigen](http://eigen.tuxfamily.org/)  
+CMake
+
+[Eigen](http://eigen.tuxfamily.org/)
 
 [Spectra](https://spectralib.org/)
 
@@ -98,18 +100,23 @@ Eigen is a library used for linear algebra, and Spectra is an add-on to that lib
 ```bash
 git clone https://github.com/sparlund/new_abaqus
 cd new_abaqus
-make
-make clean
+cmake --build . --target new_abaqus
 ```
 ## Windows build
 I don't have access to a Windows PC so I don't know, use the Makefile somehow...
 
 # To-do & features implemented
-- [x] makefile
+- [x] ~~makefile~~ CMake build system
 - [ ] Automate test cases for comparison solution against abaqus or hand calculations
-  - [X] Set up google-test
-  - [X] Unit test for reading input file
-  - [ ] Unit test for all entities
+  - [X] Set up gtest
+  - [ ] Unit test for all entities and processes
+      - [X] Read input file 
+      - [X] Node
+      - [X] MID
+      - [X] PID
+      - [ ] Boundary conditions
+      - [ ] Analysis results
+
 - [X] Set up clang-tidy for static code analysis
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
@@ -135,6 +142,7 @@ I don't have access to a Windows PC so I don't know, use the Makefile somehow...
   - [X] *STATIC 
   - [X] *EIGENFREQUENCY
   - [X] *INCLUDE
+  - [ ] *CONTACT PAIR
   - [ ] *STEP
   - [ ] *OUTPUT
 - [x] Solve Ku=f for linear problems
@@ -167,8 +175,7 @@ The binary new_abaqus is ~0.4mB on my system.
 Language           Number of files   Lines of code
 --------------------------------------------------
 C++                             18            1627
-C/C++ Header                    16             434
-JSON                             2             144
+C++ Header                      16             434
 Python                           1               9
 --------------------------------------------------
 SUM:                            37            2214
