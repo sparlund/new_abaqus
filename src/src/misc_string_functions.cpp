@@ -4,7 +4,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
-#include "misc_string_functions.h"
+#include "../include/misc_string_functions.h"
 #include <unordered_map>
 
 bool misc::is_string_in_string_vector(std::string input_string, std::vector<std::string> input_vector){
@@ -59,6 +59,7 @@ std::unordered_map<std::string,std::string> misc::options_map(std::string line){
         {
             options[key] = key;
         }
+        else
         {
             auto value = key_and_value.at(1);
             options[key] = value;

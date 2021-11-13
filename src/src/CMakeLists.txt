@@ -1,0 +1,21 @@
+add_executable(new_abaqus 
+               C3D10.cpp
+               C3D20.cpp
+               C3D8.cpp
+            #    contact.cpp
+               CPS3.cpp
+               CPS4.cpp
+               S3.cpp
+               dof.cpp
+               node.cpp
+               element.cpp
+               Gauss.cpp
+               mesh.cpp
+               mid.cpp
+               misc_string_functions.cpp
+               new_abaqus.cpp
+               pid.cpp
+               set.cpp
+               staring_point.cpp
+)
+target_compile_options(new_abaqus PRIVATE -O2)
