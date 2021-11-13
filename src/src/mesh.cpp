@@ -1,17 +1,17 @@
-#include "mesh.h"
-#include "dof.h"
-#include "elements/S3.h"
-#include "elements/CPS3.h"
-#include "elements/CPS4.h"
-#include "elements/C3D10.h"
-#include "elements/C3D8.h"
-#include "elements/C3D20.h"
-#include "misc_string_functions.h"
-#include "set.h"
-#include "../external_libs/Eigen/Dense"
-#include "../external_libs/Eigen/Sparse"
-#include "../external_libs/Eigen/Cholesky"
-#include "../external_libs/Eigen/Eigenvalues"
+#include "../include/mesh.h"
+#include "../include/dof.h"
+#include "../include/S3.h"
+#include "../include/CPS3.h"
+#include "../include/CPS4.h"
+#include "../include/C3D10.h"
+#include "../include/C3D8.h"
+#include "../include/C3D20.h"
+#include "../include/misc_string_functions.h"
+#include "../include/set.h"
+#include "../../external_libs/Eigen/Dense"
+#include "../../external_libs/Eigen/Sparse"
+#include "../../external_libs/Eigen/Cholesky"
+#include "../../external_libs/Eigen/Eigenvalues"
 // for eigenfrequency solver
 #include <Spectra/SymGEigsSolver.h>
 #include <Spectra/MatOp/SparseCholesky.h>
@@ -182,6 +182,38 @@ void Mesh::export_2_vtk(){
     std::cout << "---    Exported to VTK format in " << duration_clock_export << " seconds (wallclock time)   ---" << std::endl;
 }
 
+void Mesh::matrix_generate()
+{
+    std::cout << "---    Starting to print matrices to mtx format    ---\n" << std::endl;  
+    if (mtx_to_print.STIFFNESS_WITH_BC)
+    {
+        std::string mtx_output_filename = analysis_name + "_STIF2_new_abaqus.mtx";
+        print_matrix_to_mtx(K_with_bc,mtx_output_filename);
+        std::cout << "Printed stiffness matrix adjusted for boundary conditions to " << mtx_output_filename << std::endl;
+    }
+    if(mtx_to_print.MASS)
+    {
+        std::string mtx_output_filename = analysis_name + "_MASS2_new_abaqus.mtx";
+        print_matrix_to_mtx(M,mtx_output_filename);
+        std::cout << "Printed mass matrix adjusted to " << mtx_output_filename << std::endl;
+    }
+    if (mtx_to_print.LOAD)
+    {
+        if(static_analysis)
+        {
+            std::string mtx_output_filename = analysis_name + "_LOAD2_new_abaqus.mtx";
+            print_matrix_to_mtx(f,mtx_output_filename);
+            std::cout << "Printed load vector to " << mtx_output_filename << std::endl;
+        }
+        else
+        {
+            std::cout << "ERROR: f not used, add *STATIC analysis." << std::endl;
+        }
+        
+    }
+    std::cout << "---    Finished printing matrices to mtx format    ---\n" << std::endl;  
+}
+
 void Mesh::solve(){
     if (eigenvalue_analysis)
     {
@@ -196,6 +228,7 @@ void Mesh::solve(){
         solve_steady_state_dynamics();
     }
     export_2_vtk();
+    matrix_generate();
 }
 
 void Mesh::solve_steady_state_dynamics()
@@ -234,7 +267,7 @@ void Mesh::solve_steady_state_dynamics()
         auto Ft = F.conjugate().transpose();
         std::cout << "Ft=" << Ft << std::endl;
         std::cout << "I" << std::endl;
-        u = solver.solve(Ft);
+        // u = solver.solve(Ft);
         if(solver.info()!=Eigen::Success)
         {
             std::cout << "solver failed!" << std::endl;
@@ -309,7 +342,7 @@ void Mesh::solve_static(){
     float duration_clock_solve;
     clock_solve = std::clock();  
     // Need to alter global stiffness matric and global load vector to account for boundary conditions
-    auto K_static = K;
+    K_with_bc = K;
     for (unsigned int i = 0; i < bc.size(); i++)
     {
         try
@@ -327,9 +360,9 @@ void Mesh::solve_static(){
                 }
             }
             // if current bc==0, make all values in the corresponding row and column in K to zero
-            K_static.row(current_global_dof) *= 0;
-            K_static.col(current_global_dof) *= 0;
-            K_static.coeffRef(current_global_dof,current_global_dof) = penalty_value;
+            K_with_bc.row(current_global_dof) *= 0;
+            K_with_bc.col(current_global_dof) *= 0;
+            K_with_bc.coeffRef(current_global_dof,current_global_dof) = penalty_value;
     }
     catch(const std::exception& e)
     {
@@ -344,7 +377,7 @@ void Mesh::solve_static(){
     // Ku=f
     // Eigen::SparseLU"Eigen::SparseMatrix<float>> solver;
     // solver.compute(K_static);
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver(K_static);
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver(K_with_bc);
     u = solver.solve(f);
     // std::cout << "d" << std::endl;
     // std::cout << "u:" << std::endl;
@@ -417,8 +450,11 @@ void Mesh::assemble(){
     M.setFromTriplets(M_tripletList.begin(), M_tripletList.end());
     std::cout << std::endl;
     // assemble load vector, will alter due to boundary conditions
+    std::cout << "f_to_be_added.size() = " << f_to_be_added.size() << std::endl;
     for (unsigned int i = 0; i < f_to_be_added.size(); i++)
     {
+        std::cout << "f_to_be_added.at(i).first = " << f_to_be_added.at(i).first << std::endl;
+        std::cout << "f_to_be_added.at(i).second = " << f_to_be_added.at(i).second << std::endl;
         f.coeffRef(f_to_be_added.at(i).first) += f_to_be_added.at(i).second;
     }
     // -----
@@ -443,9 +479,6 @@ void Mesh::assemble(){
             free_dofs.push_back(i);
         }
     }
-    print_matrix_to_mtx(K,analysis_name + "_STIF2_new_abaqus.mtx");
-    print_matrix_to_mtx(M,analysis_name + "_MASS2_new_abaqus.mtx");
-    print_matrix_to_mtx(f,analysis_name + "_LOAD2_new_abaqus.mtx");
     duration_assemble = ( std::clock() - clock_assemble ) / (float) CLOCKS_PER_SEC;;
     // std::cout << "K:" << std::endl;
     // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K) << std::endl;
@@ -499,6 +532,11 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
         if (node_boundary)
         {
             unsigned int global_node_id     = std::stoi(data.at(0));
+            if(node_map.find(global_node_id) == node_map.end()){
+                std::cout << "ERROR: terminate at line " << row_counter << " in file " << current_inputfile << std::endl;
+                std::cout << "ERROR: can't find node with id " << global_node_id << std::endl;
+                std::terminate();
+            }
             const auto& node = node_map[global_node_id];
             std::cout << "*BOUNDARY: id=" << global_node_id << ", dofs=" << dof_from << "-" << dof_to << ", magnitude=" << magnitude << std::endl;
             for(unsigned int j = dof_from; j <= dof_to; j++){
@@ -564,7 +602,7 @@ void Mesh::read_file_new_method(const std::string& filename){
         read_file(filename,keyword);
     }
     duration_clock_read_file = (std::clock() - clock_read_file ) / static_cast<float>(CLOCKS_PER_SEC);
-    std::cout << "---    Input file "<< filename << " read and written information to the log file, in " << duration_clock_read_file << " seconds (wallclock time)    ---" << std::endl;
+    std::cout << "---    Input file "<< filename << " read and written information to the log file, in " << std::setprecision(2) << duration_clock_read_file << " seconds (wallclock time)    ---" << std::endl;
 
 }
 
@@ -583,10 +621,10 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
     {
         row_counter++;
         if (misc::is_keyword(line)){
-            std::string current_line_keyword = misc::split_on(line, ',').at(0);
+            auto current_line_keyword = misc::split_on(line, ',').at(0);
             if (current_line_keyword == keyword or current_line_keyword == "*INCLUDE"){
                 // extract a map of parameters and their values
-                std::unordered_map<std::string,std::string> options = misc::options_map(line);  
+                auto options = misc::options_map(line);
                 if (current_line_keyword == "*INCLUDE")
                 {
                     // Call this function recursively if found include.
@@ -760,9 +798,25 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                     this->number_of_modes_to_find = std::stoi(number_of_modes_to_find_string);
                     std::cout << keyword << ": number of eigenvalues to be calculated = " << number_of_modes_to_find << std::endl;
                 }
-                else if("*MATRIX GENERATE")
+                else if(keyword == "*MATRIX GENERATE")
                 {
-                    
+                    auto what_matrix_to_generate = misc::split_on(line, ',').at(1);
+                    misc::trim_leading_and_ending_whitespace(what_matrix_to_generate);
+                    if(what_matrix_to_generate == "STIFFNESS"){
+                        mtx_to_print.STIFFNESS_WITH_BC = true;
+                    }
+                    else if(what_matrix_to_generate == "MASS"){
+                        mtx_to_print.MASS = true;
+                    }
+                    else if(what_matrix_to_generate == "LOAD"){
+                        mtx_to_print.LOAD = true;
+                    }
+                    else
+                    {
+                        std::cout << "ERROR: terminate at line " << row_counter << " in file " << current_inputfile << std::endl;
+                        std::cout << "ERROR: " << what_matrix_to_generate << " not recognized as *MATRIX GENERATE option." << std::endl;
+                        std::terminate();
+                    }
                 }
                 else if (keyword == "*STEADY STATE DYNAMICS")
                 {
@@ -914,7 +968,13 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     {
         std::cout << "*ELEMENT: type=" << type << " not supported" << std::endl;
         return;
-    }    
+    }
+    // save what nodes connect to this element. needed for 
+    // generating segments for contact
+    // for (const auto& node : element_connectivity)
+    // {
+        // node->connected_elements.push_back(element.get());
+    // }
     elements.push_back(std::move(element));
     };
 void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string> options){

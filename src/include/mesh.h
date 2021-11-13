@@ -1,12 +1,12 @@
 #pragma once
-#include "elements/element.h"
+#include "element.h"
 #include "mid.h"
 #include "misc_string_functions.h"
 #include "node.h"
 #include "pid.h"
 #include "set.h"
-#include "../external_libs/Eigen/Dense"
-#include "../external_libs/Eigen/Sparse"
+#include "../../external_libs/Eigen/Dense"
+#include "../../external_libs/Eigen/Sparse"
 
 #include <string>
 #include <vector>
@@ -19,7 +19,7 @@ class Mesh
 private:
     unsigned int row_counter = 0;
     std::string current_inputfile = "";
-    // the penalty value is used when solving the ODE. It's relatively large arbitrary number
+    // the penalty value is used when solving the ODE. It's a relatively large arbitrary number
     const float penalty_value = 1e36;
     // mesh is the owner of all nodes, elements, pids and mids
     std::vector<std::unique_ptr<Node>>                  nodes;
@@ -55,10 +55,10 @@ private:
     std::string analysis_name;
     // The supported keywords needs to be added in this order!
     const std::vector<std::string> keywords = {"*NODE",
+                                               "*NSET",
                                                "*MATERIAL",
                                                "*SOLID SECTION",
                                                "*ELEMENT",
-                                               "*NSET",
                                                "*BOUNDARY",
                                                "*CLOAD",
                                                "*STATIC",
@@ -67,12 +67,12 @@ private:
                                                "*MATRIX GENERATE"};
     // global stiffness matrix
     Eigen::SparseMatrix<float> K;
+    Eigen::SparseMatrix<float> K_with_bc;
     // global mass matrix
     Eigen::SparseMatrix<float> M;
     // global load vector
     Eigen::SparseVector<float> f;
 public:    
-    void print_matrix_to_mtx(const Eigen::SparseMatrix<float>&,const std::string&) const;
     auto          get_K() const {return &K;};
     auto          get_M() const {return &M;};
     auto          get_f() const {return &f;};
@@ -88,7 +88,7 @@ public:
     auto          get_number_of_nodes() const {return nodes.size();}
     auto          get_number_of_elements() const {return elements.size();}
     unsigned int  get_number_of_dofs() const;
-    unsigned int number_of_modes_to_find;
+    unsigned int  number_of_modes_to_find;
     // size(eigenvalues) = number_of_modes*1
     Eigen::Matrix<float,Eigen::Dynamic,1> eigenvalues;
     Eigen::Matrix<float,Eigen::Dynamic,1> eigenfrequencies;
@@ -96,7 +96,16 @@ public:
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> eigenvectors;
     // solution to Ku=f
     Eigen::Matrix<float,Eigen::Dynamic,1> u;
-    // bc: global dof, value
+    struct Mtx_to_print
+    {
+        bool STIFFNESS = false;
+        bool STIFFNESS_WITH_BC = false;
+        bool MASS = false;
+        bool LOAD = false;
+    };
+    Mtx_to_print mtx_to_print;
+    void matrix_generate();
+    void print_matrix_to_mtx(const Eigen::SparseMatrix<float>&,const std::string&) const;
     void assemble();
     void solve();
     void solve_static();
