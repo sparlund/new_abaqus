@@ -9,32 +9,45 @@
        2,                      1000,                       0.,                       0.
        3,                      1000,                    1000.,                       0.
        4,                         0,                    1000.,                       0.
-       5,                      1000,                     2000,                       0.
+5,                      1000,                     2000,                       0.
 ** 
 ** 
-       6,                         0,                     2000,                       0.
+6,                         0,                     2000,                       0.
 **
-*NSET, NSET=nodeset
-1, ,2,    
+** *NSET, NSET=nodeset
+** 1,2,    
 ** 
 ** 
-4,    6
+** 4,    6
+** ** 
+** *NSET, NSET=load
+** 6
 ** 
 *ELEMENT, TYPE=CPS4, ELSET=pid
 ** 
        1,        1,        2,        3,        4
        5,        4,        3,        5,        6
 ** 
-*BOUNDARY, TYPE=DISPLACEMENT
-     1,1,        2,                       0
-       2,        1,        2,                       0.
-** 
+*BOUNDARY
+       1,        1,        2
+       2,        1,        2
+**
 *MATERIAL, NAME=mid
 *DENSITY
                  7.85E-9,
 *ELASTIC, TYPE=ISOTROPIC
                  210000.,                      0.3
 ** 
+*STEP
 *CLOAD
-    6,        2, -1e5.
+    6,        1,     1e2
+*OUTPUT
+U
+*NODE FILE
+u,s
+*STATIC
+0.1
 ** 
+** *MATRIX GENERATE, STIFFNESS, MASS
+** *MATRIX OUTPUT, STIFFNESS, MASS, FORMAT=COORDINATE
+*END STEP
