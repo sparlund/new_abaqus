@@ -34,7 +34,7 @@ To run this example:
 ## Example #2, 3D tuning fork 
 A tuning fork made up of 4 thousand second order tetra element (C3D10). This mesh has 23 thousand degrees of freedom and took ~~close to an hour~~ 24 seconds to solve on my laptop. However, it takes only 7 seconds to solve on the same computer using [Calculix](http://www.calculix.de/) which is another FEM solver that also follows the Abaqus(C) input file format.
 
-The comparison of results between Abaqus(C) and new_abaqus is still decent in this example, but a few modes are off by ~40-70 Hz, which I chalk up to the eigenvalue solver.
+The comparison of results between Abaqus(C) and new_abaqus is good in this example. For the 8 first modes the average difference is 17Hz and the maximum difference is 70Hz which I chalk up to the eigenvalue solver.
 
 Tuning fork geometry | 1st eigenmode | 4th eigenmode
 -------------------------|-------------------------|-------------------------
@@ -103,7 +103,7 @@ cd new_abaqus
 cmake --build . --target new_abaqus
 ```
 ## Windows build
-I don't have access to a Windows PC so I don't know, use the Makefile somehow...
+I don't have access to a Windows PC so I don't know, use the CMakefile somehow...
 
 # To-do & features implemented
 - [x] ~~makefile~~ CMake build system
@@ -120,7 +120,7 @@ I don't have access to a Windows PC so I don't know, use the Makefile somehow...
 - [X] Set up clang-tidy for static code analysis
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
-  - [ ] Allow for commentented lines to start with whitespace
+  - [X] Allow for commentented lines to start with whitespace
   - [ ] Exit if trying to create element with a N/A node
   - [X] Allow entities to be defined in any order
 - [x] Create classes and relations for nodes, elements, properties and materials
@@ -148,7 +148,8 @@ I don't have access to a Windows PC so I don't know, use the Makefile somehow...
 - [x] Solve Ku=f for linear problems
 - [ ] Support for simple contact mechanics
 - [ ] Calculate scalar values on elements
-  - [ ] Stresses and strains
+  - [X]  Strains
+  - [ ] Stresses
   - [ ] von Mises stress
 - [X] Solve eigen value problem
   - [X] Calculate mass matrix in element construction
@@ -159,7 +160,7 @@ I don't have access to a Windows PC so I don't know, use the Makefile somehow...
 - [ ] Export results to VTK format to view results in ParaView
   - [x] Nodal displacement
   - [x] Eigenmodes 
-  - [ ] Stresses and strains  
+  - [ ] Stresses and strains
 - [x] Re-direct output to a log file for debugging  
   - [x] Print timing for each step in logfile as basic profiling
 - [ ] Some basic error handling

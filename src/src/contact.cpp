@@ -1,15 +1,17 @@
 #include "../include/contact.h"
+#include "../include/element.h"
 
-Contact::Contact(Set<Node>& master, Set<Node>& slave):master{master}, slave{slave}
+Contact::Contact(Set<Node*>& master, Set<Node*>& slave) : master(master), slave(slave)
 {
     // Create segments from nodes in master set
     for(size_t i = 0; i < master.get_number_of_entities(); i++)
     {
         auto node = master.get_entity(i);
-        for(const auto& element : node.connected_elements)
+        auto connected_elements = node->connected_elements;
+        for(auto element : connected_elements)
         {
-            auto segments = element->get_segments();
-            for(const auto& segment : segments)
+            auto segments = element->get_segments(node);
+            for(const auto segment : segments)
             {
                 if(master.is_entity_in_set(segment.first) && master.is_entity_in_set(segment.second))
                 {
@@ -21,13 +23,13 @@ Contact::Contact(Set<Node>& master, Set<Node>& slave):master{master}, slave{slav
     std::cout << "contact segements:" << std::endl;
     for(auto seg: master_segments)
     {
-        std::cout << "first:" << seg.first.id << std::endl;
-        std::cout << "second:" << seg.second.id << std::endl;
+        std::cout << "first:" << seg.first->id << std::endl;
+        std::cout << "second:" << seg.second->id << std::endl;
         std::cout << "---" << std::endl;
     }
 }
 
-bool  Contact::is_penetrating(const Set<Node>&, const Node&)
+bool  Contact::is_penetrating(const Set<Node*>*, const Node*)
 {
     // slave node X is projected onto the master segnment
     // 

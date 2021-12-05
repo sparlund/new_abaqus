@@ -2,39 +2,95 @@
 #include <cmath>
 #include "../include/CPS4.h"
 
-// std::vector<Segment>& Element::get_segments(const Node& node) const
-// {
+std::vector<float> CPS4::calculate_stress(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> D,
+                                          Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> u)
+{
+    // stress is calculated at Gauss points, by interpolating the displacements
+    // at the nodes (using shape functions)
+    // stress = [force/area] = E*epsilon = Young's modulus * strain = D * strain
+    // B is strain-displacement matrix. If we use the Gauss points to evaluate
+    //  stresses and strains we save the effort of evaluat the B matrix.
+    // Want to evaluate σ at the Gauss integration points used in the element stiffness integration and
+    // then extrapolate to the element node points.
+    // Felipe "Introduction to the finite element method" chapter 28:
+    // for a quadrilateral element with 2x2 Gauss integration:
+    // ξ = ξ'/ 3, η = η'/3
+    // where ' denotes an imaginary "Gauss element" inside our distorted element.
+    // for given quantity w:
+    // w(xhi', eta') = [w1' w2' w3' w4'][ N1' N2' N3' N4']
+    // where for CPS4: N1' = (1 - ξ')(1 - η')/4
+    //                 N2' = (1 + ξ')(1 - η')/4
+    //                 N3' = (1 + ξ')(1 + η')/4
+    //                 N4' = (1 - ξ')(1 + η')/4
+    // c.f CPS4::calculate_Me shape functions.
+    // in the case of stress w is σ_xx, σ_yy, τ_xy.
+    // size(strain) = 1*Number of Gauss points
+    // auto strain = calculate_strain(D, node_displacement);
+    // constexpr float sqrt3 = 1.73205080757;
+    // float xhi_prime,eta_prime;
+    // float N1_prime,N2_prime,N3_prime,N4_prime;
+    // std::vector<float> stress;
+    // for(size_t i = 0; i < gauss_points->size(); i++)
+    // {
+        // xhi_prime = gauss_points->at(i).at(0)/sqrt3;
+        // eta_prime = gauss_points->at(i).at(1)/sqrt3;
+        // N1_prime  = 0.25*(1-xhi_prime)*(1-eta_prime);
+        // N2_prime  = 0.25*(1+xhi_prime)*(1-eta_prime);
+        // N3_prime  = 0.25*(1+xhi_prime)*(1+eta_prime);
+        // N4_prime  = 0.25*(1-xhi_prime)*(1+eta_prime);
+        // stress    = 
+    // }
+
+
+}
+std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>> CPS4::calculate_strain(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> D,
+                                          Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> u)
+{
+    std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>> strains;
+    for(const auto& Bi: B)
+    {
+        // size(B) = 3 x 8, size(u) = 8 x 1 = (nnodes x ndofs) x 1
+        // --> size(strain) = 3 x 1 = [ε_x ε_y ε_xy]
+        auto strain = Bi*u;
+        strains.emplace_back(strain);
+    }
+
+}
+
+
+std::vector<Segment>& CPS4::get_segments(Node* node)
+{
     // given a node, what other nodes does it connect to?
     // will be different for each element type.
     // base on node position in connectivity vector
-    // for(size_t i = 0; i < connectivity.size(); i++)
-    // {
-    //     if(connectivity.at(i)->id == node.id)
-    //     {
-            // if (i == 0)
-            // {
-            //     segements.push_back(Segment{connectivity.at(0)->id, connectivity.at(1)->id});
-            //     segements.push_back(Segment{connectivity.at(1)->id, connectivity.at(3)->id});
-            // }
-            // else if (i == 1)
-            // {
-            //     segements.push_back(Segment{connectivity.at(1)->id, connectivity.at(0)->id});
-            //     segements.push_back(Segment{connectivity.at(1)->id, connectivity.at(2)->id});
-            // }
-            // else if (i == 2)
-            // {
-            //     segements.push_back(Segment{connectivity.at(2)->id, connectivity.at(1)->id});
-            //     segements.push_back(Segment{connectivity.at(2)->id, connectivity.at(3)->id});
-            // }
-            // else if (i == 3)
-            // {
-            //     segements.push_back(Segment{connectivity.at(3)->id, connectivity.at(2)->id});
-            //     segements.push_back(Segment{connectivity.at(3)->id, connectivity.at(0)->id});
-            // }
-        // }
-    // }
-    // return segments;
-// };
+    for(size_t i = 0; i < connectivity.size(); i++)
+    {
+        if(connectivity.at(i)->id == node->id)
+        {
+            if (i == 0)
+            {
+                segments.push_back(std::make_pair(connectivity.at(0), connectivity.at(1)));
+                segments.push_back(std::make_pair(connectivity.at(1), connectivity.at(3)));
+            }
+            else if (i == 1)
+            {
+                segments.push_back(std::make_pair(connectivity.at(1), connectivity.at(0)));
+                segments.push_back(std::make_pair(connectivity.at(1), connectivity.at(2)));
+            }
+            else if (i == 2)
+            {
+                segments.push_back(std::make_pair(connectivity.at(2), connectivity.at(1)));
+                segments.push_back(std::make_pair(connectivity.at(2), connectivity.at(3)));
+            }
+            else if (i == 3)
+            {
+                segments.push_back(std::make_pair(connectivity.at(3), connectivity.at(2)));
+                segments.push_back(std::make_pair(connectivity.at(3), connectivity.at(0)));
+            }
+        }
+    }
+    return segments;
+};
 
 void CPS4::calculate_Ke(){
     Mid* mid = pid->get_mid();
@@ -50,7 +106,7 @@ void CPS4::calculate_Ke(){
     Eigen::Matrix<float,2,4> dNdXhidEta;
     Eigen::Matrix<float,2,4> dNdxdy;
     Eigen::Matrix<float,2,2> J;
-    Eigen::Matrix<float,3,8> B;
+    Eigen::Matrix<float,3,8> Bi;
     float xhi,eta,w;
     float dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi;
     float dN1dEta,dN2dEta,dN3dEta,dN4dEta;
@@ -79,10 +135,11 @@ void CPS4::calculate_Ke(){
             std::cout << "WARNING: Jacobian determinant less than 0.1 for element #" << this->get_id() << std::endl;    
         }
         dNdxdy = J.inverse()*dNdXhidEta;
-        B <<    dNdxdy(0,0),           0, dNdxdy(0,1),           0, dNdxdy(0,2),           0, dNdxdy(0,3),           0,
+        Bi <<    dNdxdy(0,0),           0, dNdxdy(0,1),           0, dNdxdy(0,2),           0, dNdxdy(0,3),           0,
                           0, dNdxdy(1,0),           0, dNdxdy(1,1),           0, dNdxdy(1,2),           0, dNdxdy(1,3),
                 dNdxdy(1,0), dNdxdy(0,0), dNdxdy(1,1), dNdxdy(0,1), dNdxdy(1,2), dNdxdy(0,2), dNdxdy(1,3), dNdxdy(0,3); 
-        Ke = Ke + w*(B.transpose()*D*B*detJ.back());
+        B.emplace_back(Bi);
+        Ke = Ke + w*(Bi.transpose()*D*Bi*detJ.back());
     }
 };
 void CPS4::calculate_Me(){

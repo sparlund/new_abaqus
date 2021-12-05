@@ -8,6 +8,28 @@
 #include <string>
 #include <vector>
 
+std::vector<float> Element::calculate_stress(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>, 
+                                             Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>)
+{
+    std::cout << "ERROR: element not supported for computing stress." << std::endl;
+    exit(0);
+    return std::vector<float>{};
+}                                                                     
+std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>> Element::calculate_strain(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>, 
+                                             Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>)
+{
+    std::cout << "ERROR: element not supported for computing strain" << std::endl;
+    exit(0);
+    return std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>>{};
+}
+
+std::vector<Segment>& Element::get_segments(Node*)
+{
+    std::cout << "ERROR: element not supported for *CONTACT." << std::endl;
+    exit(0);
+    return segments;
+}
+
 void Element::setup_dofs(){
     // add dofs to each node. can be done first now because now we know how many dofs each node should have    
     for (unsigned int i = 0; i < connectivity.size(); i++)
@@ -81,6 +103,11 @@ Element::Element(unsigned int                       id,
     Ke.resize(ndofs,ndofs);
     Me.resize(ndofs,ndofs);
     coord.resize(nnodes,dimensions);
+    B.resize(ngp);
+    for(auto& Bi: B)
+    {
+        Bi.resize(dimensions, ngp);
+    }
     Ke.setZero();
     Me.setZero();
     setup_dofs();

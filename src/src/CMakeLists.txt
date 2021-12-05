@@ -2,7 +2,7 @@ add_executable(new_abaqus
                C3D10.cpp
                C3D20.cpp
                C3D8.cpp
-            #    contact.cpp
+               contact.cpp
                CPS3.cpp
                CPS4.cpp
                S3.cpp

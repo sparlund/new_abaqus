@@ -5,6 +5,7 @@
 #include "node.h"
 #include "pid.h"
 #include "set.h"
+#include "contact.h"
 #include "../../external_libs/Eigen/Dense"
 #include "../../external_libs/Eigen/Sparse"
 
@@ -14,6 +15,7 @@
 #include <memory>
 #include <utility>
 
+using Segment = std::pair<Node*, Node*>;
 class Mesh
 {
 private:
@@ -46,8 +48,9 @@ private:
     void add_set(std::string line,std::unordered_map<std::string, std::string> options);
     bool static_analysis=false;
     bool eigenvalue_analysis=false;
+    std::unique_ptr<Contact> contact;
+    bool contact_mechanics_enabled=false;
     bool steady_state_dynamics_analysis=false;
-    
     float steady_state_dynamics_lower_limit = 0;
     float steady_state_dynamics_upper_limit = 20e3;
     int   steady_state_dynamics_number_of_points = 1;
@@ -109,6 +112,7 @@ public:
     void assemble();
     void solve();
     void solve_static();
+    void solve_static_with_contact();
     void solve_eigenfrequency();
     void solve_steady_state_dynamics();
     void export_2_vtk();
