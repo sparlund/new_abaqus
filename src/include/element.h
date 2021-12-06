@@ -6,8 +6,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include<utility>
 
 // ABC
+using Segment = std::pair<Node*, Node*>;
 class Element{
 protected:
     const unsigned int                                  id;
@@ -27,13 +29,18 @@ protected:
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>  Me;
     Eigen::Matrix<float,Eigen::Dynamic,1>               fe;
     Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>  coord; 
-    // std::vector<Segment>                                segements;
+    std::vector<Segment>                                segments;
+    std::vector<Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>>  B;
     void                                                setup_coord();
     void                                                setup_dofs();
 public:
-    virtual void                                        calculate_Ke()=0;
-    virtual void                                        calculate_Me()=0;
-    // virtual std::vector<Segment>&                       get_segments(const Node&) const = 0;
+    virtual void                                                                    calculate_Ke()=0;
+    virtual void                                                                    calculate_Me()=0;
+    virtual std::vector<float>                                                      calculate_stress(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>, 
+                                                                                                     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>);
+    virtual std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>> calculate_strain(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>, 
+                                                                                                     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>);
+    virtual std::vector<Segment>&                       get_segments(Node*);
     std::vector<Node*>                                  get_connectivity() const ;
     Pid*                                                get_pid() const ;
     std::vector<unsigned int>                           get_element_dof_ids() const ;

@@ -222,6 +222,7 @@ void Mesh::solve(){
     if (static_analysis)
     {
         solve_static();
+        solve_static_with_contact();
     }
     if(steady_state_dynamics_analysis)
     {
@@ -334,7 +335,46 @@ void Mesh::solve_eigenfrequency(){
     std::cout << "---    Solution to eigenvalue problem found in " << std::setprecision(2) << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
 }
 
+void Mesh::solve_static_with_contact()
+{
+    std::cout << "---    Starting to solve non-linear problem with contact mechanics    ---" << std::endl;
+    std::clock_t clock_solve;
+    float duration_clock_solve;
+    clock_solve = std::clock();
+    /*
+    find which nodes already on contact before load or
+    controlled displacement is applied
+    for step in number_of_steps:
+        Equilibrium iterations below
+        for iteration in max_iterations:
+            assemble K
+            compute internal force vector and assemble in f_int
+            if number of nodes in contact != 0:
+                f_int = f_int + penatly*displacement at contact nodes
+                K = K + penalty*displacement at contact nodes
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                    "spring forces"
+            Q = nodal forces from prescribed displacement
+            R = Q - f_int = residual of nodal forces (free nodes)
+            u = solve(K,bc)
+            save displacement for this step
+            find what nodes are in contact and penetrating too far
+            save which nodes are in contact this step
+            
+            error = norm(R)
+            if error < max(abs(R))*relative_tolerance
+                convergence reached, exit
+            else
+                continue
+            if iteration == max_iterations:
+                max number of iterations reached, did not converge
 
+
+    
+    */
+    duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
+    std::cout << "---    Solution to non-linear problem with contact mechanics found in " << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
+}
 
 void Mesh::solve_static(){
     std::cout << "---    Starting to solve linear problem Ku=f    ---" << std::endl;
@@ -635,6 +675,30 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                 {
                     add_pid(options);
                 }
+                else if (keyword == "*CONTACT PAIR")
+                {
+                    // advance to next line, grab sets, then leave.
+                    // it could be a comment, new keyword.. then we exit
+                    getline(input_file, line);
+                    row_counter++;
+                    if (!misc::is_comment(line) && !misc::is_keyword(line))
+                    {
+                        // split on comma and find the two sets.
+                        // slave is first
+                        auto slave_and_master_set = misc::split_on(line,',');
+                        auto slave_set_name = slave_and_master_set.at(0);
+                        auto master_set_name = slave_and_master_set.at(1);
+                        // find node set entities
+                        auto slave_set  = node_set_from_node_set_name[slave_set_name];
+                        auto master_set = node_set_from_node_set_name[master_set_name];
+                        contact = std::make_unique<Contact>(*master_set,
+                                                            *slave_set);
+                    }
+                    else
+                    {
+                        std::cout << "ERROR: *CONTACT PAIR not followed by 2 sets." << std::endl;
+                    }
+                }
                 else if(keyword == "*NSET"){
                     add_set(line,options);
                     getline(input_file, line);
@@ -644,8 +708,6 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                     {
                         row_counter++;
                         if(!misc::is_comment(line) and !misc::is_keyword(line)){
-                            // Jump to next line 
-                        // Jump to next line 
                             // Jump to next line 
                             auto entity_ids = misc::split_on(line, ',');
                             // abaqus documentation says max number of entities per line is 16
@@ -971,10 +1033,10 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     }
     // save what nodes connect to this element. needed for 
     // generating segments for contact
-    // for (const auto& node : element_connectivity)
-    // {
-        // node->connected_elements.push_back(element.get());
-    // }
+    for (const auto& node : element_connectivity)
+    {
+        node->connected_elements.push_back(element.get());
+    }
     elements.push_back(std::move(element));
     };
 void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string> options){

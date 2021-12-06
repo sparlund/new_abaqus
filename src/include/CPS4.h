@@ -23,7 +23,11 @@ private:
 public:
     void calculate_Ke();
     void calculate_Me();
-    // std::vector<Segment>&                    get_segments(const Node&) const;
+    std::vector<Segment>&                    get_segments(Node*) override;
+    std::vector<float>                          calculate_stress(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>,
+                                                                 Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>) override;
+    std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>>                          calculate_strain(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>,
+                                                                 Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>) override;
     CPS4(unsigned int                        id,
          std::vector<Node*>                  connectivity,
          Pid*                                pid,
