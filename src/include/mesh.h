@@ -96,7 +96,7 @@ public:
     Eigen::Matrix<float,Eigen::Dynamic,1> eigenvalues;
     Eigen::Matrix<float,Eigen::Dynamic,1> eigenfrequencies;
     // size(eigenvectors) = ndofs*number_of_modes
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> eigenvectors;
+    dynMatrix eigenvectors;
     // solution to Ku=f
     Eigen::Matrix<float,Eigen::Dynamic,1> u;
     struct Mtx_to_print

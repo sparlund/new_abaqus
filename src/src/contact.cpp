@@ -4,7 +4,7 @@
 Contact::Contact(Set<Node*>& master, Set<Node*>& slave) : master(master), slave(slave)
 {
     // Create segments from nodes in master set
-    for(size_t i = 0; i < master.get_number_of_entities(); i++)
+    for(size_t i = 0; i < master.size(); i++)
     {
         auto node = master.get_entity(i);
         auto connected_elements = node->connected_elements;

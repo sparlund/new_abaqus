@@ -222,7 +222,7 @@ void Mesh::solve(){
     if (static_analysis)
     {
         solve_static();
-        solve_static_with_contact();
+        // solve_static_with_contact();
     }
     if(steady_state_dynamics_analysis)
     {
@@ -385,43 +385,30 @@ void Mesh::solve_static(){
     K_with_bc = K;
     for (unsigned int i = 0; i < bc.size(); i++)
     {
-        try
+        unsigned int current_global_dof = bc.at(i).first;
+        for (unsigned int j = 0; j < get_number_of_dofs(); j++)
         {
-            unsigned int current_global_dof = bc.at(i).first;
-            for (unsigned int j = 0; j < get_number_of_dofs(); j++)
+            if (j == current_global_dof)
             {
-                if (j == current_global_dof)
-                {
-                    f.coeffRef(current_global_dof) = bc.at(i).second;
-                }
-                else
-                {
-                    f.coeffRef(current_global_dof) = penalty_value*bc.at(i).second;
-                }
+                f.coeffRef(current_global_dof) = bc.at(i).second;
             }
-            // if current bc==0, make all values in the corresponding row and column in K to zero
-            K_with_bc.row(current_global_dof) *= 0;
-            K_with_bc.col(current_global_dof) *= 0;
-            K_with_bc.coeffRef(current_global_dof,current_global_dof) = penalty_value;
+            else
+            {
+                f.coeffRef(current_global_dof) = penalty_value*bc.at(i).second;
+            }
+        }
+        // if current bc==0, make all values in the corresponding row and column in K to zero
+        K_with_bc.row(current_global_dof) *= 0;
+        K_with_bc.col(current_global_dof) *= 0;
+        K_with_bc.coeffRef(current_global_dof,current_global_dof) = penalty_value;
     }
-    catch(const std::exception& e)
-    {
-        std::cout << e.what() << '\n';
-        std::cout << "i=" << i << '\n';
-    }
-    }
-    // std::cout << "K after bc:" << std::endl;
-    // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K_static) << std::endl;
-    // std::cout << "f after bc:" << std::endl;
-    // std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
-    // Ku=f
-    // Eigen::SparseLU"Eigen::SparseMatrix<float>> solver;
-    // solver.compute(K_static);
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver(K_with_bc);
+
+    // Ku=f, want to solve for u
+    // Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver(K_with_bc);
+    Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
+    solver.compute(K_with_bc);
     u = solver.solve(f);
-    // std::cout << "d" << std::endl;
-    // std::cout << "u:" << std::endl;
-    // std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(u).transpose() << std::endl;
+
     duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
     std::cout << "---    Solution to linear problem found in " << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
 }
@@ -521,9 +508,9 @@ void Mesh::assemble(){
     }
     duration_assemble = ( std::clock() - clock_assemble ) / (float) CLOCKS_PER_SEC;;
     // std::cout << "K:" << std::endl;
-    // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(K) << std::endl;
+    // std::cout << dynMatrix(K) << std::endl;
     // std::cout << "M:" << std::endl;
-    // std::cout << Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>(M) << std::endl;
+    // std::cout << dynMatrix(M) << std::endl;
     // std::cout << "f:" << std::endl;
     // std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
     std::cout << "---    Assembly completed in " << std::setprecision(2) << duration_assemble << " seconds (wallclock time)    ---" << std::endl;
@@ -587,7 +574,7 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
         else
         {
             const auto& node_set = node_set_from_node_set_name[node_id_or_nset_name];
-            auto number_of_nodes = node_set->get_number_of_entities();
+            auto number_of_nodes = node_set->size();
             for (unsigned int i = 0; i < number_of_nodes; i++)
             {
                 const auto& node           = node_set->get_entity(i);
@@ -718,7 +705,7 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                                 nset->add_entity(node_pointer);
                             }
                         }
-                        // Want to peek next line, if it's a keyword or empty line we break
+                        // Want to peek next line, if it's a keyword or6empty line we break
                         // the while loop and start over!
                         unsigned int previous_pos = input_file.tellg();
                         getline(input_file, line);
@@ -728,6 +715,17 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                             inner_loop_keyword = false;
                         }
                     }
+                    std::cout << "*NSET: entities:" << std::endl;
+                    auto line_counter = 16;
+                    for(size_t i = 0; i < nset->size(); i++)
+                    {
+                        std::cout << nset->get_entity(i)->id << " ";
+                        if ( ((i+1) % line_counter) == 0)
+                        {
+                            std::cout << std::endl;
+                        }
+                    }
+                    std::cout << std::endl;
                 }    
                 else if (keyword == "*MATERIAL")
                 {

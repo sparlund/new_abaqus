@@ -145,7 +145,7 @@ void C3D20::calculate_Ke(){
         // not always safe to just use member inverse(), instead use singlue value decomposition (SVD)
         if (detJ.back() < 0.1f)
         {
-            std::cout << "WARNING: Jacobian determinant less than 0.1 for element #" << this->get_id() << std::endl;
+            std::cout << "WARNING: Jacobian determinant less than 0.1 for element #" << id << std::endl;
         }
         // This stupid shit doesnt work lol, misunderstood?
         // Eigen::JacobiSVD<Eigen::Matrix<float,3,3>> svd(J, Eigen::ComputeFullV | Eigen::ComputeFullU);
