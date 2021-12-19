@@ -23,12 +23,15 @@ private:
     float allowed_penetration = 1e-2;
     size_t number_of_time_steps = 100;
     // is the given node penetrating any 2D segment?
-    bool  is_penetrating(const Set<Node*>*, const Node*);
+    bool  is_penetrating(const Segment&, const Node*);
     // how large is the penetration?
     float gap(const Segment&, const Node*);
     std::vector<Node*> old_nodes_in_contact, current_nodes_in_contact;
     std::vector<Segment> master_segments;
+    bool is_segment_in_master_segments(const Segment& segment) const;
 public:
+    // TODO: this should be something like 1e-5, will change when contact works.
+    const float residual_tolerance = 0.1;
     const Set<Node*>& master, slave;
     Contact(Set<Node*>& master, Set<Node*>& slave);
 };

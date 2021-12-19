@@ -19,7 +19,7 @@ bool Set<T>::is_entity_in_set(T in) const
 {
     for(const auto& entity: entities)
     {
-        if(in == entity)
+        if(in->id == entity->id)
         {
             return true;
         }
