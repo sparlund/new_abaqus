@@ -146,7 +146,7 @@ I don't have access to a Windows PC so I don't know, use the CMakefile somehow..
   - [ ] *STEP
   - [ ] *OUTPUT
 - [x] Solve Ku=f for linear problems
-- [ ] Support for simple contact mechanics
+- [ ] Contact mechanics
 - [ ] Calculate scalar values on elements
   - [X]  Strains
   - [ ] Stresses
@@ -175,10 +175,11 @@ The binary new_abaqus is ~0.4mB on my system.
 --------------------------------------------------
 Language           Number of files   Lines of code
 --------------------------------------------------
-C++                             18            1627
-C++ Header                      16             434
-Python                           1               9
+C++                             18            1918
+C++ Header                      16             525
+Python                           1               9  
+CMake                            1              21
 --------------------------------------------------
-SUM:                            37            2214
+SUM:                            37            2473
 --------------------------------------------------
 ```

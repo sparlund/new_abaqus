@@ -7,8 +7,8 @@ template class Set<Node*>;
 template class Set<Element*>;
 
 template <class T>
-void Set<T>::add_entity(T entity_pointer){
-    entities.emplace_back(entity_pointer);
+void Set<T>::add_entity(T entity){
+    entities.emplace_back(entity);
     }
 template <class T>
 Set<T>::Set(const std::string& name):name{name}{
@@ -19,7 +19,7 @@ bool Set<T>::is_entity_in_set(T in) const
 {
     for(const auto& entity: entities)
     {
-        if(in == entity)
+        if(in->id == entity->id)
         {
             return true;
         }

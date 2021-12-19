@@ -8,19 +8,19 @@
 #include <string>
 #include <vector>
 
-std::vector<float> Element::calculate_stress(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>, 
-                                             Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>)
+std::vector<Scalar> Element::calculate_stress(dynMatrix, 
+                                             dynMatrix)
 {
     std::cout << "ERROR: element not supported for computing stress." << std::endl;
     exit(0);
-    return std::vector<float>{};
+    return std::vector<Scalar>{};
 }                                                                     
-std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>> Element::calculate_strain(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>, 
-                                             Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>)
+std::vector<Scalar> Element::calculate_strain(dynMatrix, 
+                                             dynMatrix)
 {
     std::cout << "ERROR: element not supported for computing strain" << std::endl;
     exit(0);
-    return std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>>{};
+    return std::vector<Scalar>{};
 }
 
 std::vector<Segment>& Element::get_segments(Node*)
@@ -119,7 +119,6 @@ Pid*                                               Element::get_pid() const {ret
 std::vector<unsigned int>                          Element::get_element_dof_ids() const {return dofs_id;}
 unsigned short                                     Element::get_element_ndofs() const {return ndofs;}
 unsigned short                                     Element::get_element_nnodes() const {return nnodes;}
-unsigned int                                       Element::get_id() const {return id;}
 unsigned short                                     Element::get_dimensions() const {return dimensions;};
 std::string                                        Element::get_element_type() const {return element_type;}
 unsigned short                                     Element::get_vtk_identifier() const {return vtk_identifier;}
@@ -127,8 +126,8 @@ float                                              Element::get_weight() const {
 float                                              Element::get_volume() const {return volume;}
 unsigned short                                     Element::get_ngp() const {return ngp;};
 unsigned int                                       Element::get_element_counter() const {return element_counter;};
-Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Element::get_Ke() const {return Ke;};
-Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> Element::get_Me() const {return Me;}; 
+dynMatrix Element::get_Ke() const {return Ke;};
+dynMatrix Element::get_Me() const {return Me;}; 
 
 unsigned int Element::element_counter=0;
 
@@ -146,7 +145,7 @@ float Element::inv_div_by1(float in) const {
 void Element::print_element_info_to_log() const {
     // print info to log file
     std::vector<Node*> nodes = get_connectivity();
-    std::cout << "*ELEMENT: type=" << get_element_type() << ", PID = " << get_pid()->get_name() << ", id=" << get_id() << ", nodes=";
+    std::cout << "*ELEMENT: type=" << get_element_type() << ", PID = " << get_pid()->get_name() << ", id=" << id << ", nodes=";
     for (unsigned short i = 0; i < get_element_nnodes() ; i++)
     {
         std::cout << nodes.at(i)->id << ",";        

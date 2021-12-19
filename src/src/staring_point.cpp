@@ -17,11 +17,6 @@ int main(int argc, char const *argv[])
     // re-direct stdout & stderr  from terminal to log-file
     std::freopen(logfile_filename.c_str(), "wb", stdout );
     std::freopen(logfile_filename.c_str(), "wb", stderr );
-    std::cout << "aaa" << std::endl;
-    for (int i = 0; i < 10; i++)
-    {
-    std::cout << "[" << i << "/" << 10 << "]\r" << std::flush;
-    }
     std::cout << std::endl;
     // init new_abaqus model object
     New_abaqus na;

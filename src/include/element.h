@@ -9,10 +9,11 @@
 #include<utility>
 
 // ABC
-using Segment = std::pair<Node*, Node*>;
+using Segment    = std::pair<Node*, Node*>;
+using dynMatrix  = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
+using Scalar     = Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>;
 class Element{
 protected:
-    const unsigned int                                  id;
     std::vector<Node*>                                  connectivity;
     Pid*                                                pid;
     std::vector<unsigned int>                           dofs_id;
@@ -25,28 +26,26 @@ protected:
     const unsigned short                                ngp;
     const unsigned short                                dimensions;
     std::string                                         element_type;
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>  Ke;
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>  Me;
+    dynMatrix  Ke;
+    dynMatrix  Me;
     Eigen::Matrix<float,Eigen::Dynamic,1>               fe;
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>  coord; 
+    dynMatrix  coord; 
     std::vector<Segment>                                segments;
-    std::vector<Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>>  B;
+    std::vector<dynMatrix>  B;
     void                                                setup_coord();
     void                                                setup_dofs();
 public:
-    virtual void                                                                    calculate_Ke()=0;
-    virtual void                                                                    calculate_Me()=0;
-    virtual std::vector<float>                                                      calculate_stress(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>, 
-                                                                                                     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>);
-    virtual std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>> calculate_strain(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>, 
-                                                                                                     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>);
+    const unsigned int                                  id;
+    virtual void                                        calculate_Ke()=0;
+    virtual void                                        calculate_Me()=0;
+    virtual std::vector<Scalar>                         calculate_stress(dynMatrix,dynMatrix);
+    virtual std::vector<Scalar>                         calculate_strain(dynMatrix,dynMatrix);
     virtual std::vector<Segment>&                       get_segments(Node*);
     std::vector<Node*>                                  get_connectivity() const ;
     Pid*                                                get_pid() const ;
     std::vector<unsigned int>                           get_element_dof_ids() const ;
     unsigned short                                      get_element_ndofs() const ;
     unsigned short                                      get_element_nnodes() const ;
-    unsigned int                                        get_id() const ;
     unsigned short                                      get_dimensions() const;
     std::string                                         get_element_type() const ;
     unsigned short                                      get_vtk_identifier() const ;
@@ -54,8 +53,8 @@ public:
     float                                               get_volume() const ;
     unsigned short                                      get_ngp() const ;
     unsigned int                                        get_element_counter() const ;
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>  get_Ke() const;
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic>  get_Me() const;  
+    dynMatrix                                           get_Ke() const;
+    dynMatrix                                           get_Me() const;
     void                                                print_element_info_to_log() const ;
     // small function used when going from eigenmode to eigenfrequency
     float inv_div_by1(float in) const;

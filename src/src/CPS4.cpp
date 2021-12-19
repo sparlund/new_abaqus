@@ -2,8 +2,8 @@
 #include <cmath>
 #include "../include/CPS4.h"
 
-std::vector<float> CPS4::calculate_stress(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> D,
-                                          Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> u)
+std::vector<Scalar> CPS4::calculate_stress(dynMatrix D,
+                                           dynMatrix u)
 {
     // stress is calculated at Gauss points, by interpolating the displacements
     // at the nodes (using shape functions)
@@ -26,27 +26,19 @@ std::vector<float> CPS4::calculate_stress(Eigen::Matrix<float, Eigen::Dynamic, E
     // in the case of stress w is σ_xx, σ_yy, τ_xy.
     // size(strain) = 1*Number of Gauss points
     // auto strain = calculate_strain(D, node_displacement);
-    // constexpr float sqrt3 = 1.73205080757;
-    // float xhi_prime,eta_prime;
-    // float N1_prime,N2_prime,N3_prime,N4_prime;
-    // std::vector<float> stress;
-    // for(size_t i = 0; i < gauss_points->size(); i++)
+    std::vector<Scalar> stresses;
+    auto strains = calculate_strain(D,u);
+    // for(const auto& strain: strains)
     // {
-        // xhi_prime = gauss_points->at(i).at(0)/sqrt3;
-        // eta_prime = gauss_points->at(i).at(1)/sqrt3;
-        // N1_prime  = 0.25*(1-xhi_prime)*(1-eta_prime);
-        // N2_prime  = 0.25*(1+xhi_prime)*(1-eta_prime);
-        // N3_prime  = 0.25*(1+xhi_prime)*(1+eta_prime);
-        // N4_prime  = 0.25*(1-xhi_prime)*(1+eta_prime);
-        // stress    = 
+    //     auto stress = D*strain;
+    //     // stresses.emplace_back(stress);
     // }
 
-
 }
-std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>> CPS4::calculate_strain(Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> D,
-                                          Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> u)
+std::vector<Scalar> CPS4::calculate_strain(dynMatrix D,
+                                           dynMatrix u)
 {
-    std::vector<Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>> strains;
+    std::vector<Scalar> strains;
     for(const auto& Bi: B)
     {
         // size(B) = 3 x 8, size(u) = 8 x 1 = (nnodes x ndofs) x 1
@@ -132,7 +124,7 @@ void CPS4::calculate_Ke(){
         detJ.push_back(J.determinant());
         if (detJ.back() < 0.1f)
         {
-            std::cout << "WARNING: Jacobian determinant less than 0.1 for element #" << this->get_id() << std::endl;    
+            std::cout << "WARNING: Jacobian determinant less than 0.1 for element #" << id << std::endl;    
         }
         dNdxdy = J.inverse()*dNdXhidEta;
         Bi <<    dNdxdy(0,0),           0, dNdxdy(0,1),           0, dNdxdy(0,2),           0, dNdxdy(0,3),           0,
@@ -143,6 +135,7 @@ void CPS4::calculate_Ke(){
     }
 };
 void CPS4::calculate_Me(){
+    // size(N) = dof per node x (nnodes*dof per node)
     Eigen::Matrix<float,2,8> N;
     float xhi,eta,w;
     float N1,N2,N3,N4;
@@ -156,8 +149,8 @@ void CPS4::calculate_Me(){
         N2 = 0.25*(1+xhi)*(1-eta),
         N3 = 0.25*(1+xhi)*(1+eta),
         N4 = 0.25*(1-xhi)*(1+eta);
-        N <<  N1, 0.f,  0.f,   N2,  0.f,  0.f,   N3,  0.f,  0.f,   N4,  0.f,  0.f,
-             0.f,  N1,  0.f,  0.f,   N2,  0.f,  0.f,   N3,  0.f,  0.f,   N4,  0.f;
+        N <<  N1, 0.f,   N2,  0.f,   N3,  0.f,   N4,  0.f,
+             0.f,  N1,  0.f,   N2,  0.f,   N3,  0.f,   N4;
         Me = Me + w*pid->get_mid()->get_density()*N.transpose()*N*detJ.at(i);
     }
 };

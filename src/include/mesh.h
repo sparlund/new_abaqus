@@ -46,10 +46,13 @@ private:
     void add_pid(std::unordered_map<std::string, std::string> options);
     void add_mid(std::unordered_map<std::string, std::string> options);
     void add_set(std::string line,std::unordered_map<std::string, std::string> options);
+    void apply_boundary_conditions_on_K();
     bool static_analysis=false;
     bool eigenvalue_analysis=false;
     std::unique_ptr<Contact> contact;
     bool contact_mechanics_enabled=false;
+    // Let's say 100 steps? Too difficult to make it a dynamic step value like abaqus..
+    size_t steps = 100;
     bool steady_state_dynamics_analysis=false;
     float steady_state_dynamics_lower_limit = 0;
     float steady_state_dynamics_upper_limit = 20e3;
@@ -64,6 +67,7 @@ private:
                                                "*ELEMENT",
                                                "*BOUNDARY",
                                                "*CLOAD",
+                                               "*CONTACT PAIR",
                                                "*STATIC",
                                                "*FREQUENCY",
                                                "*STEADY STATE DYNAMICS",
@@ -75,6 +79,13 @@ private:
     Eigen::SparseMatrix<float> M;
     // global load vector
     Eigen::SparseVector<float> f;
+    struct Mtx_to_print
+    {
+        bool STIFFNESS = false;
+        bool STIFFNESS_WITH_BC = false;
+        bool MASS = false;
+        bool LOAD = false;
+    };
 public:    
     auto          get_K() const {return &K;};
     auto          get_M() const {return &M;};
@@ -96,17 +107,12 @@ public:
     Eigen::Matrix<float,Eigen::Dynamic,1> eigenvalues;
     Eigen::Matrix<float,Eigen::Dynamic,1> eigenfrequencies;
     // size(eigenvectors) = ndofs*number_of_modes
-    Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> eigenvectors;
+    dynMatrix eigenvectors;
     // solution to Ku=f
     Eigen::Matrix<float,Eigen::Dynamic,1> u;
-    struct Mtx_to_print
-    {
-        bool STIFFNESS = false;
-        bool STIFFNESS_WITH_BC = false;
-        bool MASS = false;
-        bool LOAD = false;
-    };
+    std::vector<Eigen::Matrix<float,Eigen::Dynamic,1>> u_step;
     Mtx_to_print mtx_to_print;
+    void update_geometry(const Eigen::Matrix<float,Eigen::Dynamic,1>&);
     void matrix_generate();
     void print_matrix_to_mtx(const Eigen::SparseMatrix<float>&,const std::string&) const;
     void assemble();
