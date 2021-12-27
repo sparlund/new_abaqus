@@ -313,18 +313,21 @@ void Mesh::solve_eigenfrequency(){
     // Need to modify global stiffness matrix
     // in order to account for boundary conditions
     Eigen::SparseMatrix<float> K_eigen = K;
+    std::cout << "a" << std::endl;
     for(const auto& i : bc)
     {
         // if current bc==0, make all values in the corresponding row and column in K to zero
         unsigned int current_global_dof = i.first;
         K_eigen.coeffRef(current_global_dof,current_global_dof) = penalty_value;
     }
+    std::cout << "b" << std::endl;
     Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse> opK1(K_eigen,M);
     Spectra::SparseSymMatProd<float> opM1(M);
-    unsigned int ncv = (2*number_of_modes_to_find);
+    unsigned int ncv = (2*number_of_modes_to_find)-1;
     // abaqus defines number of eigenvalues to solve for as 
     // the ones with smallest magntide --> sigma=0
     double sigma = 0;
+    std::cout << "c" << std::endl;
     Spectra::SymGEigsShiftSolver<float,
                         Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse>,
                         Spectra::SparseSymMatProd<float>,
@@ -333,8 +336,11 @@ void Mesh::solve_eigenfrequency(){
                                                             number_of_modes_to_find,
                                                             ncv,
                                                             sigma);
+    std::cout << "d" << std::endl;
     es.init();
-    es.compute(Spectra::SortRule::LargestMagn, 1e4,1e-18);
+    std::cout << "e" << std::endl;
+    es.compute(Spectra::SortRule::LargestMagn);
+    std::cout << "f" << std::endl;
     // Retrieve results
     this->eigenvalues = es.eigenvalues();
     this->eigenvectors = es.eigenvectors();

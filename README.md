@@ -75,9 +75,6 @@ The below keywords and and its following options are supported. The datalines to
 
 *STATIC
 
-
-
-
 ## Element types available
 CPS3, CPS4, C3D10, C3D8, C3D20 
 
@@ -102,21 +99,25 @@ git clone https://github.com/sparlund/new_abaqus
 cd new_abaqus
 cmake --build . --target new_abaqus
 ```
+To build and run unit test:
+```bash
+cmake --build . --target UT
+./UT
+```
+To see unit test code coverage:
+To build and run unit test:
+```bash
+cmake --build . --target UT_coverage
+```
 ## Windows build
 I don't have access to a Windows PC so I don't know, use the CMakefile somehow...
 
 # To-do & features implemented
-- [x] ~~makefile~~ CMake build system
-- [ ] Automate test cases for comparison solution against abaqus or hand calculations
-  - [X] Set up gtest
-  - [ ] Unit test for all entities and processes
-      - [X] Read input file 
-      - [X] Node
-      - [X] MID
-      - [X] PID
-      - [ ] Boundary conditions
-      - [ ] Analysis results
-
+- [x] ~~makefile~~ CMake build system  
+-   [ ] Automate test cases for comparison solution against abaqus or hand calculations
+    - [X] Set up gtest
+      [X] Set up unit test code coverage
+      [X] Verify results for a few example analysis
 - [X] Set up clang-tidy for static code analysis
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
@@ -175,11 +176,11 @@ The binary new_abaqus is ~0.4mB on my system.
 --------------------------------------------------
 Language           Number of files   Lines of code
 --------------------------------------------------
-C++                             18            1918
+C++                             18            1992
 C++ Header                      16             525
-Python                           1               9  
-CMake                            1              21
+Python                           1               9
+CMake                            1             194
 --------------------------------------------------
-SUM:                            37            2473
+SUM:                            37            2720
 --------------------------------------------------
 ```
