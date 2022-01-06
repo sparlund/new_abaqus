@@ -55,6 +55,7 @@ std::vector<Segment>& CPS4::get_segments(Node* node)
     // given a node, what other nodes does it connect to?
     // will be different for each element type.
     // base on node position in connectivity vector
+    std::cout << "CPS4::get_segments: node "<< node->id << ": x = " << node->x << ", y = " << node->y << std::endl;
     for(size_t i = 0; i < connectivity.size(); i++)
     {
         if(connectivity.at(i)->id == node->id)
@@ -85,6 +86,7 @@ std::vector<Segment>& CPS4::get_segments(Node* node)
 };
 
 void CPS4::calculate_Ke(){
+    setup_coord();
     Mid* mid = pid->get_mid();
     float v = mid->get_v();
     float E = mid->get_E();
@@ -135,6 +137,7 @@ void CPS4::calculate_Ke(){
     }
 };
 void CPS4::calculate_Me(){
+    setup_coord();
     // size(N) = dof per node x (nnodes*dof per node)
     Eigen::Matrix<float,2,8> N;
     float xhi,eta,w;
