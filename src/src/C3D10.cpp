@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 void C3D10::calculate_Ke(){
+    setup_coord();
     Mid* mid = pid->get_mid();
     float v = mid->get_v();
     float E = mid->get_E();
@@ -89,6 +90,7 @@ void C3D10::calculate_Ke(){
 
 }
 void C3D10::calculate_Me(){
+    setup_coord();
     Eigen::Matrix<float,3,30> N;
     // init Ke zero
     Me.setZero();
