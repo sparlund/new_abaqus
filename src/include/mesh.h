@@ -51,12 +51,13 @@ private:
     bool eigenvalue_analysis=false;
     std::unique_ptr<Contact> contact;
     bool contact_mechanics_enabled=false;
-    // Let's say 100 steps? Too difficult to make it a dynamic step value like abaqus..
-    size_t steps = 100;
+    // Let's say 10 steps? Too difficult to make it a dynamic step value like abaqus..
+    const size_t steps = 100;
     bool steady_state_dynamics_analysis=false;
     float steady_state_dynamics_lower_limit = 0;
     float steady_state_dynamics_upper_limit = 20e3;
     int   steady_state_dynamics_number_of_points = 1;
+    size_t ndim = 2;
     std::string eigenvalue_solution_method;
     std::string analysis_name;
     // The supported keywords needs to be added in this order!
@@ -67,8 +68,8 @@ private:
                                                "*ELEMENT",
                                                "*BOUNDARY",
                                                "*CLOAD",
-                                               "*CONTACT PAIR",
                                                "*STATIC",
+                                               "*CONTACT PAIR",
                                                "*FREQUENCY",
                                                "*STEADY STATE DYNAMICS",
                                                "*MATRIX GENERATE"};
@@ -115,7 +116,7 @@ public:
     void update_geometry(const Eigen::Matrix<float,Eigen::Dynamic,1>&);
     void matrix_generate();
     void print_matrix_to_mtx(const Eigen::SparseMatrix<float>&,const std::string&) const;
-    void assemble();
+    void assemble(bool quiet = false);
     void solve();
     void solve_static();
     void solve_static_with_contact();

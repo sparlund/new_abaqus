@@ -55,7 +55,6 @@ std::vector<Segment>& CPS4::get_segments(Node* node)
     // given a node, what other nodes does it connect to?
     // will be different for each element type.
     // base on node position in connectivity vector
-    std::cout << "CPS4::get_segments: node "<< node->id << ": x = " << node->x << ", y = " << node->y << std::endl;
     for(size_t i = 0; i < connectivity.size(); i++)
     {
         if(connectivity.at(i)->id == node->id)

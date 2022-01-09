@@ -36,6 +36,7 @@
 #include <fstream>
 #include <ctime>
 #include <stdlib.h>
+#include <numeric>
 
 // TODO: move this to misc::
 float squirt_and_divide_by_2pi(float in){
@@ -119,27 +120,21 @@ void Mesh::export_2_vtk(){
     if (contact_mechanics_enabled)
     {
         output << "FIELD contact_displacement " << steps << std::endl;
-        for(size_t i = 0; i < steps; i++)
+        dynMatrix A;
+        A.resize(nodes.size(), 3);
+        A.setZero();
+        for(size_t step = 0; step < steps; step++)
         {
-            output << "contact_displacement_" << i << " 3 " << nodes.size() << " float" << std::endl;
-            for(const auto& node: nodes)
-            {
-                // 2 scenarios available so far: 3 dofs per node & 2 dofs per node
-                if (node->dofs.size() == 3)
-                {
-                    output << u_step.at(i)(node->dofs.at(0)->id) << " " << u_step.at(i)(node->dofs.at(1)->id) << " " << u_step.at(i)(node->dofs.at(2)->id) << std::endl;
-                }
-                else{
-                    output << u_step.at(i)(node->dofs.at(0)->id) << " " << u_step.at(i)(node->dofs.at(1)->id) << " 0" << std::endl;
-                }
-                
-            }
+            output << "contact_displacement_" << step+1 << " 3 " << " " << nodes.size() << " float" << std::endl;
+            dynMatrix u_temp = Eigen::Map<Eigen::MatrixXf>(u_step.at(step).data(), ndim, nodes.size()).transpose();
+            A.col(0) += u_temp.col(0);
+            A.col(1) += u_temp.col(1);
+            output << A << std::endl;
         }
     }
-    if (static_analysis)
+    else if (static_analysis)
     {
         output << "FIELD displacement 1" << std::endl;
-        // data name, number of values (3 for 3D & 2D, Z is zero for 2D, datatype)
         output << "displacement 3 " << nodes.size() << " float" << std::endl;
         for(const auto& node: nodes)
         {
@@ -338,9 +333,7 @@ void Mesh::solve_eigenfrequency(){
                                                             sigma);
     std::cout << "d" << std::endl;
     es.init();
-    std::cout << "e" << std::endl;
     es.compute(Spectra::SortRule::LargestMagn);
-    std::cout << "f" << std::endl;
     // Retrieve results
     this->eigenvalues = es.eigenvalues();
     this->eigenvectors = es.eigenvectors();
@@ -369,6 +362,18 @@ void Mesh::solve_static_with_contact()
     std::clock_t clock_solve;
     float duration_clock_solve_iteration, duration_clock_solve;
     clock_solve = std::clock();
+    std::cout << "Master segments:" << std::endl;
+    for (auto segment : contact->master_segments)
+    {
+        std::cout << segment.first->id << "->" << segment.second->id << std::endl;
+    }
+    std::cout << "Slave nodes:" << std::endl;
+    for (auto slave_node : contact->slave->entities)
+    {
+        std::cout << slave_node->id << std::endl;
+    }
+
+    
     /*
     find which nodes already on contact before load or
     controlled displacement is applied
@@ -399,26 +404,35 @@ void Mesh::solve_static_with_contact()
     */
     // Let's say 1000 iterations is max and we have diverged.
     size_t iteration, max_iterations = 1e3;
-    for(size_t step = 1; step < steps; step++)
+    for(size_t step = 1; step < steps + 1; step++)
     {
         std::clock_t clock_solve_iteration;
         float residual = 0;
-        iteration = 0;
         // 1) Solve linear displacement for a small step
         // 2) Correct penetrating nodes
         // 3)
-        float duration_clock_solve;
-        clock_solve = std::clock();  
+        // float duration_clock_solve;
+        // clock_solve = std::clock();  
+        // 1)
+        // re-assemble K since we it _might_ have been changed after solving the previous step
+        assemble(true);
         apply_boundary_conditions_on_K();
         // Ku=f, want to solve for u
         Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
         solver.compute(K_with_bc);
+        auto loadscale = (float)step/(float)steps;
+        auto current_u = solver.solve(f*loadscale);
         // Solve linear displacement for small load
         // save result as new state for next iteration
-        u_step.push_back(solver.solve(f*(iteration/max_iterations)));
+        u_step.push_back(current_u);
+        auto& temp = nodes[global_2_local_node_id[9]];
         update_geometry(u_step.back());
-        std::cout << " step #" << step << " TODO add info " << std::endl;
-        duration_clock_solve_iteration = ( std::clock() - clock_solve_iteration ) / (float) CLOCKS_PER_SEC;
+        contact->fix_penetrating_nodes();
+        // 2)
+        // Modify penetrating nodes
+        // contact->
+
+        // duration_clock_solve_iteration = ( std::clock() - clock_solve_iteration ) / (float) CLOCKS_PER_SEC;
 
     }
 
@@ -432,10 +446,12 @@ void Mesh::update_geometry(const Eigen::Matrix<float,Eigen::Dynamic,1>& previous
     size_t dof_offset = 0;
     for (auto& node : nodes)
     {
-        node->x = previous_u.coeff(dof_offset);
-        node->y = previous_u.coeff(++dof_offset);
-        node->z = previous_u.coeff(++dof_offset);
-        ++dof_offset;
+        node->x += previous_u.coeff(dof_offset);
+        node->y += previous_u.coeff(dof_offset+1);
+        // TODO: when 3D support is added to contact mechanics this needs to be enabled.
+        // Maybe give Mesh a bool is3D?
+        // node->z += previous_u.coeff(dof_offset+2);
+        dof_offset += 2;
     }
 }
 
@@ -482,14 +498,24 @@ void Mesh::solve_static(){
 }
 
 
-void Mesh::assemble(){
+void Mesh::assemble(bool quiet){
     // By the time of assemble we know the number of dofs --> pre-allocate K, f & solution u
-    std::cout << "---    Starting matrix assembly    ---" << std::endl;
-    std::cout << "           Mesh size:" << std::endl;
-    std::cout << "               nodes = " << nodes.size() << std::endl;
-    std::cout << "            elements = " << elements.size() << std::endl;
+    if (!quiet)
+    {
+        std::cout << "---    Starting matrix assembly    ---" << std::endl;
+        std::cout << "           Mesh size:" << std::endl;
+        std::cout << "               nodes = " << nodes.size() << std::endl;
+        std::cout << "            elements = " << elements.size() << std::endl;
+        // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
     // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
-    std::cout << "  degrees of freedom = " << get_number_of_dofs() << std::endl << std::endl;
+        // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
+    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
+        // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
+    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
+        // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
+        std::cout << "  degrees of freedom = " << get_number_of_dofs() << std::endl << std::endl;
+    }
+    
     // Also print weight as a sanity check!
     // float model_total_weight = 0;
     // for (unsigned int i = 0; i < elements.size(); i++)
@@ -502,23 +528,24 @@ void Mesh::assemble(){
     std::clock_t clock_assemble;
     float duration_assemble;
     clock_assemble = std::clock();
+    // Resize and clear previous values (not necessary every time but whatever) 
     K.resize(get_number_of_dofs(),get_number_of_dofs());
     M.resize(get_number_of_dofs(),get_number_of_dofs());
     f.resize(get_number_of_dofs(),1);
     u.resize(get_number_of_dofs(),1);
+    K.setZero();
+    M.setZero();
+    f.setZero();
+    u.setZero();
     // assemble stiffness- and mass matrix, will alter it later due to boundary conditions
-    std::cout << "Calculating all element stiffness and or mass matrices:" <<std::endl;
     size_t current_element_counter = 1;
     size_t nel = get_number_of_elements();
     for(const auto& element: elements)
     {
-        // std::cout << "[" << current_element_counter << "/" << nel << "]" << "\r" << std::flush;
         element->calculate_Ke();
         element->calculate_Me();
         current_element_counter++;
     }
-    // std::cout << std::endl;
-    std::cout << "Progress assembly:" <<std::endl;
     current_element_counter = 1;
     std::vector<Eigen::Triplet<float>> K_tripletList;
     std::vector<Eigen::Triplet<float>> M_tripletList;
@@ -526,8 +553,6 @@ void Mesh::assemble(){
     M_tripletList.reserve(get_number_of_dofs());
     for(const auto& element:elements)
     {
-        // std::cout << "[" << current_element_counter << "/" << nel << "]\r";
-        // std::cout.flush();
         auto Ke         = element->get_Ke();
         auto Me         = element->get_Me();
         auto dofs       = element->get_element_dof_ids();
@@ -543,45 +568,40 @@ void Mesh::assemble(){
     }
     K.setFromTriplets(K_tripletList.begin(), K_tripletList.end());
     M.setFromTriplets(M_tripletList.begin(), M_tripletList.end());
-    // std::cout << std::endl;
     // assemble load vector, will alter due to boundary conditions
-    std::cout << "f_to_be_added.size() = " << f_to_be_added.size() << std::endl;
     for (unsigned int i = 0; i < f_to_be_added.size(); i++)
     {
-        std::cout << "f_to_be_added.at(i).first = " << f_to_be_added.at(i).first << std::endl;
-        std::cout << "f_to_be_added.at(i).second = " << f_to_be_added.at(i).second << std::endl;
         f.coeffRef(f_to_be_added.at(i).first) += f_to_be_added.at(i).second;
     }
     // -----
+    // TODO: what is the below about? Other boundary conditions than fixed..? Not used atm and should be moved to apply_boundary_conditions_on_K()?
     // START APPLYING BOUNDARY CONDITIONS!
     // index u=unknown, index d=dircichlet (known!)
     // [K_dd  K_du][u_d]=[f_d] 
     // [K_ud  K_uu][u_u] [f_u]
     // boundary conditions:
     // want to find free indices!
-    std::vector<unsigned int> free_dofs;
-    std::vector<unsigned int> dirichlet_dofs;
-    for(const auto& i : bc)
-    {
-        dirichlet_dofs.push_back(i.first);
-    }
-    for (unsigned int i = 0; i < get_number_of_dofs(); i++)
-    {
-        // if i not in dirichlet_dofs
-        if(std::find(dirichlet_dofs.begin(), dirichlet_dofs.end(), i) != dirichlet_dofs.end()){
-        }
-        else{
-            free_dofs.push_back(i);
-        }
-    }
+    // std::vector<unsigned int> free_dofs;
+    // std::vector<unsigned int> dirichlet_dofs;
+    // for(const auto& i : bc)
+    // {
+    //     dirichlet_dofs.push_back(i.first);
+    // }
+    // for (unsigned int i = 0; i < get_number_of_dofs(); i++)
+    // {
+    //     // if i not in dirichlet_dofs
+    //     if(std::find(dirichlet_dofs.begin(), dirichlet_dofs.end(), i) != dirichlet_dofs.end()){
+    //     }
+    //     else{
+    //         free_dofs.push_back(i);
+    //     }
+    // }
     duration_assemble = ( std::clock() - clock_assemble ) / (float) CLOCKS_PER_SEC;;
-    // std::cout << "K:" << std::endl;
-    // std::cout << dynMatrix(K) << std::endl;
-    // std::cout << "M:" << std::endl;
-    // std::cout << dynMatrix(M) << std::endl;
-    // std::cout << "f:" << std::endl;
-    // std::cout << Eigen::Matrix<float,1,Eigen::Dynamic>(f) << std::endl;
-    std::cout << "---    Assembly completed in " << std::setprecision(2) << duration_assemble << " seconds (wallclock time)    ---" << std::endl;
+    if (!quiet)
+    {
+        std::cout << "---    Assembly completed in " << std::setprecision(2) << duration_assemble << " seconds (wallclock time)    ---" << std::endl;
+    }
+    
 }
 
 
@@ -732,6 +752,7 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                 }
                 else if (keyword == "*CONTACT PAIR")
                 {
+                    contact_mechanics_enabled = true;
                     // advance to next line, grab sets, then leave.
                     // it could be a comment, new keyword.. then we exit
                     getline(input_file, line);
@@ -744,15 +765,24 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                         auto slave_set_name = slave_and_master_set.at(0);
                         auto master_set_name = slave_and_master_set.at(1);
                         // find node set entities
-                        // TODO: add check here to exit() if sets don't exists
                         auto slave_set  = node_set_from_node_set_name[slave_set_name];
                         auto master_set = node_set_from_node_set_name[master_set_name];
-                        contact = std::make_unique<Contact>(*master_set,
-                                                            *slave_set);
+                        if (slave_set && master_set)
+                        {
+                            contact = std::make_unique<Contact>(master_set,
+                                                                slave_set);
+                        }
+                        else
+                        {
+                            std::cout << "ERROR: couldnt find master or slave set." << std::endl;
+                            exit(1);
+                        }
+                        
                     }
                     else
                     {
                         std::cout << "ERROR: *CONTACT PAIR not followed by 2 sets." << std::endl;
+                        exit(1);
                     }
                 }
                 else if(keyword == "*NSET"){
@@ -1023,9 +1053,11 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
 
 void Mesh::add_set(std::string line,std::unordered_map<std::string, std::string> options){
     // create new node set, add it to member variable map node_sets
-    const auto set_name  = options["NSET"];
+    auto set_name  = options["NSET"];
     auto       node_set  = std::make_unique<Set<Node*>>(set_name);
     // Add entry to map to find node set by name
+    // trim whitespace first
+    misc::trim_leading_and_ending_whitespace(set_name);
     node_set_from_node_set_name[set_name] = node_set.get();
     // Add node set to vector of node sets
     nsets.push_back(std::move(node_set));

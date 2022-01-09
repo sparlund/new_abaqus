@@ -110,8 +110,11 @@ Element::Element(unsigned int                       id,
     }
     Ke.setZero();
     Me.setZero();
+    // dofs can be setup now because an element won't
+    // change dofs during analysis but coord cant be setup
+    // because elements change shape during analysis.
+    // so setup_coord is moved to calculate_{Ke,Me} for each element!
     setup_dofs();
-    setup_coord();
     };
 
 std::vector<Node*>                                 Element::get_connectivity() const {return connectivity;}
