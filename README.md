@@ -116,8 +116,8 @@ I don't have access to a Windows PC so I don't know, use the CMakefile somehow..
 - [x] ~~makefile~~ CMake build system  
 -   [ ] Automate test cases for comparison solution against abaqus or hand calculations
     - [X] Set up gtest
-      [X] Set up unit test code coverage
-      [X] Verify results for a few example analysis
+    - [X] Set up unit test code coverage
+    - [X] Verify results for a few example analysis
 - [X] Set up clang-tidy for static code analysis
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
@@ -148,6 +148,10 @@ I don't have access to a Windows PC so I don't know, use the CMakefile somehow..
   - [ ] *OUTPUT
 - [x] Solve Ku=f for linear problems
 - [ ] Contact mechanics
+  - [x] Create segments from master node set
+  - [x] Gap function that checks distance from slave node to master set for arbitrary geometry
+  - [ ] Print information for each load step similar to how ABAQUS does
+  - [ ] Find contact force at contact interface and correct penetration
 - [ ] Calculate scalar values on elements
   - [X]  Strains
   - [ ] Stresses
@@ -176,11 +180,11 @@ The binary new_abaqus is ~0.4mB on my system.
 --------------------------------------------------
 Language           Number of files   Lines of code
 --------------------------------------------------
-C++                             18            1992
-C++ Header                      16             525
+C++                             18            2054
+C++ Header                      16             526
 Python                           1               9
-CMake                            1             194
+CMake                            1              47
 --------------------------------------------------
-SUM:                            37            2720
+SUM:                            37            2636
 --------------------------------------------------
 ```
