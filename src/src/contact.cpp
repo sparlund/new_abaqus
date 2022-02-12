@@ -3,16 +3,31 @@
 
 #include <iomanip>
 
-void Contact::fix_penetrating_nodes()
+
+inline bool SameSign(float a, float b) {
+    return a*b >= 0.0f;
+}
+
+
+std::vector<std::pair<Node*, float>> Contact::get_penetrating_nodes()
 {
     // Check if any slave node is penetrating any master set segments
     // and correct position of those who do
-    for (const auto& node: slave->entities)
+    for (auto& node: slave->entities)
     {
         for (const auto& segment : master_segments)
         {
-            if (is_penetrating(segment, node))
+            auto g = gap(segment,node);
+            // g > 0: no contact
+            // g < 0: contact
+            // Check if node is on the same side of the segment as initally.
+            // Has it changed side it's penetrating
+            auto current_distance_sign  = ((segment.second->x - segment.first->x)*(node->y - segment.first->y) - (segment.second->y - segment.first->y)*(node->x - segment.first->x));
+            auto original_distance_sign = ((segment.second->x - segment.first->x)*(node->original_y - segment.first->y) - (segment.second->y - segment.first->y)*(node->original_x - segment.first->x));
+            auto penetration = SameSign(current_distance_sign,original_distance_sign)? false: true;
+            if (penetration)
             {
+
             }
         }
     }
@@ -59,41 +74,6 @@ bool Contact::is_segment_in_master_segments(const Segment& segment) const
         }
     }
     return false;
-}
-
-inline bool SameSign(float a, float b) {
-    return a*b >= 0.0f;
-}
-
-bool  Contact::is_penetrating(const Segment& segment, const Node* node)
-{
-    // slave node X is projected onto the master segnment
-    // don't use concept of segment on slave side
-    //
-    //      __________x0__________ slave node
-    //                |
-    //                | e_n is unit vector from master segment intersection to slave segment
-    //                |
-    //      x1 _______|_________x2  master segment
-
-    // X_c is the point where the node is projected onto the surface.
-    // Get search distance from all elements connected to node
-    // g = (x2 - x1)*e_n >= 0
-    // Slave node x is projected onto the piecewise linear segments of the
-    // master segment with xc as the projected point
-
-    // hur vet man om e_n pekar utåt eller inåt?!
-    float g = gap(segment,node);
-    // Check if node is on the same side of the segment as initally.
-    // Has it changed side it's penetrating
-    auto current_distance_sign  = ((segment.second->x - segment.first->x)*(node->y - segment.first->y) - (segment.second->y - segment.first->y)*(node->x - segment.first->x));
-    auto original_distance_sign = ((segment.second->x - segment.first->x)*(node->original_y - segment.first->y) - (segment.second->y - segment.first->y)*(node->original_x - segment.first->x));
-    auto contact_status = SameSign(current_distance_sign,original_distance_sign)? false: true;
-    // g > 0: no contact
-    // g < 0: contact
-    return contact_status;
-    
-    
 }
 
 float Contact::gap(const Segment& segment, const Node* node)

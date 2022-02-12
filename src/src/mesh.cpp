@@ -362,16 +362,16 @@ void Mesh::solve_static_with_contact()
     std::clock_t clock_solve;
     float duration_clock_solve_iteration, duration_clock_solve;
     clock_solve = std::clock();
-    std::cout << "Master segments:" << std::endl;
-    for (auto segment : contact->master_segments)
-    {
-        std::cout << segment.first->id << "->" << segment.second->id << std::endl;
-    }
-    std::cout << "Slave nodes:" << std::endl;
-    for (auto slave_node : contact->slave->entities)
-    {
-        std::cout << slave_node->id << std::endl;
-    }
+    // std::cout << "Master segments:" << std::endl;
+    // for (auto segment : contact->master_segments)
+    // {
+    //     std::cout << segment.first->id << "->" << segment.second->id << std::endl;
+    // }
+    // std::cout << "Slave nodes:" << std::endl;
+    // for (auto slave_node : contact->slave->entities)
+    // {
+    //     std::cout << slave_node->id << std::endl;
+    // }
 
     
     /*
@@ -427,11 +427,14 @@ void Mesh::solve_static_with_contact()
         u_step.push_back(current_u);
         auto& temp = nodes[global_2_local_node_id[9]];
         update_geometry(u_step.back());
-        contact->fix_penetrating_nodes();
+        auto penetrating_nodes = contact->get_penetrating_nodes();
         // 2)
         // Modify penetrating nodes
-        // contact->
-
+        for (auto& node_penetration : penetrating_nodes)
+        {
+            std::cout << "node " << node_penetration.first->id << " penetrating " << node_penetration.second << " [mm] " << std::endl;
+            
+        }
         // duration_clock_solve_iteration = ( std::clock() - clock_solve_iteration ) / (float) CLOCKS_PER_SEC;
 
     }
@@ -506,13 +509,6 @@ void Mesh::assemble(bool quiet){
         std::cout << "           Mesh size:" << std::endl;
         std::cout << "               nodes = " << nodes.size() << std::endl;
         std::cout << "            elements = " << elements.size() << std::endl;
-        // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
-    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
-        // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
-    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
-        // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
-    // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
-        // access arbitrary dof object from arbitrary node object and check the static member to see total ndofs     
         std::cout << "  degrees of freedom = " << get_number_of_dofs() << std::endl << std::endl;
     }
     
@@ -867,6 +863,19 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                                     float v = std::stof(values.at(1));
                                     mids.back()->set_E(E);
                                     mids.back()->set_v(v);
+                                    // Constitutive matrix (linear continuum mechanics)
+                                    mids.back()->D_2D_linear_continuum_mechanics << 1, v,         0,
+                                                                                    v, 1,         0,
+                                                                                    0, 0, 0.5*(1-v);
+                                    mids.back()->D_2D_linear_continuum_mechanics *= E/(1-(v*v));
+                                    mids.back()->D_3D_linear_continuum_mechanics << 1-v,     v,     v,           0,          0,          0,
+                                                                                      v,   1-v,     v,           0,          0,          0,
+                                                                                      v,     v,   1-v,           0,          0,          0,
+                                                                                      0,     0,     0,   (1-2*v)/2,          0,          0,
+                                                                                      0,     0,     0,           0,  (1-2*v)/2,          0,
+                                                                                      0,     0,     0,           0,          0,  (1-2*v)/2;
+                                    mids.back()->D_3D_linear_continuum_mechanics *= E/((1+v)*(1-2*v));
+
                                     std::cout << keyword << ", " << options["TYPE"] << ", E" << " = " << E << ", v" << " = " << v << std::endl;
                                 }
                             }

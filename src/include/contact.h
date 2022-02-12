@@ -22,8 +22,6 @@ private:
     // max allowed penetration. too large obviously bad, but too small and difficult its to solve
     float allowed_penetration = 1e-2;
     size_t number_of_time_steps = 100;
-    // is the given node penetrating any 2D segment?
-    bool  is_penetrating(const Segment&, const Node*);
     // how large is the penetration?
     float gap(const Segment&, const Node*);
     std::vector<Node*> old_nodes_in_contact, current_nodes_in_contact;
@@ -35,7 +33,7 @@ public:
     Set<Node*>* master;
     Set<Node*>* slave;
     Contact(Set<Node*>* master, Set<Node*>* slave);
-    void fix_penetrating_nodes();
+    std::vector<std::pair<Node*, float>> get_penetrating_nodes();
 };
 
 

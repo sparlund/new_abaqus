@@ -11,6 +11,7 @@
 // ABC
 using Segment    = std::pair<Node*, Node*>;
 using dynMatrix  = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
+using dynVector  = Eigen::Matrix<float, Eigen::Dynamic, 1>;
 using Scalar     = Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>;
 class Element{
 protected:
@@ -26,18 +27,22 @@ protected:
     const unsigned short                                ngp;
     const unsigned short                                dimensions;
     std::string                                         element_type;
-    dynMatrix  Ke;
-    dynMatrix  Me;
-    Eigen::Matrix<float,Eigen::Dynamic,1>               fe;
+    dynMatrix Ke;
+    dynMatrix Me;
+    dynVector fe;
+    dynVector f_int;
     dynMatrix  coord; 
     std::vector<Segment>                                segments;
     std::vector<dynMatrix>  B;
     void                                                setup_coord();
     void                                                setup_dofs();
 public:
+    // Let's not care about thickness too much yet
+    const float                                         t = 1.0;
     const unsigned int                                  id;
     virtual void                                        calculate_Ke()=0;
     virtual void                                        calculate_Me()=0;
+    virtual void                                        calculate_f_internal(dynVector u);
     virtual std::vector<Scalar>                         calculate_stress(dynMatrix,dynMatrix);
     virtual std::vector<Scalar>                         calculate_strain(dynMatrix,dynMatrix);
     virtual std::vector<Segment>&                       get_segments(Node*);

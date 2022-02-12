@@ -23,6 +23,7 @@ private:
 public:
     void calculate_Ke();
     void calculate_Me();
+    void calculate_f_internal(dynVector u) override;
     std::vector<Segment>&                    get_segments(Node*) override;
     std::vector<Scalar>                          calculate_stress(dynMatrix,
                                                                  dynMatrix) override;

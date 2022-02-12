@@ -8,6 +8,12 @@
 #include <string>
 #include <vector>
 
+void Element::calculate_f_internal(dynVector u)
+{
+    std::cout << "ERROR: element not supported for computing internal element forces." << std::endl;
+    exit(0);
+}
+
 std::vector<Scalar> Element::calculate_stress(dynMatrix, 
                                              dynMatrix)
 {
