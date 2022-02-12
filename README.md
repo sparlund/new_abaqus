@@ -23,8 +23,8 @@ This example is in 2D, and contains ~800 elements and ~900 nodes, with a mix of 
 
 | FE-solver      | Load node deflection (red arrow in figure above!) |
 | ----------- | ----------- |
-| ABAQUS (c)      | 0.0348       |
-| new_abaqus   | 0.0346        |
+| ABAQUS (c) | 0.034840 |
+| new_abaqus | 0.034863 |
 
 To run this example:
 ```bash
@@ -34,7 +34,7 @@ To run this example:
 ## Example #2, 3D tuning fork 
 A tuning fork made up of 4 thousand second order tetra element (C3D10). This mesh has 23 thousand degrees of freedom and took ~~close to an hour~~ 24 seconds to solve on my laptop. However, it takes only 7 seconds to solve on the same computer using [Calculix](http://www.calculix.de/) which is another FEM solver that also follows the Abaqus(C) input file format.
 
-The comparison of results between Abaqus(C) and new_abaqus is good in this example. For the 8 first modes the average difference is 17Hz and the maximum difference is 70Hz which I chalk up to the eigenvalue solver.
+The comparison of results between Abaqus(C) and new_abaqus is good in this example. For the 8 first modes the average difference is 17Hz, minimum difference is 0.3Hz and the maximum is 70Hz. I chalk this difference up to the different eigenvalue solvers.
 
 Tuning fork geometry | 1st eigenmode | 4th eigenmode
 -------------------------|-------------------------|-------------------------
@@ -122,7 +122,7 @@ I don't have access to a Windows PC so I don't know, use the CMakefile somehow..
 - [x] Implement logic and structure for reading abaqus input files
   - [ ] Disregard unused nodes
   - [X] Allow for commentented lines to start with whitespace
-  - [ ] Exit if trying to create element with a N/A node
+  - [X] Exit if trying to create element with a N/A node
   - [X] Allow entities to be defined in any order
 - [x] Create classes and relations for nodes, elements, properties and materials
 - [X] Implement logic for different elements
@@ -174,17 +174,17 @@ I don't have access to a Windows PC so I don't know, use the CMakefile somehow..
 
 # Program size
 
-The binary new_abaqus is ~0.4mB on my system.
+The binary new_abaqus is ~1.2mB on my system.
 
 ```
 --------------------------------------------------
 Language           Number of files   Lines of code
 --------------------------------------------------
-C++                             18            2054
-C++ Header                      16             526
+C++                             18            2052
+C++ Header                      16             530
 Python                           1               9
 CMake                            1              47
 --------------------------------------------------
-SUM:                            37            2636
+SUM:                            37            2638
 --------------------------------------------------
 ```
