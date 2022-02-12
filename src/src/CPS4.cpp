@@ -198,14 +198,8 @@ void CPS4::calculate_Me(){
 
 CPS4::CPS4(unsigned int                        id,
            std::vector<Node*>                  connectivity,
-           Pid*                                pid,
-           const unsigned short                nnodes,
-           const unsigned short                ndofs,
-           const unsigned short                vtk_identifier,
-           const unsigned short                ngp,
-           const unsigned short                dimensions,
-           std::string                         element_type):
-Element{id,connectivity,pid,nnodes,ndofs,vtk_identifier,ngp,dimensions,element_type}{
+           Pid*                                pid):
+Element{id,connectivity,pid,ElementType::CPS4,4,4*2,9,4,2}{
     print_element_info_to_log();
 }
 

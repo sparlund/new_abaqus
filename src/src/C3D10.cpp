@@ -112,14 +112,8 @@ void C3D10::calculate_Me(){
 // C3D10 is 10 node tetrahedron element
 C3D10::C3D10(unsigned int                        id,
              std::vector<Node*>                  connectivity,
-             Pid*                                pid,
-             const unsigned short                nnodes,
-             const unsigned short                ndofs,
-             const unsigned short                vtk_identifier,
-             const unsigned short                ngp,
-             const unsigned short                dimensions,
-             std::string                         element_type):
-Element{id,connectivity,pid,nnodes,ndofs,vtk_identifier,ngp,dimensions,element_type}{
+             Pid*                                pid):
+Element{id,connectivity,pid,ElementType::C3D10,10,30,24,4,3}{
     print_element_info_to_log();
 }
 

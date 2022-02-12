@@ -88,55 +88,41 @@ void Element::setup_coord(){
     }
 };
 
-Element::Element(unsigned int                       id,
-                std::vector<Node*>                  connectivity,
-                Pid*                                pid,
-                unsigned short                      nnodes,
-                unsigned short                      ndofs,
-                unsigned short                      vtk_identifier,
-                unsigned short                      ngp,
-                unsigned short                      dimensions,
-                std::string                         element_type):
+Element::Element(unsigned int                        id,
+                 std::vector<Node*>                  connectivity,
+                 Pid*                                pid,
+                 ElementType                         elementType,
+                 const unsigned short                nnodes,
+                 const unsigned short                ndofs,
+                 const unsigned short                vtk_identifier,
+                 const unsigned short                ngp,
+                 const unsigned short                dimensions):
                 id{id},
                 connectivity{std::move(connectivity)},
                 pid{pid},
+                elementType{elementType},
                 nnodes{nnodes},
                 ndofs{ndofs},
                 vtk_identifier{vtk_identifier},
                 ngp{ngp},
-                dimensions{dimensions},
-                element_type{std::move(element_type)}{
-    Ke.resize(ndofs,ndofs);
-    Me.resize(ndofs,ndofs);
-    coord.resize(nnodes,dimensions);
-    B.resize(ngp);
-    for(auto& Bi: B)
+                dimensions{dimensions}
     {
-        Bi.resize(dimensions, ngp);
-    }
-    Ke.setZero();
-    Me.setZero();
-    // dofs can be setup now because an element won't
-    // change dofs during analysis but coord cant be setup
-    // because elements change shape during analysis.
-    // so setup_coord is moved to calculate_{Ke,Me} for each element!
-    setup_dofs();
+        Ke.resize(ndofs,ndofs);
+        Me.resize(ndofs,ndofs);
+        coord.resize(nnodes,dimensions);
+        B.resize(ngp);
+        for(auto& Bi: B)
+        {
+            Bi.resize(dimensions, ngp);
+        }
+        Ke.setZero();
+        Me.setZero();
+        // dofs can be setup now because an element won't
+        // change dofs during analysis but coord cant be setup
+        // because elements change shape during analysis.
+        // so setup_coord is moved to calculate_{Ke,Me} for each element!
+        setup_dofs();
     };
-
-std::vector<Node*>                                 Element::get_connectivity() const {return connectivity;}
-Pid*                                               Element::get_pid() const {return pid;}
-std::vector<unsigned int>                          Element::get_element_dof_ids() const {return dofs_id;}
-unsigned short                                     Element::get_element_ndofs() const {return ndofs;}
-unsigned short                                     Element::get_element_nnodes() const {return nnodes;}
-unsigned short                                     Element::get_dimensions() const {return dimensions;};
-std::string                                        Element::get_element_type() const {return element_type;}
-unsigned short                                     Element::get_vtk_identifier() const {return vtk_identifier;}
-float                                              Element::get_weight() const {return weight;}
-float                                              Element::get_volume() const {return volume;}
-unsigned short                                     Element::get_ngp() const {return ngp;};
-unsigned int                                       Element::get_element_counter() const {return element_counter;};
-dynMatrix Element::get_Ke() const {return Ke;};
-dynMatrix Element::get_Me() const {return Me;}; 
 
 unsigned int Element::element_counter=0;
 
@@ -154,18 +140,45 @@ float Element::inv_div_by1(float in) const {
 void Element::print_element_info_to_log() const {
     // print info to log file
     std::vector<Node*> nodes = get_connectivity();
-    std::cout << "*ELEMENT: type=" << get_element_type() << ", PID = " << get_pid()->get_name() << ", id=" << id << ", nodes=";
-    for (unsigned short i = 0; i < get_element_nnodes() ; i++)
+    std::cout << "*ELEMENT: type=" << elementType << ", PID = " << get_pid()->get_name() << ", id=" << id << ", nodes=";
+    for (unsigned short i = 0; i < nnodes ; i++)
     {
         std::cout << nodes.at(i)->id << ",";        
     }
     std::cout << " dofs=";
-    for (unsigned short i = 0; i < get_element_nnodes() ; i++)
+    for (unsigned short i = 0; i < nnodes ; i++)
     {   
-        for (unsigned short j = 0; j < get_element_ndofs()/get_element_nnodes() ; j++)
+        for (unsigned short j = 0; j < ndofs/nnodes ; j++)
         {
             std::cout << nodes.at(i)->dofs.at(j)->id << ",";
         }
     }
     std::cout << std::endl;
 }
+
+std::ostream& operator<<(std::ostream& os, const Element::ElementType t)
+{
+    switch (t)
+    {
+        case Element::ElementType::C3D10:
+            os << "C3D10";
+            break;
+        case Element::ElementType::C3D20:
+            os << "C3D20";
+            break;
+        case Element::ElementType::C3D8:
+            os << "C3D8";
+            break;
+        case Element::ElementType::CPS3:
+            os << "CPS3";
+            break;
+        case Element::ElementType::CPS4:
+            os << "CPS4";
+            break;
+        case Element::ElementType::S4:
+            os << "S4";
+            break;
+    }
+    return os;
+}
+

@@ -105,11 +105,5 @@ void C3D8::calculate_Me(){
 
 C3D8::C3D8(unsigned int                        id,
            std::vector<Node*>                  connectivity,
-           Pid*                                pid,
-           const unsigned short                nnodes,
-           const unsigned short                ndofs,
-           const unsigned short                vtk_identifier,
-           const unsigned short                ngp,
-           const unsigned short                dimensions,
-           std::string                         element_type):
-Element{id,connectivity,pid,nnodes,ndofs,vtk_identifier,ngp,dimensions,element_type}{}
+           Pid*                                pid):
+Element{id,connectivity,pid,ElementType::C3D8,8,24,12,8,3}{}

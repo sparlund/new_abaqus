@@ -95,12 +95,12 @@ void Mesh::export_2_vtk(){
     unsigned int total_amount_of_used_nodes=0;
     for(const auto& element: elements)
     {
-        total_amount_of_used_nodes += element->get_element_nnodes();
+        total_amount_of_used_nodes += element->nnodes;
     }    
     output << "CELLS " << elements.size() << " " << elements.size() + total_amount_of_used_nodes  << std::endl;
     for(const auto& element: elements)
     {
-        output << element->get_element_nnodes() << " ";
+        output << element->nnodes << " ";
         for (unsigned int  j = 0; j < element->get_connectivity().size(); j++)
         {
             output << global_2_local_node_id[element->get_connectivity().at(j)->id] << " ";
@@ -111,7 +111,7 @@ void Mesh::export_2_vtk(){
     output << "CELL_TYPES " << elements.size() << std::endl;
     for(const auto& element: elements)
     {
-        output << element->get_vtk_identifier() << std::endl;
+        output << element->vtk_identifier << std::endl;
     }
     // point_data, i.e displacement on nodes
     output << "POINT_DATA " << nodes.size() << std::endl;
@@ -1112,27 +1112,27 @@ void Mesh::add_element(std::string line,std::unordered_map<std::string,std::stri
     std::unique_ptr<Element> element;
     if (type == "S3")
     {
-        element = std::make_unique<S3>(element_id,element_connectivity,pid,3,3*3,5,1,2,"S3");
+        element = std::make_unique<S3>(element_id,element_connectivity,pid);
     }
     else if (type == "CPS3")
     {
-        element = std::make_unique<CPS3>(element_id,element_connectivity,pid,3,3*2,6,1,2,"CPS3");
+        element = std::make_unique<CPS3>(element_id,element_connectivity,pid);
     }
     else if (type == "CPS4")
     {   
-        element = std::make_unique<CPS4>(element_id,element_connectivity,pid,4,4*2,9,4,2,"CPS4");
+        element = std::make_unique<CPS4>(element_id,element_connectivity,pid);
     }
     else if (type == "C3D10")
     {   
-        element = std::make_unique<C3D10>(element_id,element_connectivity,pid,10,30,24,4,3,"C3D10");
+        element = std::make_unique<C3D10>(element_id,element_connectivity,pid);
     }
     else if (type == "C3D8")
     {      
-        element = std::make_unique<C3D8>(element_id,element_connectivity,pid,8,24,12,8,3,"C3D8");
+        element = std::make_unique<C3D8>(element_id,element_connectivity,pid);
     }
     else if (type == "C3D20")
     {      
-        element = std::make_unique<C3D20>(element_id,element_connectivity,pid,20,60,25,27,3,"C3D20");
+        element = std::make_unique<C3D20>(element_id,element_connectivity,pid);
     }
     else
     {

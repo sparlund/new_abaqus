@@ -36,11 +36,5 @@ void CPS3::calculate_Me(){
 
 CPS3::CPS3(unsigned int                        id,
            std::vector<Node*>                  connectivity,
-           Pid*                                pid,
-           const unsigned short                nnodes,
-           const unsigned short                ndofs,
-           const unsigned short                vtk_identifier,
-           const unsigned short                ngp,
-           const unsigned short                dimensions,
-           std::string                         element_type):
-Element{id,connectivity,pid,nnodes,ndofs,vtk_identifier,ngp,dimensions,element_type}{}
+           Pid*                                pid):
+Element{id,connectivity,pid,ElementType::CPS3,3,3*2,6,1,2}{}
