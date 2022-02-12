@@ -13,10 +13,10 @@ private:
     float       E;
     float       v;
     std::string name;
+public:
     // Constitutive matrix (linear continuum mechanics)
     Eigen::Matrix<float,6,6> D_3D_linear_continuum_mechanics;
     Eigen::Matrix<float,3,3> D_2D_linear_continuum_mechanics;
-public:
     void        set_density(float density){this->density = density;};
     void        set_E(float E){this->E = E; };
     void        set_v(float v){this->v = v;};
