@@ -1,11 +1,13 @@
 #include "../include/CPS3.h"
 #include "../include/dof.h"
 #include <iostream>
+#include <iomanip>
 
 
 void CPS3::calculate_Ke(){
     Eigen::Matrix<float,2,2> J;
     Eigen::Matrix<float,3,6> B;
+    auto D = pid->get_mid()->D_2D_linear_continuum_mechanics;
     // Want to find elements addition to the stiffness- & load matrix
     float x1 = connectivity.at(0)->x;
     float x2 = connectivity.at(1)->x;
@@ -13,29 +15,12 @@ void CPS3::calculate_Ke(){
     float y1 = connectivity.at(0)->y;
     float y2 = connectivity.at(1)->y;
     float y3 = connectivity.at(2)->y;
-    // create coord matrix needed to find area
-    // TODO: calculate area
-    // area = 0.5*coord.determinant();
     J << x1-x3, y1 - y3,
             x2-x3, y2 - y3;
     B << J(1,1), 0, -J(0,1), 0, -J(1,1)+J(0,1), 0,
             0, -J(1,0), 0, J(0,0), 0, J(1,0)-J(0,0),
             -J(1,0), J(1,1), J(0,0), -J(0,1), J(1,0)-J(0,0), -J(1,1)+J(0,1);
     B = 1/J.determinant()*B; 
-    Eigen::Matrix<float,2,6> global_N_matrix;
-    // global_N_matrix << 1 x1
-    // TODO: plane strain
-    Mid* mid = pid->get_mid();
-    float v = mid->get_v();
-    float E = mid->get_E();        
-    float t = 1.0;
-    Eigen::Matrix<float,3,3> D_temp;
-    // plane stress:
-    D_temp << 1, v,       0,
-                v, 1,       0,
-                0, 0, (1-v)/2;
-    Eigen::Matrix<float,3,3> D = (E/( 1-(v*v) )) * D_temp;
-    // // Finally compute elements contribution to stiffness matrix and load vector:
     Ke = t*0.5*J.determinant()*B.transpose()*D*B;
 }
 void CPS3::calculate_Me(){

@@ -3,20 +3,7 @@
 #include <stdlib.h>
 
 void C3D20::calculate_Ke(){
-    Mid* mid = pid->get_mid();
-    float v = mid->get_v();
-    float E = mid->get_E();
-    Eigen::Matrix<float,6,6> D;
-    // Constitutive matrix (linear continuum mechanics)
-    D << 1-v,     v,     v,           0,          0,          0,
-           v,   1-v,     v,           0,          0,          0,
-           v,     v,   1-v,           0,          0,          0,
-           0,     0,     0,   (1-2*v)/2,          0,          0,
-           0,     0,     0,           0,  (1-2*v)/2,          0,
-           0,     0,     0,           0,          0,  (1-2*v)/2;
-    D *= E/((1+v)*(1-2*v));
-    
-    // Weight = volume*density
+    setup_coord();
     // Formula for volume of generic hexahedron found here
     // Don't account for mid nodes...
     // TODO: this gives an error for Eigen, why?
@@ -48,6 +35,7 @@ void C3D20::calculate_Ke(){
     float dN1dEta,dN2dEta,dN3dEta,dN4dEta,dN5dEta,dN6dEta,dN7dEta,dN8dEta,dN9dEta,dN10dEta,dN11dEta,dN12dEta,dN13dEta,dN14dEta,dN15dEta,dN16dEta,dN17dEta,dN18dEta,dN19dEta,dN20dEta;   
     float dN1dMy,dN2dMy,dN3dMy,dN4dMy,dN5dMy,dN6dMy,dN7dMy,dN8dMy,dN9dMy,dN10dMy,dN11dMy,dN12dMy,dN13dMy,dN14dMy,dN15dMy,dN16dMy,dN17dMy,dN18dMy,dN19dMy,dN20dMy;
     float w,xhi,eta,my;
+    auto D = pid->get_mid()->D_3D_linear_continuum_mechanics;
     for (unsigned int i = 0; i < gauss_points->size(); i++) {
         xhi = gauss_points->at(i).at(0);
         eta = gauss_points->at(i).at(1);
@@ -165,6 +153,7 @@ void C3D20::calculate_Ke(){
 }
 
 void C3D20::calculate_Me(){
+    setup_coord();
     // size(N) = dof per node x (nnodes*dof per node)
     Eigen::Matrix<float,3,60> N;
     float N1,N2,N3,N4,N5,N6,N7,N8,N9,N10,N11,N12,N13,N14,N15,N16,N17,N18,N19,N20;

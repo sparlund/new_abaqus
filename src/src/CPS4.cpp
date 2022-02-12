@@ -2,6 +2,51 @@
 #include <cmath>
 #include "../include/CPS4.h"
 
+void CPS4::calculate_f_internal(dynVector u)
+{
+    // f_int = integrate(B*σ*t)
+    // size(f_int) = 1 x (ngp x ndim)
+    // Use Gauss integration. We could have saved the B
+    // matrix from the stiffness matrix calculation but I don't feel
+    // it's worth the extra hassle?
+    Eigen::Matrix<float,2,4> dNdXhidEta;
+    Eigen::Matrix<float,2,4> dNdxdy;
+    Eigen::Matrix<float,2,2> J;
+    Eigen::Matrix<float,3,8> Bi;
+    float xhi,eta,w;
+    float dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi;
+    float dN1dEta,dN2dEta,dN3dEta,dN4dEta;
+    for (unsigned char i = 0; i < gauss_points->size(); i+2)
+    {
+        Bi.setZero();
+        xhi = gauss_points->at(i).at(0);
+        eta = gauss_points->at(i).at(1);
+        w   = gauss_weights->at(i);
+        // shape functions derivatives wrt xhi
+        dN1dXhi = -0.25*(1-eta);
+        dN2dXhi =  0.25*(1-eta);
+        dN3dXhi =  0.25*(1+eta);
+        dN4dXhi = -0.25*(1+eta);
+        // shape functions derivatives wrt eta
+        dN1dEta = -0.25*(1-xhi);
+        dN2dEta = -0.25*(1+xhi); 
+        dN3dEta =  0.25*(1+xhi); 
+        dN4dEta =  0.25*(1-xhi); 
+        // 
+        dNdXhidEta.row(0) << dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi;
+        dNdXhidEta.row(1) << dN1dEta,dN2dEta,dN3dEta,dN4dEta;
+        J = dNdXhidEta*coord;
+        detJ.push_back(J.determinant());
+        dNdxdy = J.inverse()*dNdXhidEta;
+        Bi <<    dNdxdy(0,0),           0, dNdxdy(0,1),           0, dNdxdy(0,2),           0, dNdxdy(0,3),           0,
+                        0, dNdxdy(1,0),           0, dNdxdy(1,1),           0, dNdxdy(1,2),           0, dNdxdy(1,3),
+                dNdxdy(1,0), dNdxdy(0,0), dNdxdy(1,1), dNdxdy(0,1), dNdxdy(1,2), dNdxdy(0,2), dNdxdy(1,3), dNdxdy(0,3); 
+        // auto stress_i = calculate_stress(D, u);
+        // f_int.coeff(i)   = Bi * stress_i * t;
+        // f_int.coeff(i+1) = Bi * stress_i * t;
+    }
+}
+
 std::vector<Scalar> CPS4::calculate_stress(dynMatrix D,
                                            dynMatrix u)
 {
@@ -86,20 +131,13 @@ std::vector<Segment>& CPS4::get_segments(Node* node)
 
 void CPS4::calculate_Ke(){
     setup_coord();
-    Mid* mid = pid->get_mid();
-    float v = mid->get_v();
-    float E = mid->get_E();
-    Eigen::Matrix<float,3,3> D;
-    D << 1, v, 0,
-         v, 1, 0,
-         0, 0, 0.5*(1-v);
-    D *= E/(1-(v*v));
      // create coord matrix needed to find Jacobian
     // setup_coord();
     Eigen::Matrix<float,2,4> dNdXhidEta;
     Eigen::Matrix<float,2,4> dNdxdy;
     Eigen::Matrix<float,2,2> J;
     Eigen::Matrix<float,3,8> Bi;
+    auto D = pid->get_mid()->D_2D_linear_continuum_mechanics;
     float xhi,eta,w;
     float dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi;
     float dN1dEta,dN2dEta,dN3dEta,dN4dEta;

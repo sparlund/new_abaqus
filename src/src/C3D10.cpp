@@ -4,18 +4,6 @@
 
 void C3D10::calculate_Ke(){
     setup_coord();
-    Mid* mid = pid->get_mid();
-    float v = mid->get_v();
-    float E = mid->get_E();
-    Eigen::Matrix<float,6,6> D;
-    // Constitutive matrix (linear continuum mechanics)
-    D << 1-v,     v,     v,           0,          0,          0,
-           v,   1-v,     v,           0,          0,          0,
-           v,     v,   1-v,           0,          0,          0,
-           0,     0,     0,   (1-2*v)/2,          0,          0,
-           0,     0,     0,           0,  (1-2*v)/2,          0,
-           0,     0,     0,           0,          0,  (1-2*v)/2;
-    D *= E/((1+v)*(1-2*v));
     Eigen::Matrix<float,3,3> J;
     Eigen::Matrix<float,6,30> B;
     
@@ -29,6 +17,7 @@ void C3D10::calculate_Ke(){
     float dN1dEta, dN2dEta, dN3dEta, dN4dEta, dN5dEta, dN6dEta, dN7dEta, dN8dEta, dN9dEta, dN10dEta;
     float dN1dMy, dN2dMy, dN3dMy, dN4dMy, dN5dMy, dN6dMy, dN7dMy, dN8dMy, dN9dMy, dN10dMy;
     float xhi,eta,my,w;
+    auto D = pid->get_mid()->D_3D_linear_continuum_mechanics;
     for (unsigned int i = 0; i < gauss_points->size(); i++)
     {
         xhi = gauss_points->at(i).at(0);
