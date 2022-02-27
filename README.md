@@ -34,7 +34,7 @@ To run this example:
 ## Example #2, 3D tuning fork 
 A tuning fork made up of 4 thousand second order tetra element (C3D10). This mesh has 23 thousand degrees of freedom and took ~~close to an hour~~ 24 seconds to solve on my laptop. However, it takes only 7 seconds to solve on the same computer using [Calculix](http://www.calculix.de/) which is another FEM solver that also follows the Abaqus(C) input file format.
 
-The comparison of results between Abaqus(C) and new_abaqus is good in this example. For the 8 first modes the average difference is 17Hz, minimum difference is 0.3Hz and the maximum is 70Hz. I chalk this difference up to the different eigenvalue solvers.
+The comparison of results between Abaqus(C) and new_abaqus match in this example. For the first 20 modes the typical difference is result is ~0.5%.
 
 Tuning fork geometry | 1st eigenmode | 4th eigenmode
 -------------------------|-------------------------|-------------------------
@@ -44,7 +44,7 @@ Tuning fork geometry | 1st eigenmode | 4th eigenmode
 | Eigenfrequency \[Hz\] | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |-------------|---|---|---|---|---|---|---|---|
 | Abaqus (c)  | 158.62 | 163.19 | 378.21 | 554.76 | 1120.28 | 1155.02 | 1186.46 | 1977.45 | 2501.20 | 3467.12
-| new_abaqus  | 158.24 | 232.48 | 416.13 | 590.17 | 1120.96 | 1168.65 | 1192.04 | 1982.79 | 2504.98 | 3467.45
+| new_abaqus  | 158.62 | 163.19 | 378.21 | 554.76 | 1120.28 | 1155.02 | 1186.46 | 1977.45 | 2501.20 | 3476.12
 
 
 To run this example:
