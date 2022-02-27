@@ -80,6 +80,8 @@ private:
     Eigen::SparseMatrix<float> M;
     // global load vector
     Eigen::SparseVector<float> f;
+    // internal force vector
+    Eigen::SparseVector<float> f_int;
     struct Mtx_to_print
     {
         bool STIFFNESS = false;

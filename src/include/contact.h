@@ -15,7 +15,7 @@ class Contact
 {
 private:
     // penalty value is dependent on stiffness of contacting materials! neets to be set dynamically.
-    // typically ~1-50*E
+    // typically ~1e-50*E
     float penalty = 0;
     // tolerance for equilibrium iterations. Maybe update dynamically?
     float relative_tolerance = 1e-6;
@@ -27,6 +27,7 @@ private:
     std::vector<Node*> old_nodes_in_contact, current_nodes_in_contact;
     bool is_segment_in_master_segments(const Segment& segment) const;
 public:
+    float get_penalty_factor() const {return penalty;}
     std::vector<Segment> master_segments;
     // TODO: this should be something like 1e-5, will change when contact works.
     const float residual_tolerance = 0.1;

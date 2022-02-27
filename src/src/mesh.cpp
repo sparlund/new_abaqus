@@ -380,20 +380,29 @@ void Mesh::solve_static_with_contact()
     for step in number_of_steps:
         Equilibrium iterations below
         for iteration in max_iterations:
+            1) Assemble K, f_int
             assemble K
             compute internal force vector and assemble in f_int
-            if number of nodes in contact != 0:
+            2) Take special care of nodes in contact (found infrom previous iteration)
+            if number of nodes in contact from previous iteration != 0:
                 f_int = f_int + penatly*displacement at contact nodes
+
+                                      found from u_n-1
+                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 K = K + penalty*displacement at contact nodes
                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                                     "spring forces"
-            Q = nodal forces from prescribed displacement
+            3) Residual forces (needed for convergence check)
+            Q = nodal forces in nodes where we have prescribed displacement or force
             R = Q - f_int = residual of nodal forces (free nodes)
+            4) Solve
             u = solve(K,bc)
+            5) Admin
             save displacement for this step
+            6) Check for nodes in contact
             find what nodes are in contact and penetrating too far
             save which nodes are in contact this step
-            
+            5) Check for convergence
             error = norm(R)
             if error < max(abs(R))*relative_tolerance
                 convergence reached, exit
@@ -404,37 +413,49 @@ void Mesh::solve_static_with_contact()
     */
     // Let's say 1000 iterations is max and we have diverged.
     size_t iteration, max_iterations = 1e3;
+    std::vector<std::pair<Node*, float>> penetrating_nodes;
+    dynMatrix Q, R;
+    Q.resize(get_number_of_dofs());
+    Q.setZero();
     for(size_t step = 1; step < steps + 1; step++)
     {
         std::clock_t clock_solve_iteration;
         float residual = 0;
-        // 1) Solve linear displacement for a small step
-        // 2) Correct penetrating nodes
-        // 3)
         // float duration_clock_solve;
         // clock_solve = std::clock();  
+        // Numbering from instructions above
         // 1)
         // re-assemble K since we it _might_ have been changed after solving the previous step
         assemble(true);
         apply_boundary_conditions_on_K();
-        // Ku=f, want to solve for u
-        Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
-        solver.compute(K_with_bc);
         auto loadscale = (float)step/(float)steps;
+        // 2)
+        if (penetrating_nodes.size() != 0)
+        {
+            for (const auto& penetrating_node: penetrating_nodes)
+            {
+                f_int += contact->get_penalty_factor()*penetrating_node.second;
+                K     += contact->get_penalty_factor()*penetrating_node.second
+            }
+        }
+        Q = f_int.coeffRef()
+        auto R = Q - 
+
         auto current_u = solver.solve(f*loadscale);
         // Solve linear displacement for small load
         // save result as new state for next iteration
         u_step.push_back(current_u);
         auto& temp = nodes[global_2_local_node_id[9]];
         update_geometry(u_step.back());
-        auto penetrating_nodes = contact->get_penetrating_nodes();
+        penetrating_nodes = contact->get_penetrating_nodes();
         // 2)
         // Modify penetrating nodes
         for (auto& node_penetration : penetrating_nodes)
         {
             std::cout << "node " << node_penetration.first->id << " penetrating " << node_penetration.second << " [mm] " << std::endl;
-            
         }
+        Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
+        solver.compute(K_with_bc);
         // duration_clock_solve_iteration = ( std::clock() - clock_solve_iteration ) / (float) CLOCKS_PER_SEC;
 
     }
