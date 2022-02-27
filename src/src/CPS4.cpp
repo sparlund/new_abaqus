@@ -9,13 +9,13 @@ void CPS4::calculate_f_internal(dynVector u)
     // Use Gauss integration. We could have saved the B
     // matrix from the stiffness matrix calculation but I don't feel
     // it's worth the extra hassle?
-    Eigen::Matrix<float,2,4> dNdXhidEta;
-    Eigen::Matrix<float,2,4> dNdxdy;
-    Eigen::Matrix<float,2,2> J;
-    Eigen::Matrix<float,3,8> Bi;
-    float xhi,eta,w;
-    float dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi;
-    float dN1dEta,dN2dEta,dN3dEta,dN4dEta;
+    Eigen::Matrix<double,2,4> dNdXhidEta;
+    Eigen::Matrix<double,2,4> dNdxdy;
+    Eigen::Matrix<double,2,2> J;
+    Eigen::Matrix<double,3,8> Bi;
+    double xhi,eta,w;
+    double dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi;
+    double dN1dEta,dN2dEta,dN3dEta,dN4dEta;
     for (unsigned char i = 0; i < gauss_points->size(); i+2)
     {
         Bi.setZero();
@@ -133,14 +133,14 @@ void CPS4::calculate_Ke(){
     setup_coord();
      // create coord matrix needed to find Jacobian
     // setup_coord();
-    Eigen::Matrix<float,2,4> dNdXhidEta;
-    Eigen::Matrix<float,2,4> dNdxdy;
-    Eigen::Matrix<float,2,2> J;
-    Eigen::Matrix<float,3,8> Bi;
+    Eigen::Matrix<double,2,4> dNdXhidEta;
+    Eigen::Matrix<double,2,4> dNdxdy;
+    Eigen::Matrix<double,2,2> J;
+    Eigen::Matrix<double,3,8> Bi;
     auto D = pid->get_mid()->D_2D_linear_continuum_mechanics;
-    float xhi,eta,w;
-    float dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi;
-    float dN1dEta,dN2dEta,dN3dEta,dN4dEta;
+    double xhi,eta,w;
+    double dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi;
+    double dN1dEta,dN2dEta,dN3dEta,dN4dEta;
     for (unsigned char i = 0; i < gauss_points->size(); i++)
     {            
         xhi = gauss_points->at(i).at(0);
@@ -161,7 +161,7 @@ void CPS4::calculate_Ke(){
         dNdXhidEta.row(1) << dN1dEta,dN2dEta,dN3dEta,dN4dEta;
         J = dNdXhidEta*coord;
         detJ.push_back(J.determinant());
-        if (detJ.back() < 0.1f)
+        if (detJ.back() < 0.d)
         {
             std::cout << "WARNING: Jacobian determinant less than 0.1 for element #" << id << std::endl;    
         }
@@ -176,9 +176,9 @@ void CPS4::calculate_Ke(){
 void CPS4::calculate_Me(){
     setup_coord();
     // size(N) = dof per node x (nnodes*dof per node)
-    Eigen::Matrix<float,2,8> N;
-    float xhi,eta,w;
-    float N1,N2,N3,N4;
+    Eigen::Matrix<double,2,8> N;
+    double xhi,eta,w;
+    double N1,N2,N3,N4;
     for (unsigned char i = 0; i < gauss_points->size(); i++)
     {            
         xhi = gauss_points->at(i).at(0);

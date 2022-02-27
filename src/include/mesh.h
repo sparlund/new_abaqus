@@ -22,7 +22,7 @@ private:
     unsigned int row_counter = 0;
     std::string current_inputfile = "";
     // the penalty value is used when solving the ODE. It's a relatively large arbitrary number
-    const float penalty_value = 1e36;
+    const double penalty_value = 1e36;
     // mesh is the owner of all nodes, elements, pids and mids
     std::vector<std::unique_ptr<Node>>                  nodes;
     std::vector<std::unique_ptr<Element>>               elements;
@@ -30,14 +30,14 @@ private:
     std::vector<std::unique_ptr<Mid>>                   mids;
     std::vector<std::unique_ptr<Set<Node*>>>            nsets;
     std::vector<std::unique_ptr<Set<Element*>>>         esets;
-    std::vector<std::pair<unsigned int,float>>          bc;
+    std::vector<std::pair<unsigned int,double>>          bc;
     std::unordered_map<unsigned int,unsigned int>       global_2_local_node_id;
     // global node id to pointer
     std::unordered_map<unsigned int, Node*>             node_map;
     std::unordered_map<std::string, Mid*>               mid_map;
     std::unordered_map<std::string, Pid*>               pid_map;
     std::unordered_map<std::string, Set<Node*>*>        node_set_from_node_set_name; 
-    std::vector<std::pair<unsigned int,float>>          f_to_be_added;
+    std::vector<std::pair<unsigned int,double>>          f_to_be_added;
     // The following method are used to add entities from the input file to create the FE model
     void add_node(std::string line,std::unordered_map<std::string, std::string> options);
     void add_element(std::string line,std::unordered_map<std::string, std::string> options);
@@ -54,8 +54,8 @@ private:
     // Let's say 10 steps? Too difficult to make it a dynamic step value like abaqus..
     const size_t steps = 100;
     bool steady_state_dynamics_analysis=false;
-    float steady_state_dynamics_lower_limit = 0;
-    float steady_state_dynamics_upper_limit = 20e3;
+    double steady_state_dynamics_lower_limit = 0;
+    double steady_state_dynamics_upper_limit = 20e3;
     int   steady_state_dynamics_number_of_points = 1;
     size_t ndim = 2;
     std::string eigenvalue_solution_method;
@@ -74,14 +74,14 @@ private:
                                                "*STEADY STATE DYNAMICS",
                                                "*MATRIX GENERATE"};
     // global stiffness matrix
-    Eigen::SparseMatrix<float> K;
-    Eigen::SparseMatrix<float> K_with_bc;
+    Eigen::SparseMatrix<double> K;
+    Eigen::SparseMatrix<double> K_with_bc;
     // global mass matrix
-    Eigen::SparseMatrix<float> M;
+    Eigen::SparseMatrix<double> M;
     // global load vector
-    Eigen::SparseVector<float> f;
+    Eigen::SparseVector<double> f;
     // internal force vector
-    Eigen::SparseVector<float> f_int;
+    Eigen::SparseVector<double> f_int;
     struct Mtx_to_print
     {
         bool STIFFNESS = false;
@@ -107,17 +107,17 @@ public:
     unsigned int  get_number_of_dofs() const;
     unsigned int  number_of_modes_to_find;
     // size(eigenvalues) = number_of_modes*1
-    Eigen::Matrix<float,Eigen::Dynamic,1> eigenvalues;
-    Eigen::Matrix<float,Eigen::Dynamic,1> eigenfrequencies;
+    Eigen::Matrix<double,Eigen::Dynamic,1> eigenvalues;
+    Eigen::Matrix<double,Eigen::Dynamic,1> eigenfrequencies;
     // size(eigenvectors) = ndofs*number_of_modes
     dynMatrix eigenvectors;
     // solution to Ku=f
-    Eigen::Matrix<float,Eigen::Dynamic,1> u;
-    std::vector<Eigen::Matrix<float,Eigen::Dynamic,1>> u_step;
+    Eigen::Matrix<double,Eigen::Dynamic,1> u;
+    std::vector<Eigen::Matrix<double,Eigen::Dynamic,1>> u_step;
     Mtx_to_print mtx_to_print;
-    void update_geometry(const Eigen::Matrix<float,Eigen::Dynamic,1>&);
+    void update_geometry(const Eigen::Matrix<double,Eigen::Dynamic,1>&);
     void matrix_generate();
-    void print_matrix_to_mtx(const Eigen::SparseMatrix<float>&,const std::string&) const;
+    void print_matrix_to_mtx(const Eigen::SparseMatrix<double>&,const std::string&) const;
     void assemble(bool quiet = false);
     void solve();
     void solve_static();

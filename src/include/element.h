@@ -10,9 +10,9 @@
 
 // ABC
 using Segment    = std::pair<Node*, Node*>;
-using dynMatrix  = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
-using dynVector  = Eigen::Matrix<float, Eigen::Dynamic, 1>;
-using Scalar     = Eigen::Product<Eigen::MatrixXf, Eigen::MatrixXf, 0>;
+using dynMatrix  = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
+using dynVector  = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+using Scalar     = Eigen::Product<Eigen::MatrixXd, Eigen::MatrixXd, 0>;
 
 class Element
 {
@@ -30,7 +30,7 @@ protected:
     std::vector<Node*>                                  connectivity;
     Pid*                                                pid;
     std::vector<unsigned int>                           dofs_id;
-    std::vector<float>                                  detJ;
+    std::vector<double>                                  detJ;
     static unsigned int                                 element_counter;
     dynMatrix Ke;
     dynMatrix Me;
@@ -43,7 +43,7 @@ protected:
     void                                                setup_dofs();
 public:
     // TODO: these are not calculated at element conception for every element!
-    const float                                         area = 0, volume = 0, weight = 0;
+    const double                                         area = 0, volume = 0, weight = 0;
     const unsigned short                                nnodes;
     const unsigned short                                ndofs;
     const unsigned short                                vtk_identifier;
@@ -52,7 +52,7 @@ public:
     const ElementType                                   elementType;
     const unsigned int                                  id;
     // Let's not care about thickness too much yet
-    const float                                         t = 1.0;
+    const double                                         t = 1.0;
     virtual void                                        calculate_Ke()=0;
     virtual void                                        calculate_Me()=0;
     virtual void                                        calculate_f_internal(dynVector u);
@@ -67,7 +67,7 @@ public:
     dynMatrix                                           get_Me() const {return Me;};
     void                                                print_element_info_to_log() const ;
     // small function used when going from eigenmode to eigenfrequency
-    float inv_div_by1(float in) const;
+    double inv_div_by1(double in) const;
     virtual ~Element() = default;
     Element(unsigned int                        id,
             std::vector<Node*>                  connectivity,

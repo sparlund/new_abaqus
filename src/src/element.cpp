@@ -126,14 +126,14 @@ Element::Element(unsigned int                        id,
 
 unsigned int Element::element_counter=0;
 
-float Element::inv_div_by1(float in) const {
-    if (in > std::numeric_limits<float>::min())
+double Element::inv_div_by1(double in) const {
+    if (in > std::numeric_limits<double>::min())
     {
         return 1/in;
     }
     else
     {   
-        return std::max(1.25e9f,1/std::numeric_limits<float>::min());
+        return std::max(1.25e9d,1/std::numeric_limits<double>::min());
     }
 }
 

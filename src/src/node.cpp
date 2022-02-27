@@ -2,7 +2,7 @@
 #include "../include/node.h"
 #include "../include/dof.h"
 
-Node::Node(unsigned int id, float x_, float y_, float z_):id{id},original_x{x_},original_y{y_},original_z{z_}
+Node::Node(unsigned int id, double x_, double y_, double z_):id{id},original_x{x_},original_y{y_},original_z{z_}
 {
     x = x_;
     y = y_;

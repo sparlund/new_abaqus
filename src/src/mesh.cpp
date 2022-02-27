@@ -39,7 +39,7 @@
 #include <numeric>
 
 // TODO: move this to misc::
-float squirt_and_divide_by_2pi(float in){
+double squirt_and_divide_by_2pi(double in){
     return std::sqrt(in)/(2*3.14159265359);
 }
 
@@ -48,19 +48,19 @@ unsigned int Mesh::get_number_of_dofs() const{
     return temp_ndofs;
 }
 
-void Mesh::print_matrix_to_mtx(const Eigen::SparseMatrix<float>& A,const std::string& output_filename) const
+void Mesh::print_matrix_to_mtx(const Eigen::SparseMatrix<double>& A,const std::string& output_filename) const
 {
     // Print input matrix A in abaqus "COORDINATE" format in a .mtx-file
     std::ofstream mtx;
     mtx.open(output_filename);
     for (int k=0; k<A.outerSize(); ++k){
-        for (Eigen::SparseMatrix<float>::InnerIterator it(A,k); it; ++it){
+        for (Eigen::SparseMatrix<double>::InnerIterator it(A,k); it; ++it){
             int row = it.row()+1;   // row index
             int column = it.col()+1;   // col index (here it is equal to k)
             // it.index(); // inner index, here it is equal to it.row()
             // this should only print non-zero but doesn't work correctly? print zeros to, need to add a check
-            float v = it.value();
-            if (v != 0.0f)
+            double v = it.value();
+            if (v != 0.d)
             {
             mtx << row << " " << column << " " << v << std::endl;
             }
@@ -75,7 +75,7 @@ void Mesh::export_2_vtk(){
     // https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
     // http://profs.sci.univr.it/~caliari/aa1314/advanced_numerical_analysis/Pellegrini.pdf
     std::clock_t clock_export;
-    float duration_clock_export;
+    double duration_clock_export;
     clock_export = std::clock();
     std::cout << "---    Starting to export VTK results file    ---" << std::endl;
     std::string output_filename = analysis_name + ".vtk";
@@ -86,7 +86,7 @@ void Mesh::export_2_vtk(){
     output << "ASCII" << std::endl;
     output << "DATASET UNSTRUCTURED_GRID" << std::endl;
     // no need to use double precision on printing results
-    output << "POINTS " << nodes.size() << " float" << std::endl;
+    output << "POINTS " << nodes.size() << " double" << std::endl;
     // print nodes to result file
     for(const auto& node: nodes)
     {
@@ -125,8 +125,8 @@ void Mesh::export_2_vtk(){
         A.setZero();
         for(size_t step = 0; step < steps; step++)
         {
-            output << "contact_displacement_" << step+1 << " 3 " << " " << nodes.size() << " float" << std::endl;
-            dynMatrix u_temp = Eigen::Map<Eigen::MatrixXf>(u_step.at(step).data(), ndim, nodes.size()).transpose();
+            output << "contact_displacement_" << step+1 << " 3 " << " " << nodes.size() << " double" << std::endl;
+            dynMatrix u_temp = Eigen::Map<Eigen::MatrixXd>(u_step.at(step).data(), ndim, nodes.size()).transpose();
             A.col(0) += u_temp.col(0);
             A.col(1) += u_temp.col(1);
             output << A << std::endl;
@@ -135,7 +135,7 @@ void Mesh::export_2_vtk(){
     else if (static_analysis)
     {
         output << "FIELD displacement 1" << std::endl;
-        output << "displacement 3 " << nodes.size() << " float" << std::endl;
+        output << "displacement 3 " << nodes.size() << " double" << std::endl;
         for(const auto& node: nodes)
         {
             // 2 scenarios available so far: 3 dofs per node & 2 dofs per node
@@ -158,7 +158,7 @@ void Mesh::export_2_vtk(){
         {
             output << "FIELD mode" << (number_of_modes_to_find - mode) << " 1" << std::endl;
             // data name, number of values (3 for 3D & 2D, Z is zero for 2D, datatype)
-            output << "mode" << (number_of_modes_to_find - mode) << " 3 " << nodes.size() << " float" << std::endl;
+            output << "mode" << (number_of_modes_to_find - mode) << " 3 " << nodes.size() << " double" << std::endl;
             // for (unsigned int i = 0; i < nodes.size(); i++)
             for(const auto& node: nodes)
             {
@@ -195,7 +195,7 @@ void Mesh::export_2_vtk(){
         }          
     }    
     output.close();
-    duration_clock_export = ( std::clock() - clock_export ) / static_cast<float>(CLOCKS_PER_SEC);
+    duration_clock_export = ( std::clock() - clock_export ) / static_cast<double>(CLOCKS_PER_SEC);
     std::cout << "---    Exported to VTK format in " << duration_clock_export << " seconds (wallclock time)   ---" << std::endl;
 }
 
@@ -262,12 +262,12 @@ void Mesh::solve_steady_state_dynamics()
     auto duration_clock_solve = std::clock();
     // K_eff = -w^2 * M + K;
     auto frequency_step_width = (steady_state_dynamics_upper_limit - steady_state_dynamics_lower_limit) / steady_state_dynamics_number_of_points;
-    float w, frequency;
+    double w, frequency;
     auto ndofs = get_number_of_dofs();
-    // Eigen::SparseVector<float> F{ndofs};
-    Eigen::SparseMatrix<std::complex<float>> H{ndofs,ndofs};
-    const std::complex<float> i{0.0,1.0};
-    Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
+    // Eigen::SparseVector<double> F{ndofs};
+    Eigen::SparseMatrix<std::complex<double>> H{ndofs,ndofs};
+    const std::complex<double> i{0.0,1.0};
+    Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
     std::cout << "A" << std::endl;
     for(unsigned int k = 0; k < 1; k++)
     {
@@ -278,7 +278,7 @@ void Mesh::solve_steady_state_dynamics()
         //                    H
         auto F = f*std::exp(i*w);
         auto t = std::pow(w,2)*M;
-        Eigen::SparseMatrix<float> H = M + K;
+        Eigen::SparseMatrix<double> H = M + K;
         solver.compute(H);
         if(solver.info()!=Eigen::Success)
         {
@@ -293,7 +293,7 @@ void Mesh::solve_steady_state_dynamics()
             exit(0);
         }
     }
-    duration_clock_solve = ( std::clock() - clock_solve ) / static_cast<float>(CLOCKS_PER_SEC);
+    duration_clock_solve = ( std::clock() - clock_solve ) / static_cast<double>(CLOCKS_PER_SEC);
     std::cout << "---    Solution to eigenvalue problem found in " << std::setprecision(2) << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
 }
 
@@ -307,7 +307,7 @@ void Mesh::solve_eigenfrequency(){
     clock_solve = std::clock();  
     // Need to modify global stiffness matrix
     // in order to account for boundary conditions
-    Eigen::SparseMatrix<float> K_eigen = K;
+    Eigen::SparseMatrix<double> K_eigen = K;
     std::cout << "a" << std::endl;
     for(const auto& i : bc)
     {
@@ -316,16 +316,16 @@ void Mesh::solve_eigenfrequency(){
         K_eigen.coeffRef(current_global_dof,current_global_dof) = penalty_value;
     }
     std::cout << "b" << std::endl;
-    Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse> opK1(K_eigen,M);
-    Spectra::SparseSymMatProd<float> opM1(M);
+    Spectra::SymShiftInvert<double, Eigen::Sparse, Eigen::Sparse> opK1(K_eigen,M);
+    Spectra::SparseSymMatProd<double> opM1(M);
     unsigned int ncv = (2*number_of_modes_to_find)-1;
     // abaqus defines number of eigenvalues to solve for as 
     // the ones with smallest magntide --> sigma=0
     double sigma = 0;
     std::cout << "c" << std::endl;
-    Spectra::SymGEigsShiftSolver<float,
-                        Spectra::SymShiftInvert<float, Eigen::Sparse, Eigen::Sparse>,
-                        Spectra::SparseSymMatProd<float>,
+    Spectra::SymGEigsShiftSolver<double,
+                        Spectra::SymShiftInvert<double, Eigen::Sparse, Eigen::Sparse>,
+                        Spectra::SparseSymMatProd<double>,
                         Spectra::GEigsMode::ShiftInvert> es(opK1,
                                                             opM1,
                                                             number_of_modes_to_find,
@@ -342,7 +342,7 @@ void Mesh::solve_eigenfrequency(){
 
     // Eigen::MatrixXd Mdense = M;
     // Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXd> es(A, Bdense);
-    auto duration_clock_solve = ( std::clock() - clock_solve ) / static_cast<float>(CLOCKS_PER_SEC);
+    auto duration_clock_solve = ( std::clock() - clock_solve ) / static_cast<double>(CLOCKS_PER_SEC);
     std::cout << "                              E I G E N V A L U E    O U T P U T\n" << std::endl;
     std::cout << " MODE NO      EIGENVALUE              FREQUENCY         " << std::endl;//GENERALIZED MASS   COMPOSITE MODAL DAMPING" << std::endl
     std::cout << "                             (RAD/TIME)   (CYCLES/TIME)\n\n" << std::endl;
@@ -360,7 +360,7 @@ void Mesh::solve_static_with_contact()
 {
     std::cout << "---    Starting to solve non-linear problem with contact mechanics    ---" << std::endl;
     std::clock_t clock_solve;
-    float duration_clock_solve_iteration, duration_clock_solve;
+    double duration_clock_solve_iteration, duration_clock_solve;
     clock_solve = std::clock();
     // std::cout << "Master segments:" << std::endl;
     // for (auto segment : contact->master_segments)
@@ -413,33 +413,36 @@ void Mesh::solve_static_with_contact()
     */
     // Let's say 1000 iterations is max and we have diverged.
     size_t iteration, max_iterations = 1e3;
-    std::vector<std::pair<Node*, float>> penetrating_nodes;
-    dynMatrix Q, R;
-    Q.resize(get_number_of_dofs());
-    Q.setZero();
+    std::vector<std::pair<Node*, double>> penetrating_nodes;
+    // dynMatrix Q, R;
+    // Q.resize(get_number_of_dofs());
+    // Q.setZero();
+    // R.resize(get_number_of_dofs());
+    // R.setZero();
+    Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
     for(size_t step = 1; step < steps + 1; step++)
     {
         std::clock_t clock_solve_iteration;
-        float residual = 0;
-        // float duration_clock_solve;
+        double residual = 0;
+        // double duration_clock_solve;
         // clock_solve = std::clock();  
         // Numbering from instructions above
         // 1)
         // re-assemble K since we it _might_ have been changed after solving the previous step
         assemble(true);
         apply_boundary_conditions_on_K();
-        auto loadscale = (float)step/(float)steps;
+        auto loadscale = (double)step/(double)steps;
         // 2)
         if (penetrating_nodes.size() != 0)
         {
             for (const auto& penetrating_node: penetrating_nodes)
             {
-                f_int += contact->get_penalty_factor()*penetrating_node.second;
-                K     += contact->get_penalty_factor()*penetrating_node.second
+                // f_int += contact->get_penalty_factor()*penetrating_node.second;
+                // K     += contact->get_penalty_factor()*penetrating_node.second
             }
         }
-        Q = f_int.coeffRef()
-        auto R = Q - 
+        // Q = f_int.coeffRef()
+        // auto R = Q - 
 
         auto current_u = solver.solve(f*loadscale);
         // Solve linear displacement for small load
@@ -454,18 +457,18 @@ void Mesh::solve_static_with_contact()
         {
             std::cout << "node " << node_penetration.first->id << " penetrating " << node_penetration.second << " [mm] " << std::endl;
         }
-        Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
+        Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
         solver.compute(K_with_bc);
-        // duration_clock_solve_iteration = ( std::clock() - clock_solve_iteration ) / (float) CLOCKS_PER_SEC;
+        // duration_clock_solve_iteration = ( std::clock() - clock_solve_iteration ) / (double) CLOCKS_PER_SEC;
 
     }
 
     
-    duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
+    duration_clock_solve = ( std::clock() - clock_solve ) / (double) CLOCKS_PER_SEC;
     std::cout << "---    Solution to non-linear problem with contact mechanics found in " << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
 }
 
-void Mesh::update_geometry(const Eigen::Matrix<float,Eigen::Dynamic,1>& previous_u)
+void Mesh::update_geometry(const Eigen::Matrix<double,Eigen::Dynamic,1>& previous_u)
 {
     size_t dof_offset = 0;
     for (auto& node : nodes)
@@ -508,16 +511,16 @@ void Mesh::apply_boundary_conditions_on_K()
 void Mesh::solve_static(){
     std::cout << "---    Starting to solve linear problem Ku=f    ---" << std::endl;
     std::clock_t clock_solve;
-    float duration_clock_solve;
+    double duration_clock_solve;
     clock_solve = std::clock();  
     apply_boundary_conditions_on_K();
     // Ku=f, want to solve for u
-    // Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver(K_with_bc);
-    Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
+    // Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver(K_with_bc);
+    Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
     solver.compute(K_with_bc);
     u = solver.solve(f);
 
-    duration_clock_solve = ( std::clock() - clock_solve ) / (float) CLOCKS_PER_SEC;
+    duration_clock_solve = ( std::clock() - clock_solve ) / (double) CLOCKS_PER_SEC;
     std::cout << "---    Solution to linear problem found in " << duration_clock_solve << " seconds (wallclock time)    ---" << std::endl;
 }
 
@@ -534,7 +537,7 @@ void Mesh::assemble(bool quiet){
     }
     
     // Also print weight as a sanity check!
-    // float model_total_weight = 0;
+    // double model_total_weight = 0;
     // for (unsigned int i = 0; i < elements.size(); i++)
     // {
     //     model_total_weight = model_total_weight + elements.at(i)->get_weight();
@@ -543,7 +546,7 @@ void Mesh::assemble(bool quiet){
     // std::cout << "              weight = " << model_total_weight << std::endl;
     
     std::clock_t clock_assemble;
-    float duration_assemble;
+    double duration_assemble;
     clock_assemble = std::clock();
     // Resize and clear previous values (not necessary every time but whatever) 
     K.resize(get_number_of_dofs(),get_number_of_dofs());
@@ -564,8 +567,8 @@ void Mesh::assemble(bool quiet){
         current_element_counter++;
     }
     current_element_counter = 1;
-    std::vector<Eigen::Triplet<float>> K_tripletList;
-    std::vector<Eigen::Triplet<float>> M_tripletList;
+    std::vector<Eigen::Triplet<double>> K_tripletList;
+    std::vector<Eigen::Triplet<double>> M_tripletList;
     K_tripletList.reserve(get_number_of_dofs());
     M_tripletList.reserve(get_number_of_dofs());
     for(const auto& element:elements)
@@ -577,8 +580,8 @@ void Mesh::assemble(bool quiet){
             unsigned int dof_row = dofs.at(j);
             for(unsigned int k=0;k < dofs.size();k++){
                 auto dof_column = dofs.at(k);
-                K_tripletList.push_back(Eigen::Triplet<float>(dof_row,dof_column,Ke(j,k)));
-                M_tripletList.push_back(Eigen::Triplet<float>(dof_row,dof_column,Me(j,k)));
+                K_tripletList.push_back(Eigen::Triplet<double>(dof_row,dof_column,Ke(j,k)));
+                M_tripletList.push_back(Eigen::Triplet<double>(dof_row,dof_column,Me(j,k)));
             }
         }
         current_element_counter++;
@@ -613,7 +616,7 @@ void Mesh::assemble(bool quiet){
     //         free_dofs.push_back(i);
     //     }
     // }
-    duration_assemble = ( std::clock() - clock_assemble ) / (float) CLOCKS_PER_SEC;;
+    duration_assemble = ( std::clock() - clock_assemble ) / (double) CLOCKS_PER_SEC;;
     if (!quiet)
     {
         std::cout << "---    Assembly completed in " << std::setprecision(2) << duration_assemble << " seconds (wallclock time)    ---" << std::endl;
@@ -659,7 +662,7 @@ void Mesh::add_boundary(std::string line,std::unordered_map<std::string, std::st
                                               [](unsigned char c) { return !std::isdigit(c); }) == node_id_or_nset_name.end();
         unsigned int dof_from  = std::stoi(data.at(1));
         unsigned int dof_to    = std::stoi(data.at(2));
-        auto         magnitude = std::stof(data.at(3));
+        auto         magnitude = std::stod(data.at(3));
         // node,dof_from,dof_to,magnitude
         if (node_boundary)
         {
@@ -701,7 +704,7 @@ void Mesh::add_load(std::string line, std::unordered_map<std::string, std::strin
     auto         data               = misc::split_on(line,',');   
     unsigned int global_node_id     = std::stoi(data.at(0));
     unsigned int local_dof          = std::stoi(data.at(1));
-    float        magnitude          = std::stof(data.at(2));
+    double        magnitude          = std::stod(data.at(2));
     try
     {
         auto         node       = node_map[global_node_id]; 
@@ -726,14 +729,14 @@ void Mesh::read_file_new_method(const std::string& filename){
     std::vector<std::string> filename_split = misc::split_on(filename,'/');   
     std::cout << "---    Starting to read input file " << filename_split.back() << "    ---" << std::endl;
     std::clock_t clock_read_file;
-    float duration_clock_read_file;
+    double duration_clock_read_file;
     clock_read_file = std::clock();  
     misc::append_newline_to_textfile(filename);
     for (auto && keyword : keywords)
     {
         read_file(filename,keyword);
     }
-    duration_clock_read_file = (std::clock() - clock_read_file ) / static_cast<float>(CLOCKS_PER_SEC);
+    duration_clock_read_file = (std::clock() - clock_read_file ) / static_cast<double>(CLOCKS_PER_SEC);
     std::cout << "---    Input file "<< filename << " read and written information to the log file, in " << std::setprecision(2) << duration_clock_read_file << " seconds (wallclock time)    ---" << std::endl;
 
 }
@@ -864,7 +867,7 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                             {
                                 // Skip to next line and save the value
                                 getline(input_file, line);
-                                float density = std::stof(misc::split_on(line, ',').at(0));
+                                double density = std::stod(misc::split_on(line, ',').at(0));
                                 mids.back()->set_density(density);
                                 std::cout << keyword << " = " << density << std::endl;
                             }
@@ -880,8 +883,8 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                                     // Skip to next line and save the value
                                     getline(input_file, line);
                                     auto values = misc::split_on(line, ',');
-                                    float E = std::stof(values.at(0));
-                                    float v = std::stof(values.at(1));
+                                    double E = std::stod(values.at(0));
+                                    double v = std::stod(values.at(1));
                                     mids.back()->set_E(E);
                                     mids.back()->set_v(v);
                                     // Constitutive matrix (linear continuum mechanics)
@@ -1013,8 +1016,8 @@ void Mesh::read_file(const std::string& filename, const std::string& keyword){
                     getline(input_file, line);
                     row_counter++;
                     auto lowLim_and_uppLim_and_total_noPoints = misc::split_on(line, ',');
-                    steady_state_dynamics_lower_limit      = std::stof(lowLim_and_uppLim_and_total_noPoints.at(0));
-                    steady_state_dynamics_upper_limit      = std::stof(lowLim_and_uppLim_and_total_noPoints.at(1));
+                    steady_state_dynamics_lower_limit      = std::stod(lowLim_and_uppLim_and_total_noPoints.at(0));
+                    steady_state_dynamics_upper_limit      = std::stod(lowLim_and_uppLim_and_total_noPoints.at(1));
                     steady_state_dynamics_number_of_points = std::stoi(lowLim_and_uppLim_and_total_noPoints.at(2));
                 }
                 else if (keyword == "*ELEMENT"){
@@ -1182,9 +1185,9 @@ void Mesh::add_node(std::string line,std::unordered_map<std::string, std::string
     auto               dataline_items = misc::split_on(line,',');
     // TODO: add support for more node options like coordinate system and stuff
     unsigned int            global_id = std::stoi(dataline_items.at(0));
-    auto                            x = std::stof(dataline_items.at(1));
-    auto                            y = std::stof(dataline_items.at(2));
-    auto                            z = std::stof(dataline_items.at(3));
+    auto                            x = std::stod(dataline_items.at(1));
+    auto                            y = std::stod(dataline_items.at(2));
+    auto                            z = std::stod(dataline_items.at(3));
     auto                         node = std::make_unique<Node>(global_id,x,y,z);
     node_map[global_id]               = node.get();
     nodes.push_back(std::move(node));

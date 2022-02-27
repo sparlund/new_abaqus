@@ -4,12 +4,12 @@
 #include <iomanip>
 
 
-inline bool SameSign(float a, float b) {
-    return a*b >= 0.0f;
+inline bool SameSign(double a, double b) {
+    return a*b >= 0.d;
 }
 
 
-std::vector<std::pair<Node*, float>> Contact::get_penetrating_nodes()
+std::vector<std::pair<Node*, double>> Contact::get_penetrating_nodes()
 {
     // Check if any slave node is penetrating any master set segments
     // and correct position of those who do
@@ -76,29 +76,29 @@ bool Contact::is_segment_in_master_segments(const Segment& segment) const
     return false;
 }
 
-float Contact::gap(const Segment& segment, const Node* node)
+double Contact::gap(const Segment& segment, const Node* node)
 {
     // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
     // https://stackoverflow.com/questions/849211/short
-    float x = node->x;
-    float y = node->y;
-    float x1 = segment.first->x;
-    float y1 = segment.first->y;
-    float x2 = segment.second->x;
-    float y2 = segment.second->y;
-    float A = x - x1;
-    float B = y - y1;
-    float C = x2 - x1;
-    float D = y2 - y1;
-    float dot = (A * C) + (B * D);
-    float len_sq = (C * C) + (D * D);
-    float param = -1;
+    double x = node->x;
+    double y = node->y;
+    double x1 = segment.first->x;
+    double y1 = segment.first->y;
+    double x2 = segment.second->x;
+    double y2 = segment.second->y;
+    double A = x - x1;
+    double B = y - y1;
+    double C = x2 - x1;
+    double D = y2 - y1;
+    double dot = (A * C) + (B * D);
+    double len_sq = (C * C) + (D * D);
+    double param = -1;
     // in case of 0 length line
     if (len_sq != 0)
     {
         param = dot / len_sq;
     }
-    float xx, yy;
+    double xx, yy;
 
     if (param < 0)
     {
@@ -115,7 +115,7 @@ float Contact::gap(const Segment& segment, const Node* node)
         xx = x1 + (param * C);
         yy = y1 + (param * D);
     }
-    float dx = x - xx;
-    float dy = y - yy;
+    double dx = x - xx;
+    double dy = y - yy;
     return std::sqrt((dx * dx) + (dy * dy));
 }

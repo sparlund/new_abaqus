@@ -12,8 +12,8 @@
 class C3D20 : public Element
 {
 private:
-    const std::array<std::array<float, 3>,27>*  gauss_points  = &Gauss::_3D::integration_points_3_by_3_by_3;
-    const std::array<float, 27>*                gauss_weights = &Gauss::_3D::gauss_weights_3_by_3_by_3;
+    const std::array<std::array<double, 3>,27>*  gauss_points  = &Gauss::_3D::integration_points_3_by_3_by_3;
+    const std::array<double, 27>*                gauss_weights = &Gauss::_3D::gauss_weights_3_by_3_by_3;
 public:
     void calculate_Ke();
     void calculate_Me();

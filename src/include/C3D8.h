@@ -11,8 +11,8 @@
 class C3D8 : public Element
 {
 private:
-    const std::array<std::array<float, 3>,8>* gauss_points  = &Gauss::_3D::integration_points_2_by_2_by_2;
-    const std::array<float, 8>*               gauss_weights = &Gauss::_3D::gauss_weights_2_by_2_by_2;
+    const std::array<std::array<double, 3>,8>* gauss_points  = &Gauss::_3D::integration_points_2_by_2_by_2;
+    const std::array<double, 8>*               gauss_weights = &Gauss::_3D::gauss_weights_2_by_2_by_2;
 public:
     void calculate_Ke();
     void calculate_Me();

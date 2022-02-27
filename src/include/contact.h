@@ -16,25 +16,25 @@ class Contact
 private:
     // penalty value is dependent on stiffness of contacting materials! neets to be set dynamically.
     // typically ~1e-50*E
-    float penalty = 0;
+    double penalty = 0;
     // tolerance for equilibrium iterations. Maybe update dynamically?
-    float relative_tolerance = 1e-6;
+    double relative_tolerance = 1e-6;
     // max allowed penetration. too large obviously bad, but too small and difficult its to solve
-    float allowed_penetration = 1e-2;
+    double allowed_penetration = 1e-2;
     size_t number_of_time_steps = 100;
     // how large is the penetration?
-    float gap(const Segment&, const Node*);
+    double gap(const Segment&, const Node*);
     std::vector<Node*> old_nodes_in_contact, current_nodes_in_contact;
     bool is_segment_in_master_segments(const Segment& segment) const;
 public:
-    float get_penalty_factor() const {return penalty;}
+    double get_penalty_factor() const {return penalty;}
     std::vector<Segment> master_segments;
     // TODO: this should be something like 1e-5, will change when contact works.
-    const float residual_tolerance = 0.1;
+    const double residual_tolerance = 0.1;
     Set<Node*>* master;
     Set<Node*>* slave;
     Contact(Set<Node*>* master, Set<Node*>* slave);
-    std::vector<std::pair<Node*, float>> get_penetrating_nodes();
+    std::vector<std::pair<Node*, double>> get_penetrating_nodes();
 };
 
 

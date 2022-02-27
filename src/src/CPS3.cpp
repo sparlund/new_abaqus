@@ -5,16 +5,16 @@
 
 
 void CPS3::calculate_Ke(){
-    Eigen::Matrix<float,2,2> J;
-    Eigen::Matrix<float,3,6> B;
+    Eigen::Matrix<double,2,2> J;
+    Eigen::Matrix<double,3,6> B;
     auto D = pid->get_mid()->D_2D_linear_continuum_mechanics;
     // Want to find elements addition to the stiffness- & load matrix
-    float x1 = connectivity.at(0)->x;
-    float x2 = connectivity.at(1)->x;
-    float x3 = connectivity.at(2)->x;
-    float y1 = connectivity.at(0)->y;
-    float y2 = connectivity.at(1)->y;
-    float y3 = connectivity.at(2)->y;
+    double x1 = connectivity.at(0)->x;
+    double x2 = connectivity.at(1)->x;
+    double x3 = connectivity.at(2)->x;
+    double y1 = connectivity.at(0)->y;
+    double y2 = connectivity.at(1)->y;
+    double y3 = connectivity.at(2)->y;
     J << x1-x3, y1 - y3,
             x2-x3, y2 - y3;
     B << J(1,1), 0, -J(0,1), 0, -J(1,1)+J(0,1), 0,
@@ -31,7 +31,7 @@ void CPS3::calculate_Me(){
           0,1,0,2,0,1,
           1,0,1,0,2,0,
           0,1,0,1,0,2;   
-    Me *= (pid->get_mid()->get_density()*area/12.0f);
+    Me *= (pid->get_mid()->get_density()*area/12.d);
 }
 
 CPS3::CPS3(unsigned int                        id,

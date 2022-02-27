@@ -5,20 +5,20 @@
 void C3D8::calculate_Ke(){    
     setup_coord();
     // dim(J) = ndim x ndim
-    Eigen::Matrix<float,3,3> J;
-    Eigen::Matrix<float,6,24> B;
+    Eigen::Matrix<double,3,3> J;
+    Eigen::Matrix<double,6,24> B;
     
-    Eigen::Matrix<float,1,8> dNdXhi;
-    Eigen::Matrix<float,1,8> dNdEta;
-    Eigen::Matrix<float,1,8> dNdMy;
+    Eigen::Matrix<double,1,8> dNdXhi;
+    Eigen::Matrix<double,1,8> dNdEta;
+    Eigen::Matrix<double,1,8> dNdMy;
     // dim(dNdxdydz) = dim(dNdXhidEtadMy) = ndim x nnodes
-    Eigen::Matrix<float,3,8> dNdxdydz;
-    Eigen::Matrix<float,3,8> dNdXhidEtadMy;
+    Eigen::Matrix<double,3,8> dNdxdydz;
+    Eigen::Matrix<double,3,8> dNdXhidEtadMy;
 
-    float dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi,dN5dXhi,dN6dXhi,dN7dXhi,dN8dXhi;
-    float dN1dEta,dN2dEta,dN3dEta,dN4dEta,dN5dEta,dN6dEta,dN7dEta,dN8dEta;
-    float dN1dMy,dN2dMy,dN3dMy,dN4dMy,dN5dMy,dN6dMy,dN7dMy,dN8dMy;
-    float xhi,eta,my,w;
+    double dN1dXhi,dN2dXhi,dN3dXhi,dN4dXhi,dN5dXhi,dN6dXhi,dN7dXhi,dN8dXhi;
+    double dN1dEta,dN2dEta,dN3dEta,dN4dEta,dN5dEta,dN6dEta,dN7dEta,dN8dEta;
+    double dN1dMy,dN2dMy,dN3dMy,dN4dMy,dN5dMy,dN6dMy,dN7dMy,dN8dMy;
+    double xhi,eta,my,w;
     auto D = pid->get_mid()->D_3D_linear_continuum_mechanics;
     for (unsigned int i = 0; i < gauss_points->size(); i++)
     {
@@ -76,9 +76,9 @@ void C3D8::calculate_Ke(){
 void C3D8::calculate_Me(){
     setup_coord();
     // size(global_N_matrix) = element ndof*element ndof
-    Eigen::Matrix<float,3,24> N;
-    float N1,N2,N3,N4,N5,N6,N7,N8;
-    float xhi,eta,my,w;
+    Eigen::Matrix<double,3,24> N;
+    double N1,N2,N3,N4,N5,N6,N7,N8;
+    double xhi,eta,my,w;
     for (unsigned int i = 0; i < gauss_points->size(); i++)
     {
         xhi = gauss_points->at(i).at(0);
@@ -95,9 +95,9 @@ void C3D8::calculate_Me(){
         N7  = (1+xhi)*(1+eta)*(1+my)*0.125;
         N8  = (1-xhi)*(1+eta)*(1+my)*0.125;
         // § 8.5. The Mass Matrix, chapter 8
-        N <<   N1,0.0f,0.0f,N2,0.0f,0.0f,N3,0.0f,0.0f,N4,0.0f,0.0f,N5,0.0f,0.0f,N6,0.0f,0.0f,N7,0.0f,0.0f,N8,0.0f,0.0f,
-             0.0f,  N1,0.0f,0.0f,N2,0.0f,0.0f,N3,0.0f,0.0f,N4,0.0f,0.0f,N5,0.0f,0.0f,N6,0.0f,0.0f,N7,0.0f,0.0f,N8,0.0f,
-             0.0f,0.0f,N1,0.0f,0.0f,N2,0.0f,0.0f,N3,0.0f,0.0f,N4,0.0f,0.0f,N5,0.0f,0.0f,N6,0.0f,0.0f,N7,0.0f,0.0f,N8;
+        N <<   N1,0.d,0.d,N2,0.d,0.d,N3,0.d,0.d,N4,0.d,0.d,N5,0.d,0.d,N6,0.d,0.d,N7,0.d,0.d,N8,0.d,0.d,
+             0.d,  N1,0.d,0.d,N2,0.d,0.d,N3,0.d,0.d,N4,0.d,0.d,N5,0.d,0.d,N6,0.d,0.d,N7,0.d,0.d,N8,0.d,
+             0.d,0.d,N1,0.d,0.d,N2,0.d,0.d,N3,0.d,0.d,N4,0.d,0.d,N5,0.d,0.d,N6,0.d,0.d,N7,0.d,0.d,N8;
         Me = Me + w*(pid->get_mid()->get_density()*N.transpose()*N*detJ.at(i));
     }
 

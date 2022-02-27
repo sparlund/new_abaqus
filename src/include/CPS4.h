@@ -18,8 +18,8 @@
 class CPS4 : public Element
 {
 private:
-    const std::array<std::array<float, 2>, 4>*  gauss_points  = &Gauss::_2D::integration_points_2_by_2;
-    const std::array<float, 4>*                 gauss_weights = &Gauss::_2D::gauss_weights_2_by_2;
+    const std::array<std::array<double, 2>, 4>*  gauss_points  = &Gauss::_2D::integration_points_2_by_2;
+    const std::array<double, 4>*                 gauss_weights = &Gauss::_2D::gauss_weights_2_by_2;
 public:
     void calculate_Ke();
     void calculate_Me();

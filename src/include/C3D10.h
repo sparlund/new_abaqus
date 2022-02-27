@@ -11,8 +11,8 @@
 class C3D10 : public Element
 {
 private:
-    const std::array<std::array<float, 3>,4>* gauss_points  = &Gauss::_3D::integration_points_4;
-    const std::array<float,4>*                gauss_weights = &Gauss::_3D::gauss_weights_4;
+    const std::array<std::array<double, 3>,4>* gauss_points  = &Gauss::_3D::integration_points_4;
+    const std::array<double,4>*                gauss_weights = &Gauss::_3D::gauss_weights_4;
     // The target rank of K e is 30 − 6 = 24. Since each Gauss point adds 6 to the rank up to a maximum
     // of 24, the number of Gauss points should be 4 or higher. 
 public:
