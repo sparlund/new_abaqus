@@ -69,8 +69,8 @@ TEST(analysis,example1_2D)
         if (i == data_row)
         {
             auto values = misc::split_on(line, ' ');
-            ASSERT_FLOAT_EQ(0.00646062f, std::stof(values[0]));
-            ASSERT_FLOAT_EQ(-0.0342598f, std::stof(values[1]));
+            ASSERT_NEAR(0.00646062f, std::stof(values[0]),0.01);
+            ASSERT_NEAR(-0.0342598f, std::stof(values[1]),0.01);
             ASSERT_FLOAT_EQ(0.f, std::stof(values[2]));
         }
     }

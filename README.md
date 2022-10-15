@@ -97,17 +97,17 @@ Eigen is a library used for linear algebra, and Spectra is an add-on to that lib
 ```bash
 git clone https://github.com/sparlund/new_abaqus
 cd new_abaqus
-cmake --build . --target new_abaqus
+cmake .
+make all
 ```
-To build and run unit test:
+To run unit test:
 ```bash
-cmake --build . --target UT
 ./UT
 ```
 To see unit test code coverage:
-To build and run unit test:
 ```bash
 cmake --build . --target UT_coverage
+firefox UT_coverage/index.html
 ```
 ## Windows build
 I don't have access to a Windows PC so I don't know, use the CMakefile somehow...
@@ -174,7 +174,7 @@ I don't have access to a Windows PC so I don't know, use the CMakefile somehow..
 
 # Program size
 
-The binary new_abaqus is ~1.2mB on my system.
+The binary new_abaqus is 27kB on my system.
 
 ```
 --------------------------------------------------
